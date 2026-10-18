@@ -8,6 +8,7 @@ import {
   initialTimelineIndex,
   lastTopicKey,
   nextPlayableIndex,
+  reachedEnd,
   nodeLabel,
   nodeMarker,
   currentStepIndex,
@@ -293,5 +294,18 @@ describe('chapter timeline', () => {
 
   it('keys the remembered node per school, section and chapter', () => {
     expect(lastTopicKey('school-1', 'sec-9', 'leph1-c01')).toBe('resources:lastTopic:school-1:sec-9:leph1-c01');
+  });
+});
+
+describe('reachedEnd', () => {
+  it('ignores the end event the player reports before its first source has a duration', () => {
+    expect(reachedEnd(0, 0)).toBe(false);
+    expect(reachedEnd(NaN, 0)).toBe(false);
+    expect(reachedEnd(null, null)).toBe(false);
+  });
+
+  it('accepts an end only when the playhead reached the known duration', () => {
+    expect(reachedEnd(177.4, 176.9)).toBe(true);
+    expect(reachedEnd(177.4, 90)).toBe(false);
   });
 });

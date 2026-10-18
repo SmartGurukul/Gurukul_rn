@@ -246,6 +246,17 @@ export function initialTimelineIndex(nodes: TimelineNode[], lastKey: string | nu
   return nodes.findIndex((node) => node.video !== null);
 }
 
+/**
+ * Whether a play-to-end event is a real one. expo-video fires playToEnd once when the player's first
+ * source replaces the empty one (duration still 0), which would skip the opening node; only an item
+ * with a known duration that the playhead actually reached counts.
+ */
+export function reachedEnd(durationSec: number | null | undefined, currentTimeSec: number | null | undefined): boolean {
+  if (durationSec == null || currentTimeSec == null) return false;
+  if (!Number.isFinite(durationSec) || durationSec <= 0) return false;
+  return currentTimeSec >= durationSec - 1;
+}
+
 /** After `from` plays to the end: the next node with a video, or -1 when nothing remains. */
 export function nextPlayableIndex(nodes: TimelineNode[], from: number): number {
   for (let i = from + 1; i < nodes.length; i += 1) if (nodes[i].video) return i;

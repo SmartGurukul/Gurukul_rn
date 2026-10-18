@@ -21,6 +21,7 @@ import {
   formatDuration,
   initialTimelineIndex,
   nextPlayableIndex,
+  reachedEnd,
   nodeLabel,
   nodeMarker,
   resourceViewer,
@@ -95,6 +96,8 @@ export function ChapterScreen({ route, navigation }: Props) {
   // Finishing a video moves on to the next one that exists.
   useEffect(() => {
     const subscription = player.addListener('playToEnd', () => {
+      // The first source replacing the empty player also reports an end; that is not a finished video.
+      if (!reachedEnd(player.duration, player.currentTime)) return;
       const next = nextPlayableIndex(nodes, selectedRef.current);
       if (next < 0) return;
       showToast(t('resources.nextUp', { title: nodeLabel(nodes[next]) }), 'info');
