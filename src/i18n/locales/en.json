@@ -3124,6 +3124,11 @@
     "quizResults": {
       "title": "Quiz results",
       "description": "How students did in Practice, Arena and Battle"
+    },
+    "resources": {
+      "title": "Resources",
+      "description": "NCERT chapters, topics, videos and the textbook for this section",
+      "descriptionStudent": "Chapters, topics, videos and your textbook"
     }
   },
   "quizInsights": {
@@ -3694,5 +3699,48 @@
     "axisPoints": "Points vs class",
     "axisTerm": "Term",
     "axisSubject": "Subject"
+  },
+  "resources": {
+    "title": "Resources",
+    "offline": "You're offline. Showing the last saved list; videos and textbooks need a connection.",
+    "empty": "No subjects are set up for this class yet.",
+    "noChapters": "No chapters for this subject yet.",
+    "unmapped": "No NCERT subject linked yet",
+    "unmappedHint": "Chapters, topics and videos appear once an admin links this subject to its NCERT subject.",
+    "linkSubject": "Link NCERT subject",
+    "teacher": "Teacher: {{name}}",
+    "summary": "{{chapters}} chapters, {{videos}} with video",
+    "topicCount": "{{count}} topics",
+    "videoBadge": "Video",
+    "hiddenBadge": "Hidden",
+    "watch": "Watch",
+    "textbook": "Textbook",
+    "hide": "Hide",
+    "show": "Show",
+    "noTopics": "No topic list for this chapter yet.",
+    "hideFailed": "Could not change this chapter. Try again.",
+    "openFailed": "Could not open the textbook on this phone."
+  },
+  "videoPlayer": {
+    "title": "Video",
+    "hint": "Tap the video for play, pause and fullscreen."
+  },
+  "webDocument": {
+    "loading": "Loading…",
+    "failed": "This document could not be opened here.",
+    "openInBrowser": "Open in browser"
+  },
+  "curriculumMapping": {
+    "title": "Link NCERT subjects",
+    "subtitle": "One NCERT subject per school subject",
+    "intro": "Pick the NCERT subject for each of your subjects. Chapters, topics and videos then appear in Resources for every class.",
+    "ncertSubject": "NCERT subject",
+    "notNcert": "Not an NCERT subject",
+    "suggested": "Suggested: {{name}}",
+    "noSuggestion": "No suggestion. Pick one below.",
+    "current": "Linked to {{name}}",
+    "linked": "Linked. {{count}} chapters added to the class lists.",
+    "unlinked": "Unlinked.",
+    "empty": "No subjects yet. Add subjects first."
   }
 }
