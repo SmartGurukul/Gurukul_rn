@@ -1,60 +1,81 @@
+import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
+import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 
 import { getErrorMessage } from '../../api/errorMessage';
 import { getSectionResources, setChapterHidden } from '../../api/resources';
-import { readCachedResources, writeCachedResources } from '../../api/resourcesCache';
-import type { ResourceChapter, ResourceSubject, ResourceVideo, SectionResources } from '../../api/types';
+import { readCachedResources, readLastOpened, writeCachedResources, writeLastOpened } from '../../api/resourcesCache';
+import type { ResourceSubject, SectionResources } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
-import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
+import { accents, colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
-  chapterHasVideo,
-  formatDuration,
+  connectorPath,
+  currentStepIndex,
+  eyebrowText,
   initialExpandedSubject,
+  isDimmed,
+  journeySteps,
   resourceViewer,
+  stepTone,
+  subjectIcon,
   subjectSummary,
-  textbookOpenPlan,
-  topicLabel,
-  visibleBooks,
-  visibleChapters,
   withChapterHidden,
+  type JourneyStep,
 } from '../../utils/resources';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Resources'>;
 
 const accent = accents.resources;
+const THUMB = 110;
+const RING = 3;
+const CONNECTOR_H = 88;
+const GRID = 28;
 
 /**
- * The student Resource Hub for one class section: each subject's NCERT books, their chapters and
- * topics, the textbook PDF, and the videos published so far. Teachers and admins see the same list
- * with hidden chapters flagged and a Hide/Show toggle; students never see hidden chapters.
+ * The student Resource Hub as a learning journey: pick a subject, then walk its chapters down the
+ * screen one step at a time, thumbnails alternating left and right, a dashed path between them.
+ * The current step (last opened, else the first with a video) is the one bright, filled step.
  *
- * The last payload is cached per section so the list still reads offline; videos and PDFs need
- * the network and simply fail to open without it.
+ * Teachers and admins see hidden chapters as dimmed steps and can hide or show one with a long
+ * press. The last payload is cached per section so the journey still reads offline.
  */
 export function ResourcesScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
+  const { width } = useWindowDimensions();
   const classSection = route.params.classSection;
   const viewer = resourceViewer(session);
   const canHide = viewer !== 'student';
+  const contentWidth = width - spacing.lg * 2;
 
   const [data, setData] = useState<SectionResources | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [offlineNotice, setOfflineNotice] = useState<string | null>(null);
-  const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set());
-  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+  const [offline, setOffline] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [lastOpened, setLastOpened] = useState<Record<string, string | null>>({});
+  const [sheetStep, setSheetStep] = useState<JourneyStep | null>(null);
   const [busyChapter, setBusyChapter] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -62,23 +83,15 @@ export function ResourcesScreen({ route, navigation }: Props) {
     try {
       const fresh = await getSectionResources(schoolId, classSection.id);
       setData(fresh);
-      setOfflineNotice(null);
-      setExpandedSubjects((prev) => {
-        if (prev.size > 0) return prev;
-        const first = initialExpandedSubject(fresh.subjects, viewer);
-        return first ? new Set([first]) : prev;
-      });
+      setOffline(false);
+      setSelectedId((prev) => prev ?? initialExpandedSubject(fresh.subjects, viewer));
       writeCachedResources(schoolId, classSection.id, fresh);
     } catch (e) {
       const cached = await readCachedResources(schoolId, classSection.id);
       if (cached) {
         setData(cached);
-        setOfflineNotice(getErrorMessage(e));
-        setExpandedSubjects((prev) => {
-          if (prev.size > 0) return prev;
-          const first = initialExpandedSubject(cached.subjects, viewer);
-          return first ? new Set([first]) : prev;
-        });
+        setOffline(true);
+        setSelectedId((prev) => prev ?? initialExpandedSubject(cached.subjects, viewer));
       } else {
         setError(getErrorMessage(e));
       }
@@ -93,31 +106,36 @@ export function ResourcesScreen({ route, navigation }: Props) {
     return unsubscribe;
   }, [navigation, load]);
 
-  const toggle = (set: Set<string>, id: string) => {
-    const next = new Set(set);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    return next;
+  // The chapter the student last opened in the selected subject decides which step is bright.
+  useEffect(() => {
+    if (!selectedId || selectedId in lastOpened) return;
+    let cancelled = false;
+    readLastOpened(schoolId, classSection.id, selectedId).then((chapterId) => {
+      if (!cancelled) setLastOpened((prev) => ({ ...prev, [selectedId]: chapterId }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, lastOpened, schoolId, classSection.id]);
+
+  const subject = useMemo(
+    () => data?.subjects.find((s) => s.subjectId === selectedId) ?? null,
+    [data, selectedId]
+  );
+  const steps = useMemo(() => (subject ? journeySteps(subject, viewer) : []), [subject, viewer]);
+  const current = currentStepIndex(steps, subject ? (lastOpened[subject.subjectId] ?? null) : null);
+
+  const openChapter = (step: JourneyStep) => {
+    if (!subject) return;
+    writeLastOpened(schoolId, classSection.id, subject.subjectId, step.chapter.chapterId);
+    setLastOpened((prev) => ({ ...prev, [subject.subjectId]: step.chapter.chapterId }));
+    navigation.navigate('Chapter', { classSection, subject, book: step.book, chapter: step.chapter });
   };
 
-  const watch = (video: ResourceVideo, title: string) => {
-    navigation.navigate('VideoPlayer', { url: video.url, title, posterUrl: video.posterUrl });
-  };
-
-  const openTextbook = (chapter: ResourceChapter) => {
-    const plan = textbookOpenPlan(chapter.pdfUrl, Platform.OS);
-    if (!plan) return;
-    if (plan.kind === 'webview') {
-      navigation.navigate('WebDocument', { url: plan.url, title: chapter.title });
-      return;
-    }
-    Linking.openURL(plan.url).catch(() => showToast(t('resources.openFailed'), 'error'));
-  };
-
-  const toggleHidden = async (chapter: ResourceChapter) => {
-    if (!data || !chapter.syllabusChapterId || busyChapter) return;
-    const id = chapter.syllabusChapterId;
-    const nextHidden = !chapter.hidden;
+  const toggleHidden = async (step: JourneyStep) => {
+    const id = step.chapter.syllabusChapterId;
+    if (!data || !id || busyChapter) return;
+    const nextHidden = !step.chapter.hidden;
     const before = data;
     setBusyChapter(id);
     setData(withChapterHidden(data, id, nextHidden));
@@ -132,141 +150,112 @@ export function ResourcesScreen({ route, navigation }: Props) {
     }
   };
 
-  const renderChapter = (chapter: ResourceChapter, subject: ResourceSubject) => {
-    const open = expandedChapters.has(chapter.chapterId);
-    const hasVideo = chapterHasVideo(chapter);
-    const duration = formatDuration(chapter.video?.durationSec);
-    return (
-      <View key={chapter.chapterId} style={[styles.chapter, chapter.hidden && styles.chapterHidden]}>
-        <Pressable
-          style={styles.chapterRow}
-          onPress={() => setExpandedChapters((prev) => toggle(prev, chapter.chapterId))}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-        >
-          <View style={styles.chapterNumber}>
-            <Text style={styles.chapterNumberText}>{chapter.number}</Text>
-          </View>
-          <View style={styles.chapterText}>
-            {chapter.section ? <Text style={styles.sectionLabel}>{chapter.section}</Text> : null}
-            <Text style={styles.chapterTitle}>{chapter.title}</Text>
-            <View style={styles.badges}>
-              {hasVideo ? (
-                <View style={[styles.badge, styles.badgeVideo]}>
-                  <Text style={styles.badgeVideoText}>{t('resources.videoBadge')}</Text>
-                </View>
-              ) : null}
-              {chapter.hidden ? (
-                <View style={[styles.badge, styles.badgeHidden]}>
-                  <Text style={styles.badgeHiddenText}>{t('resources.hiddenBadge')}</Text>
-                </View>
-              ) : null}
-              {chapter.topics.length > 0 ? (
-                <Text style={styles.topicCount}>{t('resources.topicCount', { count: chapter.topics.length })}</Text>
-              ) : null}
-            </View>
-          </View>
-          <Text style={[styles.chevron, open && styles.chevronOpen]}>›</Text>
-        </Pressable>
+  const renderStep = (step: JourneyStep, index: number) => {
+    const tone = stepTone(step, current);
+    const dim = isDimmed(tone);
+    const isCurrent = tone === 'current';
+    const resumed = isCurrent && subject !== null && lastOpened[subject.subjectId] === step.chapter.chapterId;
+    const poster = step.chapter.video?.posterUrl ?? null;
+    const label = step.chapter.hidden ? t('resources.show') : resumed ? t('resources.continue') : t('resources.startLearning');
+    const onPress = () => (step.chapter.hidden ? toggleHidden(step) : openChapter(step));
 
-        <View style={styles.actions}>
-          {chapter.video ? (
-            <Pressable style={[styles.action, styles.actionPrimary]} onPress={() => watch(chapter.video!, chapter.title)}>
-              <Text style={styles.actionPrimaryText}>
-                {t('resources.watch')}
-                {duration ? ` · ${duration}` : ''}
-              </Text>
-            </Pressable>
-          ) : null}
-          {chapter.pdfUrl ? (
-            <Pressable style={styles.action} onPress={() => openTextbook(chapter)}>
-              <Text style={styles.actionText}>{t('resources.textbook')}</Text>
-            </Pressable>
-          ) : null}
-          {canHide && chapter.syllabusChapterId ? (
-            <Pressable
-              style={[styles.action, busyChapter === chapter.syllabusChapterId && styles.disabled]}
-              onPress={() => toggleHidden(chapter)}
-              disabled={busyChapter !== null}
-            >
-              <Text style={styles.actionText}>{chapter.hidden ? t('resources.show') : t('resources.hide')}</Text>
-            </Pressable>
+    const thumbnail = (
+      <View style={[styles.thumb, { borderColor: isCurrent ? accent.base : colors.border }, dim && styles.dim]}>
+        {poster ? (
+          <Image source={{ uri: poster }} style={styles.thumbImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.thumbPlaceholder}>
+            <Text style={styles.thumbNumber}>{step.chapter.number}</Text>
+            <FontAwesome5 name={subjectIcon(subject?.curriculumSubjectKey ?? null)} size={14} color={accent.base} />
+          </View>
+        )}
+      </View>
+    );
+    const textBlock = (
+      <View style={[styles.textBlock, step.side === 'right' && styles.textBlockRight, dim && styles.dim]}>
+        <View style={[styles.eyebrowRow, step.side === 'right' && styles.rowReverse]}>
+          <Text style={styles.eyebrow}>{eyebrowText(step.chapter, t)}</Text>
+          {step.chapter.hidden ? (
+            <View style={styles.hiddenPill}>
+              <Text style={styles.hiddenPillText}>{t('resources.hiddenBadge')}</Text>
+            </View>
           ) : null}
         </View>
+        <Text style={[styles.title, step.side === 'right' && styles.titleRight]}>{step.chapter.title}</Text>
+        <Pressable
+          style={[styles.cta, isCurrent ? styles.ctaFilled : styles.ctaOutlined, busyChapter === step.chapter.syllabusChapterId && styles.busy]}
+          onPress={onPress}
+          disabled={busyChapter !== null}
+          accessibilityRole="button"
+        >
+          <FontAwesome5 name={step.chapter.hidden ? 'eye' : 'play'} size={11} color={isCurrent ? colors.white : accent.base} />
+          <Text style={[styles.ctaText, isCurrent ? styles.ctaTextFilled : styles.ctaTextOutlined]}>{label}</Text>
+        </Pressable>
+      </View>
+    );
 
-        {open ? (
-          <View style={styles.topics}>
-            {chapter.topics.length === 0 ? (
-              <Text style={styles.noTopics}>{t('resources.noTopics')}</Text>
-            ) : (
-              chapter.topics.map((topic) => (
-                <View key={topic.topicId} style={styles.topicRow}>
-                  <View style={styles.topicDot} />
-                  <Text style={styles.topicText}>{topicLabel(topic)}</Text>
-                  {topic.video ? (
-                    <Pressable
-                      style={styles.topicWatch}
-                      onPress={() => watch(topic.video!, `${subject.subjectName}: ${topic.title}`)}
-                    >
-                      <Text style={styles.topicWatchText}>{t('resources.watch')}</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-              ))
-            )}
-          </View>
+    return (
+      <View key={step.chapter.chapterId}>
+        <Pressable
+          style={styles.step}
+          onLongPress={canHide && step.chapter.syllabusChapterId ? () => setSheetStep(step) : undefined}
+          delayLongPress={350}
+        >
+          {step.side === 'left' ? (
+            <>
+              {thumbnail}
+              {textBlock}
+            </>
+          ) : (
+            <>
+              {textBlock}
+              {thumbnail}
+            </>
+          )}
+        </Pressable>
+        {index < steps.length - 1 ? (
+          <Svg width={contentWidth} height={CONNECTOR_H} style={styles.connector}>
+            <Path
+              d={connectorPath(contentWidth, CONNECTOR_H, step.side, THUMB)}
+              stroke={colors.textMuted}
+              strokeOpacity={0.55}
+              strokeWidth={2}
+              strokeDasharray="6 7"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </Svg>
         ) : null}
       </View>
     );
   };
 
-  const renderSubject = (subject: ResourceSubject) => {
-    const open = expandedSubjects.has(subject.subjectId);
-    const books = visibleBooks(subject);
-    const summary = subjectSummary(subject, viewer);
-    const unmapped = !subject.curriculumSubjectKey;
+  const renderSubjectBody = (subject: ResourceSubject) => {
+    if (!subject.curriculumSubjectKey) {
+      return (
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>{t('resources.unmapped')}</Text>
+          <Text style={styles.noticeText}>{t('resources.unmappedHint')}</Text>
+          {viewer === 'admin' ? (
+            <Pressable style={[styles.cta, styles.ctaFilled, styles.noticeCta]} onPress={() => navigation.navigate('CurriculumMapping')}>
+              <Text style={[styles.ctaText, styles.ctaTextFilled]}>{t('resources.linkSubject')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      );
+    }
+    if (steps.length === 0) return <Text style={styles.empty}>{t('resources.noChapters')}</Text>;
     return (
-      <View key={subject.subjectId} style={styles.card}>
-        <Pressable
-          style={styles.subjectRow}
-          onPress={() => setExpandedSubjects((prev) => toggle(prev, subject.subjectId))}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-        >
-          <View style={styles.accentBar} />
-          <View style={styles.subjectText}>
-            <Text style={styles.subjectName}>{subject.subjectName}</Text>
-            <Text style={styles.subjectMeta}>
-              {subject.teacherName ? t('resources.teacher', { name: subject.teacherName }) + ' · ' : ''}
-              {unmapped
-                ? t('resources.unmapped')
-                : t('resources.summary', { chapters: summary.chapters, videos: summary.videos })}
-            </Text>
-          </View>
-          <Text style={[styles.chevron, open && styles.chevronOpen]}>›</Text>
-        </Pressable>
-
-        {open ? (
-          unmapped ? (
-            <View style={styles.notice}>
-              <Text style={styles.noticeText}>{t('resources.unmappedHint')}</Text>
-              {viewer === 'admin' ? (
-                <Pressable style={[styles.action, styles.actionPrimary]} onPress={() => navigation.navigate('CurriculumMapping')}>
-                  <Text style={styles.actionPrimaryText}>{t('resources.linkSubject')}</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : books.length === 0 ? (
-            <Text style={styles.noticeText}>{t('resources.noChapters')}</Text>
-          ) : (
-            books.map((book) => (
-              <View key={book.bookCode} style={styles.book}>
-                {books.length > 1 ? <Text style={styles.bookTitle}>{book.bookTitle}</Text> : null}
-                {visibleChapters(book, viewer).map((chapter) => renderChapter(chapter, subject))}
-              </View>
-            ))
-          )
-        ) : null}
+      <View style={styles.journey}>
+        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
+          <Defs>
+            <Pattern id="journey-grid" width={GRID} height={GRID} patternUnits="userSpaceOnUse">
+              <Path d={`M ${GRID} 0 L 0 0 0 ${GRID}`} fill="none" stroke={colors.border} strokeWidth={1} />
+            </Pattern>
+          </Defs>
+          <Rect width="100%" height="100%" fill="url(#journey-grid)" opacity={0.45} />
+        </Svg>
+        {steps.map(renderStep)}
       </View>
     );
   };
@@ -279,7 +268,7 @@ export function ResourcesScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
-        {offlineNotice ? (
+        {offline ? (
           <View style={styles.offline}>
             <Text style={styles.offlineText}>{t('resources.offline')}</Text>
           </View>
@@ -289,13 +278,13 @@ export function ResourcesScreen({ route, navigation }: Props) {
           <View>
             <ErrorNotice message={error} />
             <Pressable
-              style={[styles.action, styles.actionPrimary, styles.retry]}
+              style={[styles.cta, styles.ctaFilled, styles.retry]}
               onPress={() => {
                 setLoading(true);
                 load().finally(() => setLoading(false));
               }}
             >
-              <Text style={styles.actionPrimaryText}>{t('common.retry')}</Text>
+              <Text style={[styles.ctaText, styles.ctaTextFilled]}>{t('common.retry')}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -303,8 +292,60 @@ export function ResourcesScreen({ route, navigation }: Props) {
         {loading && !data ? <ActivityIndicator style={styles.loader} color={colors.primary} /> : null}
 
         {data && data.subjects.length === 0 ? <Text style={styles.empty}>{t('resources.empty')}</Text> : null}
-        {data ? data.subjects.map(renderSubject) : null}
+
+        {data && data.subjects.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            {data.subjects.map((s) => {
+              const selected = s.subjectId === selectedId;
+              const count = subjectSummary(s, viewer).chapters;
+              return (
+                <Pressable
+                  key={s.subjectId}
+                  style={[styles.chip, selected && styles.chipSelected]}
+                  onPress={() => setSelectedId(s.subjectId)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                >
+                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{s.subjectName}</Text>
+                  {count > 0 ? (
+                    <Text style={[styles.chipCount, selected && styles.chipCountSelected]}>{count}</Text>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        ) : null}
+
+        {subject?.teacherName ? (
+          <Text style={styles.teacher}>{t('resources.teacher', { name: subject.teacherName })}</Text>
+        ) : null}
+
+        {subject ? renderSubjectBody(subject) : null}
       </ScreenContainer>
+
+      <Modal visible={sheetStep !== null} transparent animationType="fade" onRequestClose={() => setSheetStep(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setSheetStep(null)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <Text style={styles.sheetTitle} numberOfLines={2}>
+              {sheetStep ? sheetStep.chapter.title : ''}
+            </Text>
+            <Pressable
+              style={styles.sheetOption}
+              onPress={() => {
+                const step = sheetStep;
+                setSheetStep(null);
+                if (step) toggleHidden(step);
+              }}
+            >
+              <FontAwesome5 name={sheetStep?.chapter.hidden ? 'eye' : 'eye-slash'} size={14} color={colors.textPrimary} />
+              <Text style={styles.sheetOptionText}>{sheetStep?.chapter.hidden ? t('resources.show') : t('resources.hide')}</Text>
+            </Pressable>
+            <Pressable style={styles.sheetOption} onPress={() => setSheetStep(null)}>
+              <Text style={styles.sheetCancel}>{t('common.cancel')}</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -322,84 +363,78 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   offlineText: { color: colors.warning, fontSize: 13 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
-    ...softShadow,
-  },
-  subjectRow: { flexDirection: 'row', alignItems: 'center' },
-  accentBar: {
-    width: 4,
-    alignSelf: 'stretch',
-    borderRadius: radius.pill,
-    backgroundColor: accent.base,
-    marginRight: spacing.md,
-  },
-  subjectText: { flex: 1 },
-  subjectName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
-  subjectMeta: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
-  chevron: { fontSize: 22, color: colors.textMuted, marginLeft: spacing.sm },
-  chevronOpen: { transform: [{ rotate: '90deg' }] },
-  notice: { marginTop: spacing.md, gap: spacing.sm },
-  noticeText: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.md, lineHeight: 19 },
-  book: { marginTop: spacing.md },
-  bookTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: spacing.sm,
-  },
-  chapter: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    paddingVertical: spacing.sm + 2,
-  },
-  chapterHidden: { opacity: 0.6 },
-  chapterRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  chapterNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.sm,
-    backgroundColor: accent.light,
+  chips: { gap: spacing.sm, paddingVertical: spacing.xs },
+  chip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-    marginTop: 2,
-  },
-  chapterNumberText: { fontSize: 13, fontWeight: '700', color: accent.base },
-  chapterText: { flex: 1 },
-  sectionLabel: { fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
-  chapterTitle: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, lineHeight: 20 },
-  badges: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 4, flexWrap: 'wrap' },
-  badge: { borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 1 },
-  badgeVideo: { backgroundColor: accent.light },
-  badgeVideoText: { fontSize: 11, fontWeight: '700', color: accent.base },
-  badgeHidden: { backgroundColor: colors.surfaceMuted },
-  badgeHiddenText: { fontSize: 11, fontWeight: '700', color: colors.textSecondary },
-  topicCount: { fontSize: 12, color: colors.textMuted },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm, marginLeft: 28 + spacing.md },
-  action: {
+    gap: 6,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: 6,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  chipSelected: { backgroundColor: accent.base, borderColor: accent.base },
+  chipText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+  chipTextSelected: { color: colors.white },
+  chipCount: { fontSize: 11, fontWeight: '700', color: colors.textMuted },
+  chipCountSelected: { color: 'rgba(255,255,255,0.85)' },
+  teacher: { fontSize: 13, color: colors.textMuted, marginTop: spacing.sm },
+  notice: { marginTop: spacing.xl, gap: spacing.sm },
+  noticeTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  noticeText: { fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
+  noticeCta: { alignSelf: 'flex-start', marginTop: spacing.sm },
+  journey: { marginTop: spacing.xl, paddingVertical: spacing.md, overflow: 'hidden', borderRadius: radius.lg },
+  step: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, minHeight: THUMB + spacing.md },
+  connector: { marginVertical: 2 },
+  thumb: {
+    width: THUMB,
+    height: THUMB,
+    borderRadius: THUMB / 2,
+    borderWidth: RING,
+    overflow: 'hidden',
     backgroundColor: colors.surface,
   },
-  actionText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
-  actionPrimary: { backgroundColor: accent.base, borderColor: accent.base },
-  actionPrimaryText: { fontSize: 13, fontWeight: '700', color: colors.white },
-  disabled: { opacity: 0.5 },
-  topics: { marginTop: spacing.sm, marginLeft: 28 + spacing.md, gap: 6 },
-  noTopics: { fontSize: 13, color: colors.textMuted },
-  topicRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  topicDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: accent.base },
-  topicText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
-  topicWatch: { borderRadius: radius.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3, backgroundColor: accent.light },
-  topicWatchText: { fontSize: 12, fontWeight: '700', color: accent.base },
+  thumbImage: { width: '100%', height: '100%' },
+  thumbPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: accent.light, gap: 2 },
+  thumbNumber: { fontSize: 34, fontWeight: '800', color: accent.base, lineHeight: 38 },
+  dim: { opacity: 0.55 },
+  textBlock: { flex: 1, alignItems: 'flex-start', gap: spacing.sm },
+  textBlockRight: { alignItems: 'flex-end' },
+  eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  rowReverse: { flexDirection: 'row-reverse' },
+  eyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase', color: colors.textMuted },
+  hiddenPill: { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 1 },
+  hiddenPillText: { fontSize: 10, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6 },
+  title: { fontSize: 25, lineHeight: 30, fontWeight: '800', color: colors.textPrimary },
+  titleRight: { textAlign: 'right' },
+  cta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+    borderWidth: 1.5,
+  },
+  ctaFilled: { backgroundColor: accent.base, borderColor: accent.base },
+  ctaOutlined: { backgroundColor: 'transparent', borderColor: accent.base },
+  ctaText: { fontSize: 14, fontWeight: '700' },
+  ctaTextFilled: { color: colors.white },
+  ctaTextOutlined: { color: accent.base },
+  busy: { opacity: 0.5 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(32,26,43,0.45)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
+    gap: spacing.xs,
+  },
+  sheetTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: spacing.sm },
+  sheetOption: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
+  sheetOptionText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  sheetCancel: { fontSize: 16, color: colors.textMuted },
 });

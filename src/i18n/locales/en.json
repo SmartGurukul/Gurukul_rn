@@ -3709,9 +3709,7 @@
     "unmappedHint": "Chapters, topics and videos appear once an admin links this subject to its NCERT subject.",
     "linkSubject": "Link NCERT subject",
     "teacher": "Teacher: {{name}}",
-    "summary": "{{chapters}} chapters, {{videos}} with video",
     "topicCount": "{{count}} topics",
-    "videoBadge": "Video",
     "hiddenBadge": "Hidden",
     "watch": "Watch",
     "textbook": "Textbook",
@@ -3719,7 +3717,13 @@
     "show": "Show",
     "noTopics": "No topic list for this chapter yet.",
     "hideFailed": "Could not change this chapter. Try again.",
-    "openFailed": "Could not open the textbook on this phone."
+    "openFailed": "Could not open the textbook on this phone.",
+    "startLearning": "Start learning",
+    "continue": "Continue",
+    "chapterLabel": "Chapter {{n}}",
+    "minutes": "{{count}} min",
+    "sourceNcert": "Source: NCERT",
+    "topics": "Topics"
   },
   "videoPlayer": {
     "title": "Video",

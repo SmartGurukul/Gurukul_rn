@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import type { LoginResponse, ResourceBook, ResourceChapter, ResourceSubject, ResourceTopic } from '../api/types';
 
 export type ResourceViewer = 'student' | 'teacher' | 'admin';
@@ -87,4 +89,127 @@ export function withChapterHidden<T extends { subjects: ResourceSubject[] }>(dat
     return subjectChanged ? { ...subject, books } : subject;
   });
   return { ...data, subjects };
+}
+
+// ---------------------------------------------------------------------------------------------
+// The journey: one step per chapter, alternating sides, the current step bright and the rest quiet.
+// ---------------------------------------------------------------------------------------------
+
+export type JourneySide = 'left' | 'right';
+
+export interface JourneyStep {
+  index: number;
+  /** Which side the thumbnail sits on; the text block takes the other. */
+  side: JourneySide;
+  chapter: ResourceChapter;
+  book: ResourceBook;
+}
+
+/** Steps alternate: the first thumbnail on the left, the next on the right, and so on. */
+export const stepSide = (index: number): JourneySide => (index % 2 === 0 ? 'left' : 'right');
+
+/** A subject's chapters in reading order (Part I, then Part II), minus legacy books and, for students, hidden chapters. */
+export function journeySteps(subject: ResourceSubject, viewer: ResourceViewer): JourneyStep[] {
+  const steps: JourneyStep[] = [];
+  for (const book of visibleBooks(subject)) {
+    for (const chapter of visibleChapters(book, viewer)) {
+      steps.push({ index: steps.length, side: stepSide(steps.length), chapter, book });
+    }
+  }
+  return steps;
+}
+
+/**
+ * The one bright step: the chapter the student last opened in this subject, else the first chapter
+ * with a video, else the first chapter. -1 when there are no steps.
+ */
+export function currentStepIndex(steps: JourneyStep[], lastOpenedChapterId: string | null): number {
+  if (steps.length === 0) return -1;
+  if (lastOpenedChapterId) {
+    const opened = steps.findIndex((step) => step.chapter.chapterId === lastOpenedChapterId);
+    if (opened >= 0) return opened;
+  }
+  const withVideo = steps.findIndex((step) => chapterHasVideo(step.chapter));
+  return withVideo >= 0 ? withVideo : 0;
+}
+
+export type StepTone = 'current' | 'done' | 'upcoming' | 'hidden';
+
+/** Steps before the current one read normally, steps after it a little dimmer, hidden ones dimmer still. */
+export function stepTone(step: Pick<JourneyStep, 'index' | 'chapter'>, currentIndex: number): StepTone {
+  if (step.chapter.hidden) return 'hidden';
+  if (step.index === currentIndex) return 'current';
+  return step.index < currentIndex ? 'done' : 'upcoming';
+}
+
+export const isDimmed = (tone: StepTone) => tone === 'upcoming' || tone === 'hidden';
+
+/** Whole minutes for the eyebrow; a 30-second clip still says 1 min. */
+export function durationMinutes(seconds: number | null | undefined): number | null {
+  if (seconds == null || !Number.isFinite(seconds) || seconds <= 0) return null;
+  return Math.max(1, Math.round(seconds / 60));
+}
+
+/** "Chapter 3 • 12 min", else the topic count, else "Textbook" - what the step says above its title. */
+export function eyebrowText(chapter: ResourceChapter, t: TFunction): string {
+  const minutes = durationMinutes(chapter.video?.durationSec);
+  const detail =
+    minutes !== null
+      ? t('resources.minutes', { count: minutes })
+      : chapter.topics.length > 0
+        ? t('resources.topicCount', { count: chapter.topics.length })
+        : t('resources.textbook');
+  return `${t('resources.chapterLabel', { n: chapter.number })} \u2022 ${detail}`;
+}
+
+export const lastOpenedKey = (schoolId: string, sectionId: string, subjectId: string) =>
+  `resources:last:${schoolId}:${sectionId}:${subjectId}`;
+
+/** The FontAwesome5 glyph on a placeholder thumbnail, by the catalogue's subject key. */
+export function subjectIcon(curriculumSubjectKey: string | null): string {
+  switch (curriculumSubjectKey) {
+    case 'mathematics':
+      return 'calculator';
+    case 'physics':
+      return 'atom';
+    case 'science':
+    case 'chemistry':
+    case 'biology':
+    case 'biotechnology':
+      return 'flask';
+    case 'social-science':
+    case 'history':
+    case 'geography':
+    case 'political-science':
+      return 'globe';
+    case 'english':
+    case 'hindi':
+    case 'sanskrit':
+      return 'book';
+    case 'computer-science':
+    case 'informatics-practices':
+      return 'laptop';
+    case 'accountancy':
+    case 'business-studies':
+    case 'economics':
+      return 'chart-line';
+    case 'environmental-studies':
+    case 'the-world-around-us':
+      return 'leaf';
+    default:
+      return 'book-open';
+  }
+}
+
+/**
+ * The dashed S-curve between two steps: from under one thumbnail (its side) to the top of the next
+ * on the other side, as an SVG path over a `width` x `height` box.
+ */
+export function connectorPath(width: number, height: number, fromSide: JourneySide, thumb: number): string {
+  const left = thumb / 2;
+  const right = width - thumb / 2;
+  const x0 = fromSide === 'left' ? left : right;
+  const x1 = fromSide === 'left' ? right : left;
+  const mid = height / 2;
+  return `M ${x0} 0 C ${x0} ${mid}, ${x1} ${mid}, ${x1} ${height}`;
 }

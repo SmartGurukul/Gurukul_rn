@@ -3709,9 +3709,7 @@
     "unmappedHint": "एडमिन के इस विषय को NCERT विषय से जोड़ते ही अध्याय, विषय-बिंदु और वीडियो दिखेंगे।",
     "linkSubject": "NCERT विषय जोड़ें",
     "teacher": "शिक्षक: {{name}}",
-    "summary": "{{chapters}} अध्याय, {{videos}} में वीडियो",
     "topicCount": "{{count}} विषय-बिंदु",
-    "videoBadge": "वीडियो",
     "hiddenBadge": "छिपा हुआ",
     "watch": "देखें",
     "textbook": "पाठ्यपुस्तक",
@@ -3719,7 +3717,13 @@
     "show": "दिखाएँ",
     "noTopics": "इस अध्याय की विषय-सूची अभी नहीं है।",
     "hideFailed": "यह अध्याय बदला नहीं जा सका। फिर कोशिश करें।",
-    "openFailed": "इस फ़ोन पर पाठ्यपुस्तक नहीं खुल सकी।"
+    "openFailed": "इस फ़ोन पर पाठ्यपुस्तक नहीं खुल सकी।",
+    "startLearning": "सीखना शुरू करें",
+    "continue": "जारी रखें",
+    "chapterLabel": "अध्याय {{n}}",
+    "minutes": "{{count}} मिनट",
+    "sourceNcert": "स्रोत: NCERT",
+    "topics": "विषय-बिंदु"
   },
   "videoPlayer": {
     "title": "वीडियो",
