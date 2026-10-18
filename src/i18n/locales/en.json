@@ -218,6 +218,10 @@
         "title": "Classes",
         "description": "Sections, subjects, assessments, and attendance"
       },
+      "resources": {
+        "title": "Resources",
+        "description": "Chapter videos and notes for your class"
+      },
       "myClassSection": {
         "title": "My Class Section",
         "description": "Attendance and assessments for your homeroom class"
