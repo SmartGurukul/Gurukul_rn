@@ -267,8 +267,6 @@ export type PrincipalStackParamList = {
   Chapter: { classSection: ClassSection; subject: ResourceSubject; book: ResourceBook; chapter: ResourceChapter };
   /** Admin: link each school subject to its NCERT subject. */
   CurriculumMapping: undefined;
-  /** Plays one published chapter or topic video. */
-  VideoPlayer: { url: string; title: string; posterUrl?: string | null };
   /** Opens a web document (an NCERT chapter PDF) in-app; iOS renders PDFs, Android opens them outside. */
   WebDocument: { url: string; title: string };
 };

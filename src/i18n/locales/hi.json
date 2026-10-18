@@ -3711,7 +3711,6 @@
     "teacher": "शिक्षक: {{name}}",
     "topicCount": "{{count}} विषय-बिंदु",
     "hiddenBadge": "छिपा हुआ",
-    "watch": "देखें",
     "textbook": "पाठ्यपुस्तक",
     "hide": "छिपाएँ",
     "show": "दिखाएँ",
@@ -3723,11 +3722,14 @@
     "chapterLabel": "अध्याय {{n}}",
     "minutes": "{{count}} मिनट",
     "sourceNcert": "स्रोत: NCERT",
-    "topics": "विषय-बिंदु"
-  },
-  "videoPlayer": {
-    "title": "वीडियो",
-    "hint": "चलाने, रोकने और फ़ुलस्क्रीन के लिए वीडियो पर टैप करें।"
+    "topics": "विषय-बिंदु",
+    "overview": "अध्याय परिचय",
+    "nowPlaying": "अभी चल रहा है: {{title}}",
+    "noVideoYet": "वीडियो अभी नहीं",
+    "noVideoTopic": "इस विषय-बिंदु का वीडियो अभी नहीं है",
+    "openTextbook": "पाठ्यपुस्तक खोलें",
+    "noVideos": "वीडियो अभी नहीं हैं",
+    "nextUp": "अगला: {{title}}"
   },
   "webDocument": {
     "loading": "लोड हो रहा है…",
