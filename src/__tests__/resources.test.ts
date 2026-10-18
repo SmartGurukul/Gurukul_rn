@@ -2,7 +2,14 @@ import type { ResourceBook, ResourceChapter, ResourceSubject, SectionResources }
 import { tEn, tHi } from '../testUtils/i18nFixture';
 import {
   chapterHasVideo,
+  chapterTimeline,
+  chapterTopicsEyebrow,
   connectorPath,
+  initialTimelineIndex,
+  lastTopicKey,
+  nextPlayableIndex,
+  nodeLabel,
+  nodeMarker,
   currentStepIndex,
   durationMinutes,
   eyebrowText,
@@ -229,5 +236,62 @@ describe('journey steps', () => {
   it('draws the connector from under one thumbnail to the top of the next on the other side', () => {
     expect(connectorPath(300, 80, 'left', 100)).toBe('M 50 0 C 50 40, 250 40, 250 80');
     expect(connectorPath(300, 80, 'right', 100)).toBe('M 250 0 C 250 40, 50 40, 50 80');
+  });
+});
+
+describe('chapter timeline', () => {
+  const t1 = { topicId: 'leph1-c01-t01', number: '1.1', title: 'Introduction', video: null };
+  const t2 = { topicId: 'leph1-c01-t02', number: '1.2', title: 'Electric Charge', video: { ...video, mediaId: 'm2' } };
+  const t3 = { topicId: 'leph1-c01-t03', number: '1.3', title: 'Conductors and Insulators', video: { ...video, mediaId: 'm3' } };
+  const withOverview = chapter({ video, topics: [t1, t2, t3] });
+  const topicsOnly = chapter({ topics: [t1, t2, t3] });
+
+  it('starts with the overview only when the chapter itself has a video, then every topic in order', () => {
+    expect(chapterTimeline(withOverview, 'Chapter overview').map((n) => [n.key, n.kind, n.number])).toEqual([
+      ['overview', 'overview', null],
+      ['leph1-c01-t01', 'topic', '1.1'],
+      ['leph1-c01-t02', 'topic', '1.2'],
+      ['leph1-c01-t03', 'topic', '1.3'],
+    ]);
+    expect(chapterTimeline(topicsOnly, 'Chapter overview').map((n) => n.key)).toEqual(['leph1-c01-t01', 'leph1-c01-t02', 'leph1-c01-t03']);
+    expect(chapterTimeline(chapter({}), 'Chapter overview')).toEqual([]);
+  });
+
+  it('opens on the remembered node when it still has a video, else the first playable one', () => {
+    const nodes = chapterTimeline(withOverview, 'Chapter overview');
+    expect(initialTimelineIndex(nodes, 'leph1-c01-t03')).toBe(3);
+    expect(initialTimelineIndex(nodes, 'leph1-c01-t01')).toBe(0);
+    expect(initialTimelineIndex(nodes, null)).toBe(0);
+    expect(initialTimelineIndex(chapterTimeline(topicsOnly, 'x'), null)).toBe(1);
+    expect(initialTimelineIndex(chapterTimeline(chapter({ topics: [t1] }), 'x'), 'leph1-c01-t01')).toBe(-1);
+  });
+
+  it('advances to the next node that has a video and stops at the end', () => {
+    const nodes = chapterTimeline(withOverview, 'Chapter overview');
+    expect(nextPlayableIndex(nodes, 0)).toBe(2);
+    expect(nextPlayableIndex(nodes, 2)).toBe(3);
+    expect(nextPlayableIndex(nodes, 3)).toBe(-1);
+    expect(nextPlayableIndex([], 0)).toBe(-1);
+  });
+
+  it('marks the playing node filled, playable nodes outlined, the rest hollow', () => {
+    expect(nodeMarker({ video }, true)).toBe('playing');
+    expect(nodeMarker({ video }, false)).toBe('available');
+    expect(nodeMarker({ video: null }, true)).toBe('none');
+  });
+
+  it('labels a node with its number when it has one', () => {
+    expect(nodeLabel({ number: '1.2', title: 'Electric Charge' })).toBe('1.2 Electric Charge');
+    expect(nodeLabel({ number: null, title: 'Chapter overview' })).toBe('Chapter overview');
+  });
+
+  it('writes the chapter eyebrow from the topic count', () => {
+    expect(chapterTopicsEyebrow({ number: 1, topics: withOverview.topics }, tEn)).toBe('Chapter 1 \u2022 3 topics');
+    expect(chapterTopicsEyebrow({ number: 2, topics: [] }, tEn)).toBe('Chapter 2 \u2022 Textbook');
+    expect(chapterTopicsEyebrow({ number: 1, topics: withOverview.topics }, tHi)).toContain('3 ');
+  });
+
+  it('keys the remembered node per school, section and chapter', () => {
+    expect(lastTopicKey('school-1', 'sec-9', 'leph1-c01')).toBe('resources:lastTopic:school-1:sec-9:leph1-c01');
   });
 });

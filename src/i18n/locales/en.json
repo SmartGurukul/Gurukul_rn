@@ -3711,7 +3711,6 @@
     "teacher": "Teacher: {{name}}",
     "topicCount": "{{count}} topics",
     "hiddenBadge": "Hidden",
-    "watch": "Watch",
     "textbook": "Textbook",
     "hide": "Hide",
     "show": "Show",
@@ -3723,11 +3722,14 @@
     "chapterLabel": "Chapter {{n}}",
     "minutes": "{{count}} min",
     "sourceNcert": "Source: NCERT",
-    "topics": "Topics"
-  },
-  "videoPlayer": {
-    "title": "Video",
-    "hint": "Tap the video for play, pause and fullscreen."
+    "topics": "Topics",
+    "overview": "Chapter overview",
+    "nowPlaying": "Now playing: {{title}}",
+    "noVideoYet": "No video yet",
+    "noVideoTopic": "No video for this topic yet",
+    "openTextbook": "Open textbook",
+    "noVideos": "No videos yet",
+    "nextUp": "Next: {{title}}"
   },
   "webDocument": {
     "loading": "Loading…",

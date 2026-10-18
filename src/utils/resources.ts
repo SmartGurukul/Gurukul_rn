@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 
-import type { LoginResponse, ResourceBook, ResourceChapter, ResourceSubject, ResourceTopic } from '../api/types';
+import type { LoginResponse, ResourceBook, ResourceChapter, ResourceSubject, ResourceTopic, ResourceVideo } from '../api/types';
 
 export type ResourceViewer = 'student' | 'teacher' | 'admin';
 
@@ -213,3 +213,62 @@ export function connectorPath(width: number, height: number, fromSide: JourneySi
   const mid = height / 2;
   return `M ${x0} 0 C ${x0} ${mid}, ${x1} ${mid}, ${x1} ${height}`;
 }
+
+// ---------------------------------------------------------------------------------------------
+// The chapter timeline: one node per video-able thing, played inline in order.
+// ---------------------------------------------------------------------------------------------
+
+export interface TimelineNode {
+  /** 'overview' for the chapter-level video, else the topic id. Stable, so it can be remembered. */
+  key: string;
+  kind: 'overview' | 'topic';
+  number: string | null;
+  title: string;
+  video: ResourceVideo | null;
+}
+
+/** Step 0 is the chapter overview, only when a chapter-level video exists; then every topic in order. */
+export function chapterTimeline(chapter: ResourceChapter, overviewTitle: string): TimelineNode[] {
+  const nodes: TimelineNode[] = [];
+  if (chapter.video) nodes.push({ key: 'overview', kind: 'overview', number: null, title: overviewTitle, video: chapter.video });
+  for (const topic of chapter.topics) {
+    nodes.push({ key: topic.topicId, kind: 'topic', number: topic.number, title: topic.title, video: topic.video });
+  }
+  return nodes;
+}
+
+/** The node to start on: the remembered one if it still has a video, else the first with a video, else none (-1). */
+export function initialTimelineIndex(nodes: TimelineNode[], lastKey: string | null): number {
+  if (lastKey) {
+    const remembered = nodes.findIndex((node) => node.key === lastKey && node.video !== null);
+    if (remembered >= 0) return remembered;
+  }
+  return nodes.findIndex((node) => node.video !== null);
+}
+
+/** After `from` plays to the end: the next node with a video, or -1 when nothing remains. */
+export function nextPlayableIndex(nodes: TimelineNode[], from: number): number {
+  for (let i = from + 1; i < nodes.length; i += 1) if (nodes[i].video) return i;
+  return -1;
+}
+
+export type NodeMarker = 'playing' | 'available' | 'none';
+
+/** How the rail marks a node: filled when it is the one playing, outlined when it has a video, hollow grey otherwise. */
+export function nodeMarker(node: Pick<TimelineNode, 'video'>, selected: boolean): NodeMarker {
+  if (!node.video) return 'none';
+  return selected ? 'playing' : 'available';
+}
+
+export function nodeLabel(node: Pick<TimelineNode, 'number' | 'title'>): string {
+  return node.number ? `${node.number} ${node.title}` : node.title;
+}
+
+/** "Chapter 1 • 14 topics" above the title on the chapter page; "Textbook" when the chapter lists no topics. */
+export function chapterTopicsEyebrow(chapter: Pick<ResourceChapter, 'number' | 'topics'>, t: TFunction): string {
+  const detail = chapter.topics.length > 0 ? t('resources.topicCount', { count: chapter.topics.length }) : t('resources.textbook');
+  return `${t('resources.chapterLabel', { n: chapter.number })} \u2022 ${detail}`;
+}
+
+export const lastTopicKey = (schoolId: string, sectionId: string, chapterId: string) =>
+  `resources:lastTopic:${schoolId}:${sectionId}:${chapterId}`;
