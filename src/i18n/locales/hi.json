@@ -3733,7 +3733,9 @@
     "noVideoTopic": "इस विषय-बिंदु का वीडियो अभी नहीं है",
     "openTextbook": "पाठ्यपुस्तक खोलें",
     "noVideos": "वीडियो अभी नहीं हैं",
-    "nextUp": "अगला: {{title}}"
+    "nextUp": "अगला: {{title}}",
+    "play": "चलाएँ",
+    "nowPlayingShort": "चल रहा है"
   },
   "webDocument": {
     "loading": "लोड हो रहा है…",

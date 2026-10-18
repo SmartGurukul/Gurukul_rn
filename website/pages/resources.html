@@ -1,0 +1,423 @@
+<!--meta {
+  "path": "resources.html",
+  "crumb": "Video lessons",
+  "title": "NCERT video lessons | Smart Gurukul",
+  "og_title": "Smart Gurukul: free NCERT video lessons for CBSE Class 12",
+  "description": "Browse Smart Gurukul's free, NCERT-aligned video lessons for CBSE Class 12. Pick a class and subject, then play every chapter and topic along a timeline.",
+  "software": true,
+  "priority": "0.6"
+} -->
+<section class="page-hero">
+  <div class="wrap">
+    <p class="eyebrow">Video lessons</p>
+    <h1>NCERT lessons, one timeline at a time</h1>
+    <p class="lead">Short, animated video lessons for every chapter of the CBSE &amp; NCERT syllabus. The same lessons students watch inside the Smart Gurukul app, free to browse here. Pick a class and a subject, then play any chapter or topic along the timeline.</p>
+    <div class="hero-actions" style="margin-top:24px">
+      <a class="btn btn-primary" href="#lessons">Browse the lessons</a>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="pick-title">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Choose what to watch</p>
+      <h2 id="pick-title">Class and subject</h2>
+    </div>
+    <div class="res-controls" role="group" aria-label="Choose class and subject">
+      <label class="res-field">
+        <span>Class</span>
+        <select id="classSel" aria-label="Class"></select>
+      </label>
+      <label class="res-field">
+        <span>Subject</span>
+        <select id="subjSel" aria-label="Subject"></select>
+      </label>
+      <p class="res-count" id="resCount" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<section id="lessons" aria-labelledby="pick-title">
+  <div class="wrap">
+    <div id="resStatus" class="res-status">Loading lessons&hellip;</div>
+    <div id="resBody"></div>
+  </div>
+</section>
+
+<div id="player" class="res-player" hidden role="dialog" aria-modal="true" aria-labelledby="pvTitle">
+  <div class="res-player-box">
+    <button type="button" class="res-close" id="pvClose" aria-label="Close player">&times;</button>
+    <div class="res-video-wrap">
+      <video id="pv" controls playsinline preload="metadata"></video>
+    </div>
+    <h3 id="pvTitle" class="res-pv-title"></h3>
+    <div id="pvParts" class="res-parts" hidden>
+      <p class="res-parts-label">In this chapter</p>
+      <div id="pvPartsRow" class="res-parts-row"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .res-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px; }
+  .res-field { display:flex; flex-direction:column; gap:6px; font-weight:600; color:var(--sg-ink-600); }
+  .res-field span { font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; }
+  .res-field select {
+    font:inherit; font-weight:600; color:var(--sg-ink-900);
+    padding:11px 40px 11px 14px; min-width:220px;
+    border:1.5px solid var(--sg-line); border-radius:var(--sg-radius-button);
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237C3AED' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+    -webkit-appearance:none; appearance:none; cursor:pointer;
+  }
+  .res-field select:focus-visible { outline:3px solid var(--sg-violet-100); border-color:var(--sg-violet-600); }
+  .res-count { margin:0 0 2px; color:var(--sg-ink-400); font-weight:600; font-size:.9rem; }
+
+  .res-status { color:var(--sg-ink-400); font-weight:600; padding:12px 0; }
+  .res-status.err { color:var(--sg-danger); }
+
+  .subj-block { margin-top:28px; }
+  .subj-block h2.subj-name { font-size:1.35rem; margin:0 0 2px; }
+  .subj-block .subj-sub { margin:0 0 6px; color:var(--sg-ink-400); font-weight:600; font-size:.9rem; }
+
+  /* Horizontal timeline */
+  .rail { overflow-x:auto; overflow-y:hidden; padding:6px 0 12px; -webkit-overflow-scrolling:touch; }
+  .track { position:relative; display:flex; gap:22px; width:max-content; padding:0 8px; }
+  .track::before {
+    content:""; position:absolute; left:16px; right:16px; top:50%;
+    border-top:2px dashed var(--sg-violet-100); z-index:0;
+  }
+  .node {
+    position:relative; z-index:1; flex:0 0 auto;
+    width:150px; height:238px; display:block; text-align:center;
+    background:none; border:0; padding:0; cursor:pointer; font:inherit; color:inherit;
+  }
+  .thumb {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:92px; height:92px; border-radius:50%;
+    background-color:var(--sg-violet-50); background-size:cover; background-position:center;
+    border:3px solid #fff; box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .node:hover .thumb { transform:translate(-50%,-50%) scale(1.05); }
+  .node:focus-visible { outline:none; }
+  .node:focus-visible .thumb { outline:3px solid var(--sg-violet-600); outline-offset:3px; }
+  .thumb .play {
+    width:30px; height:30px; border-radius:50%; background:rgba(30,22,51,.55);
+    display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .thumb.has-img .play { background:rgba(30,22,51,.42); }
+  .thumb .num {
+    position:absolute; top:-6px; right:-6px; min-width:24px; height:24px; padding:0 6px;
+    border-radius:12px; background:var(--sg-violet-600); color:#fff;
+    font-size:.8rem; font-weight:700; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 6px rgba(124,58,237,.4);
+  }
+  .thumb .parts-badge {
+    position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); white-space:nowrap;
+    padding:2px 8px; border-radius:10px; background:var(--sg-marigold-500); color:#3b2600;
+    font-size:.68rem; font-weight:800; letter-spacing:.02em;
+  }
+  .node .txt { position:absolute; left:4px; right:4px; }
+  .node:nth-child(odd) .txt { bottom:6px; }
+  .node:nth-child(even) .txt { top:6px; }
+  .node .t-title {
+    font-weight:700; font-size:.9rem; line-height:1.25; color:var(--sg-ink-900);
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .node .t-dur { margin-top:3px; font-size:.78rem; font-weight:600; color:var(--sg-ink-400); }
+
+  /* Lightbox player */
+  .res-player { position:fixed; inset:0; z-index:1000; background:rgba(20,14,38,.72);
+    display:flex; align-items:center; justify-content:center; padding:20px; }
+  .res-player[hidden] { display:none; }
+  .res-player-box {
+    background:#fff; border-radius:var(--sg-radius-card); box-shadow:var(--shadow);
+    width:min(880px,100%); max-height:92vh; overflow:auto; padding:16px; position:relative;
+  }
+  .res-close {
+    position:absolute; top:10px; right:12px; z-index:2; width:40px; height:40px; border-radius:50%;
+    border:0; background:rgba(30,22,51,.06); color:var(--sg-ink-900); font-size:1.7rem; line-height:1;
+    cursor:pointer;
+  }
+  .res-close:hover { background:rgba(30,22,51,.12); }
+  .res-video-wrap { position:relative; aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; }
+  .res-video-wrap video { position:absolute; inset:0; width:100%; height:100%; }
+  .res-pv-title { margin:14px 4px 0; font-size:1.2rem; }
+  .res-parts { margin-top:12px; }
+  .res-parts-label { margin:0 4px 8px; font-size:.82rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--sg-ink-400); }
+  .res-parts-row { display:flex; flex-wrap:wrap; gap:8px; }
+  .res-chip {
+    font:inherit; font-weight:600; font-size:.88rem; cursor:pointer;
+    padding:8px 14px; border-radius:999px; border:1.5px solid var(--sg-line);
+    background:#fff; color:var(--sg-ink-900);
+  }
+  .res-chip:hover { border-color:var(--sg-violet-600); }
+  .res-chip[aria-pressed="true"] { background:var(--sg-violet-600); border-color:var(--sg-violet-600); color:#fff; }
+
+  @media (max-width:560px) {
+    .res-field select { min-width:0; width:100%; }
+    .res-field { width:100%; }
+  }
+</style>
+
+<script>
+(function () {
+  "use strict";
+  var BASE = "https://smartgurukul-curriculum-media-485157611101.s3.ap-southeast-2.amazonaws.com";
+  var INDEX = BASE + "/cbse/index.json";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var classSel = $("classSel"), subjSel = $("subjSel"), status = $("resStatus"),
+      body = $("resBody"), count = $("resCount");
+  var player = $("player"), pv = $("pv"), pvTitle = $("pvTitle"),
+      pvParts = $("pvParts"), pvPartsRow = $("pvPartsRow"), pvClose = $("pvClose");
+
+  var model = {};   // { classNum: { subject: [ {num, title, chapterId, video, poster, topics:[...]} ] } }
+  var io = null;    // IntersectionObserver for lazy poster backgrounds
+
+  function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+  function url(key) { return BASE + "/" + key; }
+
+  function titleCase(s) {
+    return s.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+  // Subject label from the storage key (cbse/class-12/<subject-slug>/...), so items whose
+  // catalogue subject is missing still group under the right, nicely-cased subject name.
+  function subjectOf(it) {
+    var parts = (it.key || "").split("/");
+    var slug = parts[2] || "";
+    var fromKey = slug ? titleCase(slug.replace(/-/g, " ")) : "";
+    return it.subject || fromKey || "Other";
+  }
+  function classOf(it) {
+    if (typeof it["class"] === "number") return it["class"];
+    var m = (it.key || "").match(/class-(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+  function chapNum(chapterId) {
+    var m = (chapterId || "").match(/-c0*(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+  function fmtDur(sec) {
+    if (!sec && sec !== 0) return "";
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function buildModel(items) {
+    var m = {};
+    items.forEach(function (it) {
+      var cls = classOf(it);
+      if (!cls) return;
+      var sub = subjectOf(it);
+      m[cls] = m[cls] || {};
+      m[cls][sub] = m[cls][sub] || {};
+      var chId = it.chapterId || it.id;
+      var ch = m[cls][sub][chId] || (m[cls][sub][chId] = { chapterId: chId, chapter: null, topics: [] });
+      if (it.kind === "topic") ch.topics.push(it);
+      else ch.chapter = it;
+    });
+    // Flatten each subject's chapters into an ordered list with running serial numbers.
+    var out = {};
+    Object.keys(m).forEach(function (cls) {
+      out[cls] = {};
+      Object.keys(m[cls]).forEach(function (sub) {
+        var chapters = Object.keys(m[cls][sub]).map(function (k) { return m[cls][sub][k]; });
+        chapters.sort(function (a, b) { return a.chapterId < b.chapterId ? -1 : a.chapterId > b.chapterId ? 1 : 0; });
+        var list = [];
+        chapters.forEach(function (ch, i) {
+          var head = ch.chapter;
+          if (!head) return; // a chapter needs its overview video to be playable
+          ch.topics.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+          list.push({
+            num: i + 1,
+            chapterId: ch.chapterId,
+            title: head.title || ("Chapter " + (i + 1)),
+            video: url(head.key),
+            poster: head.posterKey ? url(head.posterKey) : "",
+            dur: head.durationSec,
+            topics: ch.topics.map(function (t, ti) {
+              return {
+                title: t.title || ("Part " + (ti + 1)),
+                video: url(t.key),
+                poster: t.posterKey ? url(t.posterKey) : "",
+                dur: t.durationSec
+              };
+            })
+          });
+        });
+        if (list.length) out[cls][sub] = list;
+      });
+    });
+    return out;
+  }
+
+  var PLAY_SVG = '<svg class="pi" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+
+  function nodeHTML(item) {
+    var parts = item.topics.length
+      ? '<span class="parts-badge">' + item.topics.length + ' parts</span>' : "";
+    var durHTML = item.dur ? '<div class="t-dur">' + esc(fmtDur(item.dur)) + '</div>' : "";
+    return '<button type="button" class="node" data-ch="' + esc(item.chapterId) + '">' +
+      '<span class="thumb' + (item.poster ? '" data-bg="' + esc(item.poster) : "") + '">' +
+        '<span class="num">' + item.num + '</span>' +
+        '<span class="play">' + PLAY_SVG + '</span>' + parts +
+      '</span>' +
+      '<span class="txt"><span class="t-title">' + esc(item.title) + '</span>' + durHTML + '</span>' +
+    '</button>';
+  }
+
+  function subjectBlock(sub, list) {
+    var chapters = list.length, topics = 0;
+    list.forEach(function (c) { topics += c.topics.length; });
+    var sub2 = chapters + " chapter" + (chapters === 1 ? "" : "s") +
+      (topics ? " · " + topics + " topic lesson" + (topics === 1 ? "" : "s") : "");
+    var nodes = list.map(nodeHTML).join("");
+    return '<div class="subj-block"><h2 class="subj-name">' + esc(sub) + '</h2>' +
+      '<p class="subj-sub">' + sub2 + '</p>' +
+      '<div class="rail"><div class="track">' + nodes + '</div></div></div>';
+  }
+
+  function lazyPosters() {
+    if (io) io.disconnect();
+    if (!("IntersectionObserver" in window)) {
+      // No IO: just load them all.
+      Array.prototype.forEach.call(document.querySelectorAll(".thumb[data-bg]"), function (el) {
+        el.style.backgroundImage = "url('" + el.getAttribute("data-bg") + "')";
+        el.classList.add("has-img"); el.removeAttribute("data-bg");
+      });
+      return;
+    }
+    io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var el = e.target, src = el.getAttribute("data-bg");
+        if (src) {
+          var img = new Image();
+          img.onload = function () { el.style.backgroundImage = "url('" + src + "')"; el.classList.add("has-img"); };
+          img.src = src;
+          el.removeAttribute("data-bg");
+        }
+        io.unobserve(el);
+      });
+    }, { rootMargin: "200px" });
+    Array.prototype.forEach.call(document.querySelectorAll(".thumb[data-bg]"), function (el) { io.observe(el); });
+  }
+
+  function render() {
+    var cls = classSel.value, sub = subjSel.value;
+    var subjects = model[cls] || {};
+    var names = Object.keys(subjects).sort();
+    var show = sub === "__all" ? names : (subjects[sub] ? [sub] : []);
+    if (!show.length) {
+      body.innerHTML = "";
+      status.hidden = false; status.className = "res-status"; status.textContent = "No lessons here yet.";
+      count.textContent = "";
+      return;
+    }
+    status.hidden = true;
+    var totalCh = 0, totalVid = 0;
+    show.forEach(function (n) {
+      subjects[n].forEach(function (c) { totalCh++; totalVid += 1 + c.topics.length; });
+    });
+    count.textContent = totalVid + " video" + (totalVid === 1 ? "" : "s") +
+      " across " + totalCh + " chapter" + (totalCh === 1 ? "" : "s");
+    body.innerHTML = show.map(function (n) { return subjectBlock(n, subjects[n]); }).join("");
+    lazyPosters();
+  }
+
+  function fillSubjects() {
+    var cls = classSel.value;
+    var names = Object.keys(model[cls] || {}).sort();
+    var opts = '<option value="__all">All subjects</option>';
+    names.forEach(function (n) { opts += '<option value="' + esc(n) + '">' + esc(n) + "</option>"; });
+    subjSel.innerHTML = opts;
+  }
+
+  // ---- player ----
+  var lastFocus = null;
+  function loadSource(src, title) {
+    pv.src = src;
+    pvTitle.textContent = title;
+    var play = pv.play();
+    if (play && play.catch) play.catch(function () {});
+  }
+  function openPlayer(item) {
+    lastFocus = document.activeElement;
+    pvParts.hidden = true; pvPartsRow.innerHTML = "";
+    if (item.topics.length) {
+      var chips = ['<button type="button" class="res-chip" aria-pressed="true" data-src="' +
+        esc(item.video) + '" data-title="' + esc(item.title) + '">Full chapter</button>'];
+      item.topics.forEach(function (t, i) {
+        chips.push('<button type="button" class="res-chip" aria-pressed="false" data-src="' +
+          esc(t.video) + '" data-title="' + esc(item.title + " — " + t.title) +
+          '">' + (i + 1) + ". " + esc(t.title) + "</button>");
+      });
+      pvPartsRow.innerHTML = chips.join("");
+      pvParts.hidden = false;
+    }
+    loadSource(item.video, item.title);
+    player.hidden = false;
+    document.body.style.overflow = "hidden";
+    pvClose.focus();
+  }
+  function closePlayer() {
+    player.hidden = true;
+    pv.pause(); pv.removeAttribute("src"); pv.load();
+    document.body.style.overflow = "";
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  function chapterFromNode(btn) {
+    var cls = classSel.value, chId = btn.getAttribute("data-ch");
+    var subjects = model[cls] || {}, found = null;
+    Object.keys(subjects).some(function (n) {
+      return subjects[n].some(function (c) { if (c.chapterId === chId) { found = c; return true; } return false; });
+    });
+    return found;
+  }
+
+  body.addEventListener("click", function (e) {
+    var btn = e.target.closest ? e.target.closest(".node") : null;
+    if (!btn) return;
+    var ch = chapterFromNode(btn);
+    if (ch) openPlayer(ch);
+  });
+  pvPartsRow.addEventListener("click", function (e) {
+    var chip = e.target.closest ? e.target.closest(".res-chip") : null;
+    if (!chip) return;
+    Array.prototype.forEach.call(pvPartsRow.children, function (c) { c.setAttribute("aria-pressed", "false"); });
+    chip.setAttribute("aria-pressed", "true");
+    loadSource(chip.getAttribute("data-src"), chip.getAttribute("data-title"));
+  });
+  pvClose.addEventListener("click", closePlayer);
+  player.addEventListener("click", function (e) { if (e.target === player) closePlayer(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !player.hidden) closePlayer(); });
+
+  classSel.addEventListener("change", function () { fillSubjects(); render(); });
+  subjSel.addEventListener("change", render);
+
+  fetch(INDEX, { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function (data) {
+      model = buildModel(data.items || []);
+      var classes = Object.keys(model).map(Number).sort(function (a, b) { return a - b; });
+      if (!classes.length) {
+        status.className = "res-status"; status.textContent = "Lessons are on their way. Check back soon.";
+        return;
+      }
+      classSel.innerHTML = classes.map(function (c) {
+        return '<option value="' + c + '">Class ' + c + "</option>";
+      }).join("");
+      classSel.value = String(classes[0]);
+      fillSubjects();
+      render();
+    })
+    .catch(function () {
+      status.className = "res-status err";
+      status.textContent = "Could not load the lessons just now. Please refresh the page to try again.";
+    });
+})();
+</script>

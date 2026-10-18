@@ -39,6 +39,7 @@ import {
   stepTone,
   subjectIcon,
   subjectSummary,
+  visibleResourceSubjects,
   withChapterHidden,
   type JourneyStep,
 } from '../../utils/resources';
@@ -85,14 +86,14 @@ export function ResourcesScreen({ route, navigation }: Props) {
       const fresh = await getSectionResources(schoolId, classSection.id);
       setData(fresh);
       setOffline(false);
-      setSelectedId((prev) => prev ?? initialExpandedSubject(fresh.subjects, viewer));
+      setSelectedId((prev) => prev ?? initialExpandedSubject(visibleResourceSubjects(fresh.subjects, viewer), viewer));
       writeCachedResources(schoolId, classSection.id, fresh);
     } catch (e) {
       const cached = await readCachedResources(schoolId, classSection.id);
       if (cached) {
         setData(cached);
         setOffline(true);
-        setSelectedId((prev) => prev ?? initialExpandedSubject(cached.subjects, viewer));
+        setSelectedId((prev) => prev ?? initialExpandedSubject(visibleResourceSubjects(cached.subjects, viewer), viewer));
       } else {
         setError(getErrorMessage(e));
       }
@@ -122,6 +123,12 @@ export function ResourcesScreen({ route, navigation }: Props) {
   const subject = useMemo(
     () => data?.subjects.find((s) => s.subjectId === selectedId) ?? null,
     [data, selectedId]
+  );
+  // Students never see a subject with nothing to study (e.g. Hindi, which has no English-medium
+  // books). Teachers and admins keep seeing every subject so they can still map it.
+  const visibleSubjects = useMemo(
+    () => (data ? visibleResourceSubjects(data.subjects, viewer) : []),
+    [data, viewer]
   );
   const steps = useMemo(() => (subject ? journeySteps(subject, viewer) : []), [subject, viewer]);
   const current = currentStepIndex(steps, subject ? (lastOpened[subject.subjectId] ?? null) : null);
@@ -293,11 +300,11 @@ export function ResourcesScreen({ route, navigation }: Props) {
 
         {loading && !data ? <ActivityIndicator style={styles.loader} color={colors.primary} /> : null}
 
-        {data && data.subjects.length === 0 ? <Text style={styles.empty}>{t('resources.empty')}</Text> : null}
+        {data && visibleSubjects.length === 0 ? <Text style={styles.empty}>{t('resources.empty')}</Text> : null}
 
-        {data && data.subjects.length > 0 ? (
+        {data && visibleSubjects.length > 0 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {data.subjects.map((s) => {
+            {visibleSubjects.map((s) => {
               const selected = s.subjectId === selectedId;
               const count = subjectSummary(s, viewer).chapters;
               return (

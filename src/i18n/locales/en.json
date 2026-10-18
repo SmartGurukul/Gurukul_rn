@@ -3733,7 +3733,9 @@
     "noVideoTopic": "No video for this topic yet",
     "openTextbook": "Open textbook",
     "noVideos": "No videos yet",
-    "nextUp": "Next: {{title}}"
+    "nextUp": "Next: {{title}}",
+    "play": "Play",
+    "nowPlayingShort": "Now playing"
   },
   "webDocument": {
     "loading": "Loading…",

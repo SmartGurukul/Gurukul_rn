@@ -103,6 +103,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://smartgurukul.org/resources.html</loc>
+    <lastmod>2026-10-19</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://smartgurukul.org/school-bus-tracking.html</loc>
     <lastmod>2026-10-14</lastmod>
     <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/school-bus-tracking.html"/>
