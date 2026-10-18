@@ -7,6 +7,7 @@ import { listTeacherAssignments } from '../../api/sectionSubjects';
 import type { TeacherSubjectAssignment } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
@@ -75,6 +76,19 @@ export function SectionDetailScreen({ route, navigation }: Props) {
       description: t('sectionDetail.subjects.description'),
       onPress: () => navigation.navigate('SectionSubjectsList', { classSection }),
     },
+    // The Resource Hub: NCERT chapters, topics and videos for this section, for every role.
+    ...(FEATURE_FLAGS.resourceHub
+      ? [
+          {
+            key: 'Resources',
+            title: t('sectionDetail.resources.title'),
+            description: isStudent
+              ? t('sectionDetail.resources.descriptionStudent')
+              : t('sectionDetail.resources.description'),
+            onPress: () => navigation.navigate('Resources', { classSection }),
+          },
+        ]
+      : []),
     {
       key: 'SectionAssessmentsList',
       title: t('sectionDetail.assessments.title'),

@@ -100,7 +100,8 @@ export type AccentKey =
   | 'reports'
   | 'transport'
   | 'schoolBus'
-  | 'holidays';
+  | 'holidays'
+  | 'resources';
 
 export const accents: Record<AccentKey, { base: string; light: string }> = {
   transport: { base: '#D97706', light: '#FEF3C7' },
@@ -151,6 +152,7 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   vendorsExpenses: { base: '#EA580C', light: '#FDEBE0' },
   academics: { base: '#CA8A04', light: '#FBF1D2' },
   reports: { base: '#334155', light: '#E2E8F0' },
+  resources: { base: '#0F766E', light: '#CCFBF1' },
 };
 
 /**

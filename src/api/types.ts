@@ -2950,3 +2950,101 @@ export interface ReversalResult {
   original: LedgerTransaction;
   reversal: LedgerTransaction;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Resource Hub: a class section's subjects with their NCERT books, chapters, topics and videos.
+// Served by GET /api/v1/class-sections/{id}/resources; see the Student Resource Hub PRD.
+// ---------------------------------------------------------------------------------------------
+
+export interface ResourceVideo {
+  mediaId: string;
+  /** Plain https link on the curriculum media bucket, playable as is. */
+  url: string;
+  language: string;
+  durationSec: number | null;
+  posterUrl: string | null;
+}
+
+export interface ResourceTopic {
+  topicId: string;
+  /** The printed section number ("1.2"), or null for books whose headings are not numbered. */
+  number: string | null;
+  title: string;
+  video: ResourceVideo | null;
+}
+
+export interface ResourceChapter {
+  chapterId: string;
+  /** The school's own row for this chapter (the hide flag lives there); null until pre-filled. */
+  syllabusChapterId: string | null;
+  number: number;
+  title: string;
+  /** Group label inside readers, e.g. "Prose" / "Poetry". */
+  section: string | null;
+  /** Hidden by the school. Students never receive hidden chapters; staff see them flagged. */
+  hidden: boolean;
+  pdfUrl: string | null;
+  questionCount: number;
+  /** A whole-chapter video, when one is published. */
+  video: ResourceVideo | null;
+  topics: ResourceTopic[];
+}
+
+export type CurriculumEdition = 'ncf2023' | 'current' | 'legacy';
+
+export interface ResourceBook {
+  bookCode: string;
+  bookTitle: string;
+  edition: CurriculumEdition;
+  chapters: ResourceChapter[];
+}
+
+export interface ResourceSubject {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  teacherName: string | null;
+  /** Null until an admin links this school subject to an NCERT subject; books are then empty. */
+  curriculumSubjectKey: string | null;
+  curriculumSubjectName: string | null;
+  books: ResourceBook[];
+}
+
+export interface SectionResources {
+  classSectionId: string;
+  className: string;
+  section: string;
+  grade: number | null;
+  generatedAt: string;
+  subjects: ResourceSubject[];
+}
+
+export interface CurriculumSubjectRef {
+  key: string;
+  nameEn: string;
+}
+
+export interface CurriculumSuggestion extends CurriculumSubjectRef {
+  nameHi: string | null;
+  /** 0 to 1, best first. */
+  score: number;
+}
+
+export interface CurriculumSuggestions {
+  current: CurriculumSubjectRef | null;
+  suggestions: CurriculumSuggestion[];
+  allSubjects: CurriculumSubjectRef[];
+}
+
+export interface SubjectCurriculumResult {
+  subjectId: string;
+  curriculumSubjectKey: string | null;
+  chaptersPrefilled: number;
+}
+
+export interface SyllabusChapterHidden {
+  id: string;
+  chapterNumber: number;
+  title: string;
+  hidden: boolean;
+}

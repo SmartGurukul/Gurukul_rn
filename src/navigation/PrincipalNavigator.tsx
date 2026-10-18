@@ -110,6 +110,10 @@ import { SectionAssessmentsListScreen } from '../screens/principal/SectionAssess
 import { SectionDetailScreen } from '../screens/principal/SectionDetailScreen';
 import { SectionStudentsListScreen } from '../screens/principal/SectionStudentsListScreen';
 import { SectionSubjectsListScreen } from '../screens/principal/SectionSubjectsListScreen';
+import { ResourcesScreen } from '../screens/principal/ResourcesScreen';
+import { CurriculumMappingScreen } from '../screens/principal/CurriculumMappingScreen';
+import { VideoPlayerScreen } from '../screens/principal/VideoPlayerScreen';
+import { WebDocumentScreen } from '../screens/principal/WebDocumentScreen';
 import { SectionsListScreen } from '../screens/principal/SectionsListScreen';
 import { StudentDetailScreen } from '../screens/principal/StudentDetailScreen';
 import { StudentFormScreen } from '../screens/principal/StudentFormScreen';
@@ -190,6 +194,10 @@ export function PrincipalNavigator() {
         <Stack.Screen name="SectionDetail" component={SectionDetailScreen} />
         <Stack.Screen name="SectionStudentsList" component={SectionStudentsListScreen} />
         <Stack.Screen name="SectionSubjectsList" component={SectionSubjectsListScreen} />
+        <Stack.Screen name="Resources" component={ResourcesScreen} />
+        <Stack.Screen name="CurriculumMapping" component={CurriculumMappingScreen} />
+        <Stack.Screen name="VideoPlayer" component={VideoPlayerScreen} />
+        <Stack.Screen name="WebDocument" component={WebDocumentScreen} />
         <Stack.Screen name="SectionAssessmentsList" component={SectionAssessmentsListScreen} />
         <Stack.Screen name="AssessmentForm" component={AssessmentFormScreen} />
         <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
