@@ -9,6 +9,9 @@ import type {
   FeeStructure,
   GeneratedQuizQuestion,
   LedgerTransaction,
+  ResourceBook,
+  ResourceChapter,
+  ResourceSubject,
   SalaryStructure,
   Student,
 } from '../api/types';
@@ -260,6 +263,8 @@ export type PrincipalStackParamList = {
   Rooms: undefined;
   /** Resource Hub: a section's subjects, NCERT chapters, topics and videos (inside My Class). */
   Resources: { classSection: ClassSection };
+  /** One chapter of the journey: video, textbook and topics. Data comes by params; no refetch. */
+  Chapter: { classSection: ClassSection; subject: ResourceSubject; book: ResourceBook; chapter: ResourceChapter };
   /** Admin: link each school subject to its NCERT subject. */
   CurriculumMapping: undefined;
   /** Plays one published chapter or topic video. */
