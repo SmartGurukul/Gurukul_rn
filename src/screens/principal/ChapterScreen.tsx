@@ -2,8 +2,8 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Line as SvgLine } from 'react-native-svg';
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 
 import { getErrorMessage } from '../../api/errorMessage';
@@ -20,6 +20,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import {
   chapterTimeline,
   chapterTopicsEyebrow,
+  connectorPath,
   formatDuration,
   initialTimelineIndex,
   nextPlayableIndex,
@@ -35,7 +36,8 @@ import {
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Chapter'>;
 
 const accent = accents.resources;
-const NODE = 40;
+const THUMB = 92;
+const CONNECTOR_H = 72;
 
 /**
  * One chapter as a timeline: the player sits at the top and plays whichever node is selected (the
@@ -158,7 +160,8 @@ export function ChapterScreen({ route, navigation }: Props) {
     setExpandedKey((prev) => (prev === node.key ? null : node.key));
   };
 
-  const [timelineH, setTimelineH] = useState(0);
+  const { width } = useWindowDimensions();
+  const contentWidth = width - spacing.lg * 2;
   const nowPlaying = selected >= 0 ? nodes[selected] : null;
 
   return (
@@ -214,70 +217,85 @@ export function ChapterScreen({ route, navigation }: Props) {
         {nodes.length === 0 ? (
           <Text style={styles.noTopics}>{t('resources.noTopics')}</Text>
         ) : (
-          <View style={styles.timeline} onLayout={(e) => setTimelineH(e.nativeEvent.layout.height)}>
-            {timelineH > 0 ? (
-              <Svg width={NODE} height={timelineH} style={styles.spine} pointerEvents="none">
-                <SvgLine
-                  x1={NODE / 2}
-                  y1={NODE / 2}
-                  x2={NODE / 2}
-                  y2={timelineH - NODE / 2}
-                  stroke={colors.border}
-                  strokeWidth={2}
-                  strokeDasharray="5 6"
-                  strokeLinecap="round"
-                />
-              </Svg>
-            ) : null}
+          <View style={styles.timeline}>
             {nodes.map((node, index) => {
               const marker = nodeMarker(node, index === selected);
+              const playing = marker === 'playing';
               const duration = formatDuration(node.video?.durationSec);
               const expanded = expandedKey === node.key;
-              const playing = marker === 'playing';
+              const poster = node.video?.posterUrl ?? null;
+              const side = index % 2 === 0 ? 'left' : 'right';
+              const thumb = (
+                <View style={[styles.thumb, playing && styles.thumbPlaying, marker === 'available' && styles.thumbAvailable, marker === 'none' && styles.thumbNone]}>
+                  {poster ? (
+                    <Image source={{ uri: poster }} style={styles.thumbImg} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.thumbPh}>
+                      {node.kind === 'overview' ? (
+                        <FontAwesome5 name="layer-group" size={22} color={accent.base} />
+                      ) : (
+                        <Text style={styles.thumbNum}>{node.number ?? ''}</Text>
+                      )}
+                    </View>
+                  )}
+                  {node.video ? (
+                    <View style={styles.playBadge}>
+                      <FontAwesome5 name="play" size={10} color={colors.white} />
+                    </View>
+                  ) : null}
+                </View>
+              );
+              const textBlock = (
+                <View style={[styles.textBlock, side === 'right' && styles.textRight]}>
+                  {node.number ? <Text style={styles.stepNum}>{node.number}</Text> : null}
+                  <Text
+                    style={[styles.stepTitle, playing && styles.stepTitlePlaying, marker === 'none' && styles.stepTitleQuiet]}
+                    numberOfLines={3}
+                  >
+                    {node.title}
+                  </Text>
+                  {node.video ? (
+                    <Text style={[styles.stepMeta, playing && styles.stepMetaPlaying]}>
+                      {playing ? t('resources.nowPlayingShort') : duration ? duration : t('resources.play')}
+                    </Text>
+                  ) : (
+                    <Text style={styles.stepMetaQuiet}>{t('resources.noVideoYet')}</Text>
+                  )}
+                </View>
+              );
               return (
                 <View key={node.key}>
                   <Pressable
-                    style={styles.row}
+                    style={styles.step}
                     onPress={() => onNodePress(node, index)}
                     accessibilityRole="button"
                     accessibilityState={{ selected: index === selected, expanded: node.video ? undefined : expanded }}
                   >
-                    <View
-                      style={[
-                        styles.nodeBox,
-                        playing && styles.nodeBoxPlaying,
-                        marker === 'available' && styles.nodeBoxAvailable,
-                        marker === 'none' && styles.nodeBoxNone,
-                      ]}
-                    >
-                      {node.kind === 'overview' ? (
-                        <FontAwesome5 name="layer-group" size={13} color={playing ? colors.white : accent.base} />
-                      ) : node.number ? (
-                        <Text style={[styles.nodeNum, playing && styles.nodeNumPlaying, marker === 'none' && styles.nodeNumQuiet]}>{node.number}</Text>
-                      ) : (
-                        <FontAwesome5 name="play" size={12} color={playing ? colors.white : accent.base} />
-                      )}
-                    </View>
-                    <View style={[styles.card, playing && styles.cardPlaying]}>
-                      <View style={styles.cardText}>
-                        <Text
-                          style={[styles.rowTitle, playing && styles.rowTitlePlaying, marker === 'none' && styles.rowTitleQuiet]}
-                          numberOfLines={2}
-                        >
-                          {node.title}
-                        </Text>
-                      </View>
-                      {node.video ? (
-                        duration ? (
-                          <Text style={[styles.duration, playing && styles.durationPlaying]}>{duration}</Text>
-                        ) : (
-                          <FontAwesome5 name="play" size={11} color={playing ? accent.base : colors.textMuted} />
-                        )
-                      ) : (
-                        <Text style={styles.noVideo}>{t('resources.noVideoYet')}</Text>
-                      )}
-                    </View>
+                    {side === 'left' ? (
+                      <>
+                        {thumb}
+                        {textBlock}
+                      </>
+                    ) : (
+                      <>
+                        {textBlock}
+                        {thumb}
+                      </>
+                    )}
                   </Pressable>
+                  {index < nodes.length - 1 ? (
+                    <Svg width={contentWidth} height={CONNECTOR_H} style={styles.connector} pointerEvents="none">
+                      <Path
+                        d={connectorPath(contentWidth, CONNECTOR_H, side, THUMB)}
+                        stroke={colors.border}
+                        strokeOpacity={0.6}
+                        strokeWidth={2}
+                        strokeDasharray="6 7"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                    </Svg>
+                  ) : null}
                   {expanded && !node.video ? (
                     <View style={styles.note}>
                       <Text style={styles.noteText}>{t('resources.noVideoTopic')}</Text>
@@ -344,47 +362,51 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   noTopics: { fontSize: 13, color: colors.textMuted },
-  timeline: { marginTop: spacing.xs },
-  spine: { position: 'absolute', left: 0, top: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
-  nodeBox: {
-    width: NODE,
-    height: NODE,
-    borderRadius: 13,
-    borderWidth: 2,
+  timeline: { marginTop: spacing.md },
+  step: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, minHeight: THUMB + spacing.sm, paddingVertical: spacing.xs },
+  thumb: {
+    width: THUMB,
+    height: THUMB,
+    borderRadius: THUMB / 2,
+    borderWidth: 3,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceMuted,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    ...softShadow,
   },
-  nodeBoxPlaying: { backgroundColor: accent.base, borderColor: accent.base },
-  nodeBoxAvailable: { borderColor: accent.base, backgroundColor: accent.light },
-  nodeBoxNone: { borderColor: colors.border, backgroundColor: colors.surface },
-  nodeNum: { fontSize: 11, fontWeight: '800', color: accent.base, letterSpacing: 0.2 },
-  nodeNumPlaying: { color: colors.white },
-  nodeNumQuiet: { color: colors.textMuted },
-  card: {
-    flex: 1,
-    flexDirection: 'row',
+  thumbPlaying: { borderColor: accent.base },
+  thumbAvailable: { borderColor: accent.base },
+  thumbNone: { borderColor: colors.border, opacity: 0.75 },
+  thumbImg: { width: '100%', height: '100%' },
+  thumbPh: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', backgroundColor: accent.light },
+  thumbNum: { fontSize: 22, fontWeight: '800', color: accent.base, letterSpacing: 0.3 },
+  playBadge: {
+    position: 'absolute',
+    right: 3,
+    bottom: 3,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: accent.base,
     alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
   },
-  cardPlaying: { borderColor: accent.base, backgroundColor: accent.light },
-  cardText: { flex: 1 },
-  rowTitle: { fontSize: 15, color: colors.textPrimary, lineHeight: 20 },
-  rowTitlePlaying: { color: accent.base, fontWeight: '700' },
-  rowTitleQuiet: { color: colors.textSecondary },
-  duration: { fontSize: 12, color: colors.textMuted, fontVariant: ['tabular-nums'] },
-  durationPlaying: { color: accent.base, fontWeight: '700' },
-  noVideo: { fontSize: 11, color: colors.textMuted },
+  textBlock: { flex: 1, gap: 3 },
+  textRight: { alignItems: 'flex-end' },
+  stepNum: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: colors.textMuted },
+  stepTitle: { fontSize: 17, lineHeight: 22, fontWeight: '700', color: colors.textPrimary },
+  stepTitlePlaying: { color: accent.base },
+  stepTitleQuiet: { color: colors.textSecondary },
+  stepMeta: { fontSize: 13, color: colors.textMuted, fontVariant: ['tabular-nums'] },
+  stepMetaPlaying: { color: accent.base, fontWeight: '700' },
+  stepMetaQuiet: { fontSize: 12, color: colors.textMuted },
+  connector: { alignSelf: 'center', marginVertical: -spacing.xs },
   note: {
-    marginLeft: NODE + spacing.md,
+    marginTop: spacing.xs,
     marginBottom: spacing.sm,
     backgroundColor: colors.surfaceMuted,
     borderRadius: radius.md,

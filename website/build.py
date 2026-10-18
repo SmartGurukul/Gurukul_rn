@@ -224,15 +224,17 @@ NAV = [
     ("school-fee-management.html", "Fees", "फ़ीस"),
     ("school-timetable-app.html", "Timetable", "टाइमटेबल"),
     ("parent-app.html", "Parent App", "पैरेंट ऐप"),
+    ("resources.html", "Lessons", "वीडियो पाठ"),
     ("compare.html", "Compare", "तुलना"),
 ]
-# Hidden from the header between 981 and 1199 px, where seven links don't fit next to the logo, the
-# language switch and the demo button (site.css .nav-wide). Still in the footer and the mobile menu.
-NAV_WIDE_ONLY = {"gamified-learning.html"}
+# Hidden from the header between 981 and 1199 px, where the full set of links doesn't fit next to the
+# logo, the language switch and the demo button (site.css .nav-wide). Still in the footer and mobile menu.
+NAV_WIDE_ONLY = {"gamified-learning.html", "resources.html"}
 FOOTER_PRODUCT = [
     ("ai-for-schools.html", "AI for schools", "स्कूलों के लिए AI"),
     ("ai-question-paper-generator.html", "AI question papers", "AI से प्रश्न पत्र"),
     ("gamified-learning.html", "Gamified learning", "गेमिफ़ाइड लर्निंग"),
+    ("resources.html", "Video lessons", "वीडियो पाठ"),
     ("gps-attendance.html", "GPS attendance", "GPS हाज़िरी"),
     ("school-timetable-app.html", "Timetable &amp; substitutions", "टाइमटेबल और सब्स्टीट्यूट"),
     ("school-fee-management.html", "Fee management", "फ़ीस और पेरोल"),

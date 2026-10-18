@@ -42,6 +42,13 @@ export function subjectSummary(subject: ResourceSubject, viewer: ResourceViewer)
 }
 
 /** The subject open when the screen first shows: the first one with something to read. */
+/** Subjects a given viewer should see: students are spared subjects with no chapters at all
+ * (e.g. Hindi, which has no English-medium books yet); staff keep every subject to manage it. */
+export function visibleResourceSubjects(subjects: ResourceSubject[], viewer: ResourceViewer): ResourceSubject[] {
+  if (viewer !== 'student') return subjects;
+  return subjects.filter((subject) => subjectSummary(subject, viewer).chapters > 0);
+}
+
 export function initialExpandedSubject(subjects: ResourceSubject[], viewer: ResourceViewer): string | null {
   const first = subjects.find((subject) => subjectSummary(subject, viewer).chapters > 0) ?? subjects[0];
   return first ? first.subjectId : null;

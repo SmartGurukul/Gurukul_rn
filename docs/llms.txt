@@ -21,7 +21,7 @@ Key facts:
 - Getting started: free 1-month pilot. The Smart Gurukul team imports the school's student register and trains staff. Pricing is shared after a demo.
 - Not available: online fee payment, homework, SMS, group chat, hostel, library, statutory payroll (PF/ESI/TDS), full accounting (trial balance, balance sheet), automatic timetable generation, bus route planning.
 
-Last updated: 2026-10-14
+Last updated: 2026-10-19
 
 ## Pages
 
@@ -38,6 +38,7 @@ Last updated: 2026-10-14
 - [Fee management](https://smartgurukul.org/school-fee-management.html): Fee bills for every student, due-date reminders to parents, numbered PDF receipts, reversals and refunds, plus basic payroll and expense approvals, in one app.
 - [Timetable](https://smartgurukul.org/school-timetable-app.html): Weekly timetables with your bell schedule and rooms, one-period date changes, the periods that need a substitute, which teachers are free, and change alerts.
 - [School websites](https://smartgurukul.org/website-services.html): Smart Gurukul builds mobile-friendly school websites in Hindi and English, with admission enquiry forms, notices, gallery, hosting and Google listing.
+- [Video lessons](https://smartgurukul.org/resources.html): Browse Smart Gurukul's free, NCERT-aligned video lessons for CBSE Class 12. Pick a class and subject, then play every chapter and topic along a timeline.
 - [Hindi homepage](https://smartgurukul.org/hi/): हिंदी और English में स्कूल ऐप: शिक्षकों की GPS हाज़िरी, फ़ीस और रसीद, टाइमटेबल, रिपोर्ट कार्ड, अभिभावकों से चैट, AI और गेम्स। एक महीना मुफ़्त आज़माएँ।
 - [GPS हाज़िरी](https://smartgurukul.org/hi/gps-attendance.html): शिक्षक स्कूल पहुँचकर अपने फ़ोन से GPS हाज़िरी लगाते हैं। दूरी की जाँच हमारे सर्वर पर होती है और नकली GPS वाले फ़ोन रोक दिए जाते हैं। कोई बायोमेट्रिक मशीन नहीं।
 - [पैरेंट ऐप](https://smartgurukul.org/hi/parent-app.html): अभिभावक उसी ऐप में बच्चे की हाज़िरी, फ़ीस और रसीद, रिपोर्ट कार्ड, टाइमटेबल और स्कूल बस देखते हैं। पैरेंट अकाउंट से अनुपस्थिति अलर्ट और शिक्षकों से चैट भी।
