@@ -34,7 +34,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
 // needed for teachers, who use it to author quiz questions rather than play.
-const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAttendance', 'schoolBus'];
+const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAttendance', 'schoolBus', 'resources'];
 // Arena (question authoring) and self-mark check-in are teacher-only concepts - a principal/admin
 // self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
 // AI Quiz Generator is the teacher's own entry to the generator (for their assigned classes).
@@ -130,6 +130,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   payroll: 'PayrollHub',
   infraExpenses: 'InfraExpensesList',
   classes: 'ClassesList',
+  resources: 'Resources',
   calls: 'VideoCallHub',
   gamification: 'GamificationHub',
   houses: 'HouseWars',
@@ -179,6 +180,7 @@ const TEACHER_TILE_ORDER: FeatureId[] = [
 
 // A student's tiles, in this order (any other tile a student can see goes after them).
 const STUDENT_TILE_ORDER: FeatureId[] = [
+  'resources',
   'classes',
   'schoolBus',
   'gamification',
@@ -255,6 +257,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'payroll', title: t('dashboard.features.payroll.title'), icon: 'money-check-alt', description: t('dashboard.features.payroll.description') },
     { id: 'infraExpenses', title: t('dashboard.features.infraExpenses.title'), icon: 'tools', description: t('dashboard.features.infraExpenses.description') },
     { id: 'classes', title: t('dashboard.features.classes.title'), icon: 'chalkboard-teacher', description: t('dashboard.features.classes.description') },
+    { id: 'resources', title: t('dashboard.features.resources.title'), icon: 'photo-video', description: t('dashboard.features.resources.description') },
     { id: 'calls', title: t('dashboard.features.calls.title'), icon: 'video', description: t('dashboard.features.calls.description') },
     { id: 'gamification', title: t('dashboard.features.gamification.title'), icon: 'trophy', description: t('dashboard.features.gamification.description') },
     { id: 'events', title: t('dashboard.features.events.title'), icon: 'calendar-alt', description: t('dashboard.features.events.description') },
@@ -297,6 +300,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   // Teachers and students: the full feature list, narrowed per role.
   const roleFeatures = featureActions
     .filter((feature) => FEATURE_FLAGS.videoCalls || feature.id !== 'calls')
+    .filter((feature) => FEATURE_FLAGS.resourceHub || feature.id !== 'resources')
     .filter((feature) => {
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
       if (TEACHER_AND_STUDENT_FEATURES.includes(feature.id)) return isTeacher || isStudent;
@@ -308,7 +312,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     })
     // My Class is only scoped to the student's own class-section once it's loaded - rather than
     // briefly showing a tile that would route somewhere before we know where.
-    .filter((feature) => !(isStudent && feature.id === 'classes' && !myClassSection))
+    .filter((feature) => !(isStudent && (feature.id === 'classes' || feature.id === 'resources') && !myClassSection))
     .sort((a, b) => {
       const order = isStudent ? STUDENT_TILE_ORDER : isTeacher ? TEACHER_TILE_ORDER : [];
       return tileRank(order, a.id) - tileRank(order, b.id);
@@ -500,6 +504,10 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
                 const adminSection = session.role === 'ADMIN' ? ADMIN_SECTIONS[feature.id] : undefined;
                 if (adminSection) {
                   navigation.navigate('SectionHub', { section: adminSection });
+                  return;
+                }
+                if (isStudent && myClassSection && feature.id === 'resources') {
+                  navigation.navigate('Resources', { classSection: myClassSection });
                   return;
                 }
                 if (isStudent && myClassSection && feature.id === 'classes') {

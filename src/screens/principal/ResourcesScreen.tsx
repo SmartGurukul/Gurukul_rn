@@ -21,6 +21,7 @@ import { readCachedResources, readLastOpened, writeCachedResources, writeLastOpe
 import type { ResourceSubject, SectionResources } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenContainer } from '../../components/ScreenContainer';
+import { SubjectBackdrop } from '../../components/SubjectBackdrop';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -262,12 +263,13 @@ export function ResourcesScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
+      <SubjectBackdrop subjectKey={subject?.curriculumSubjectKey ?? null} />
       <ScreenHeader
         title={`${classSection.className} - ${classSection.section}`}
         subtitle={t('resources.title')}
         onBack={() => navigation.goBack()}
       />
-      <ScreenContainer>
+      <ScreenContainer style={styles.scroll}>
         {offline ? (
           <View style={styles.offline}>
             <Text style={styles.offlineText}>{t('resources.offline')}</Text>
@@ -352,6 +354,7 @@ export function ResourcesScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  scroll: { flex: 1, backgroundColor: 'transparent' },
   loader: { marginTop: 40 },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   retry: { alignSelf: 'flex-start', marginTop: spacing.sm },

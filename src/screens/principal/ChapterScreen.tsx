@@ -3,12 +3,14 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Line as SvgLine } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 
 import { getErrorMessage } from '../../api/errorMessage';
 import { setChapterHidden } from '../../api/resources';
 import { readLastTopic, writeLastTopic } from '../../api/resourcesCache';
 import { ScreenContainer } from '../../components/ScreenContainer';
+import { SubjectBackdrop } from '../../components/SubjectBackdrop';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -33,7 +35,7 @@ import {
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Chapter'>;
 
 const accent = accents.resources;
-const MARKER = 14;
+const NODE = 40;
 
 /**
  * One chapter as a timeline: the player sits at the top and plays whichever node is selected (the
@@ -156,12 +158,14 @@ export function ChapterScreen({ route, navigation }: Props) {
     setExpandedKey((prev) => (prev === node.key ? null : node.key));
   };
 
+  const [timelineH, setTimelineH] = useState(0);
   const nowPlaying = selected >= 0 ? nodes[selected] : null;
 
   return (
     <View style={styles.root}>
+      <SubjectBackdrop subjectKey={subject.curriculumSubjectKey} />
       <ScreenHeader title={subject.subjectName} subtitle={book.bookTitle} onBack={() => navigation.goBack()} />
-      <ScreenContainer>
+      <ScreenContainer style={styles.scroll}>
         <View style={styles.stage}>
           {hasAnyVideo ? (
             <VideoView
@@ -210,43 +214,69 @@ export function ChapterScreen({ route, navigation }: Props) {
         {nodes.length === 0 ? (
           <Text style={styles.noTopics}>{t('resources.noTopics')}</Text>
         ) : (
-          <View style={styles.timeline}>
-            <View style={styles.rail} />
+          <View style={styles.timeline} onLayout={(e) => setTimelineH(e.nativeEvent.layout.height)}>
+            {timelineH > 0 ? (
+              <Svg width={NODE} height={timelineH} style={styles.spine} pointerEvents="none">
+                <SvgLine
+                  x1={NODE / 2}
+                  y1={NODE / 2}
+                  x2={NODE / 2}
+                  y2={timelineH - NODE / 2}
+                  stroke={colors.border}
+                  strokeWidth={2}
+                  strokeDasharray="5 6"
+                  strokeLinecap="round"
+                />
+              </Svg>
+            ) : null}
             {nodes.map((node, index) => {
               const marker = nodeMarker(node, index === selected);
               const duration = formatDuration(node.video?.durationSec);
               const expanded = expandedKey === node.key;
+              const playing = marker === 'playing';
               return (
                 <View key={node.key}>
                   <Pressable
-                    style={styles.node}
+                    style={styles.row}
                     onPress={() => onNodePress(node, index)}
                     accessibilityRole="button"
                     accessibilityState={{ selected: index === selected, expanded: node.video ? undefined : expanded }}
                   >
                     <View
                       style={[
-                        styles.marker,
-                        marker === 'playing' && styles.markerPlaying,
-                        marker === 'available' && styles.markerAvailable,
-                        marker === 'none' && styles.markerNone,
+                        styles.nodeBox,
+                        playing && styles.nodeBoxPlaying,
+                        marker === 'available' && styles.nodeBoxAvailable,
+                        marker === 'none' && styles.nodeBoxNone,
                       ]}
-                    />
-                    <View style={styles.nodeText}>
-                      {node.number ? <Text style={styles.nodeNumber}>{node.number}</Text> : null}
-                      <Text style={[styles.nodeTitle, marker === 'playing' && styles.nodeTitlePlaying, marker === 'none' && styles.nodeTitleQuiet]}>
-                        {node.title}
-                      </Text>
-                    </View>
-                    {node.video ? (
-                      duration ? (
-                        <Text style={[styles.duration, marker === 'playing' && styles.durationPlaying]}>{duration}</Text>
+                    >
+                      {node.kind === 'overview' ? (
+                        <FontAwesome5 name="layer-group" size={13} color={playing ? colors.white : accent.base} />
+                      ) : node.number ? (
+                        <Text style={[styles.nodeNum, playing && styles.nodeNumPlaying, marker === 'none' && styles.nodeNumQuiet]}>{node.number}</Text>
                       ) : (
-                        <FontAwesome5 name="play" size={11} color={marker === 'playing' ? accent.base : colors.textMuted} />
-                      )
-                    ) : (
-                      <Text style={styles.noVideo}>{t('resources.noVideoYet')}</Text>
-                    )}
+                        <FontAwesome5 name="play" size={12} color={playing ? colors.white : accent.base} />
+                      )}
+                    </View>
+                    <View style={[styles.card, playing && styles.cardPlaying]}>
+                      <View style={styles.cardText}>
+                        <Text
+                          style={[styles.rowTitle, playing && styles.rowTitlePlaying, marker === 'none' && styles.rowTitleQuiet]}
+                          numberOfLines={2}
+                        >
+                          {node.title}
+                        </Text>
+                      </View>
+                      {node.video ? (
+                        duration ? (
+                          <Text style={[styles.duration, playing && styles.durationPlaying]}>{duration}</Text>
+                        ) : (
+                          <FontAwesome5 name="play" size={11} color={playing ? accent.base : colors.textMuted} />
+                        )
+                      ) : (
+                        <Text style={styles.noVideo}>{t('resources.noVideoYet')}</Text>
+                      )}
+                    </View>
                   </Pressable>
                   {expanded && !node.video ? (
                     <View style={styles.note}>
@@ -270,6 +300,7 @@ export function ChapterScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  scroll: { flex: 1, backgroundColor: 'transparent' },
   stage: {
     aspectRatio: 16 / 9,
     width: '100%',
@@ -313,32 +344,47 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   noTopics: { fontSize: 13, color: colors.textMuted },
-  timeline: { paddingLeft: spacing.lg + MARKER / 2 },
-  rail: { position: 'absolute', left: spacing.lg + MARKER / 2 - 1, top: 10, bottom: 10, width: 2, backgroundColor: colors.border, borderRadius: 1 },
-  node: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md - 2, paddingRight: spacing.xs },
-  marker: {
-    position: 'absolute',
-    // Centred on the rail: the row starts at the rail's centre, so the marker sits half its width to the left.
-    left: -MARKER / 2,
-    width: MARKER,
-    height: MARKER,
-    borderRadius: MARKER / 2,
+  timeline: { marginTop: spacing.xs },
+  spine: { position: 'absolute', left: 0, top: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
+  nodeBox: {
+    width: NODE,
+    height: NODE,
+    borderRadius: 13,
     borderWidth: 2,
+    borderColor: colors.border,
     backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  markerPlaying: { backgroundColor: accent.base, borderColor: accent.base },
-  markerAvailable: { borderColor: accent.base },
-  markerNone: { borderColor: colors.border },
-  nodeText: { flex: 1, marginLeft: MARKER / 2 + spacing.sm },
-  nodeNumber: { fontSize: 11, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.4 },
-  nodeTitle: { fontSize: 15, color: colors.textPrimary, lineHeight: 20 },
-  nodeTitlePlaying: { color: accent.base, fontWeight: '700' },
-  nodeTitleQuiet: { color: colors.textSecondary },
+  nodeBoxPlaying: { backgroundColor: accent.base, borderColor: accent.base },
+  nodeBoxAvailable: { borderColor: accent.base, backgroundColor: accent.light },
+  nodeBoxNone: { borderColor: colors.border, backgroundColor: colors.surface },
+  nodeNum: { fontSize: 11, fontWeight: '800', color: accent.base, letterSpacing: 0.2 },
+  nodeNumPlaying: { color: colors.white },
+  nodeNumQuiet: { color: colors.textMuted },
+  card: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
+  cardPlaying: { borderColor: accent.base, backgroundColor: accent.light },
+  cardText: { flex: 1 },
+  rowTitle: { fontSize: 15, color: colors.textPrimary, lineHeight: 20 },
+  rowTitlePlaying: { color: accent.base, fontWeight: '700' },
+  rowTitleQuiet: { color: colors.textSecondary },
   duration: { fontSize: 12, color: colors.textMuted, fontVariant: ['tabular-nums'] },
   durationPlaying: { color: accent.base, fontWeight: '700' },
   noVideo: { fontSize: 11, color: colors.textMuted },
   note: {
-    marginLeft: MARKER / 2 + spacing.sm,
+    marginLeft: NODE + spacing.md,
     marginBottom: spacing.sm,
     backgroundColor: colors.surfaceMuted,
     borderRadius: radius.md,

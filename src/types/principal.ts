@@ -25,6 +25,7 @@ export type FeatureId =
   | 'payroll'
   | 'infraExpenses'
   | 'classes'
+  | 'resources'
   | 'calls'
   | 'gamification'
   | 'houses'
