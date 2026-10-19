@@ -10,12 +10,16 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { SearchBar } from '../../components/SearchBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, softShadow, spacing } from '../../theme/colors';
+import { colors, heroShadow, radius, spacing } from '../../theme/colors';
+import { fonts } from '../../theme/typography';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
 interface Props {
   classSection: ClassSection;
+  /** How far the summary card overlaps the header above (match the header's `overlap`). */
+  overlap?: number;
 }
 
 const STATUSES: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'LATE', 'HALF_DAY'];
@@ -24,18 +28,23 @@ const SEARCH_DEBOUNCE_MS = 300;
 const statusColor: Record<AttendanceStatus, string> = {
   PRESENT: colors.success,
   ABSENT: colors.error,
-  LATE: colors.warning,
+  LATE: colors.marigold,
   HALF_DAY: colors.textSecondary,
 };
 
-const methodEmoji: Record<AttendanceMethod, string> = {
-  RFID: '📇',
-  FINGERPRINT: '👆',
-  FACE: '📷',
+/** The letter on each pill; the full word is the accessibility label. */
+const statusLetter: Record<AttendanceStatus, string> = { PRESENT: 'P', ABSENT: 'A', LATE: 'L', HALF_DAY: 'H' };
+const statusWord: Record<AttendanceStatus, string> = { PRESENT: 'Present', ABSENT: 'Absent', LATE: 'Late', HALF_DAY: 'Half day' };
+
+const methodLabel: Record<AttendanceMethod, string> = {
+  RFID: 'card',
+  FINGERPRINT: 'fingerprint',
+  FACE: 'face',
 };
 
-export function AttendanceTakeBody({ classSection }: Props) {
+export function AttendanceTakeBody({ classSection, overlap = 0 }: Props) {
   const schoolId = useSchoolId();
+  const footerBottom = useBottomInset();
   const { session } = useAuth();
   const isAdmin = session.role === 'ADMIN';
 
@@ -140,6 +149,8 @@ export function AttendanceTakeBody({ classSection }: Props) {
   };
 
   const canSubmit = !!teacherId && roster.every((s) => !!statuses[s.id]);
+  const marked = roster.filter((s) => !!statuses[s.id]).length;
+  const countOf = (status: AttendanceStatus) => roster.filter((s) => statuses[s.id] === status).length;
 
   const handleSubmit = async () => {
     if (!teacherId) return;
@@ -164,13 +175,31 @@ export function AttendanceTakeBody({ classSection }: Props) {
   };
 
   return (
-    <ScreenContainer>
-      <DatePickerField label="Date" value={date} onChange={setDate} />
-        <Pressable style={styles.loadButton} onPress={handleLoadDate} disabled={loadingDate}>
-          <Text style={styles.loadButtonText}>{loadingDate ? 'Loading…' : 'Load attendance for this date'}</Text>
-        </Pressable>
+    <View style={styles.root}>
+      <ScreenContainer contentContainerStyle={{ paddingBottom: footerBottom + SUBMIT_HEIGHT + spacing.lg }}>
+        <View style={[styles.hero, { marginTop: -overlap }]}>
+          <View style={styles.heroTop}>
+            <Text style={styles.heroTitle}>
+              {roster.length === 0 ? 'No students yet' : `${marked} of ${roster.length} marked`}
+            </Text>
+            <View style={styles.heroCounts}>
+              <Text style={[styles.heroCount, { color: colors.success }]}>{countOf('PRESENT')}</Text>
+              <Text style={[styles.heroCount, { color: colors.error }]}>{countOf('ABSENT')}</Text>
+              <Text style={[styles.heroCount, { color: colors.warning }]}>{countOf('LATE') + countOf('HALF_DAY')}</Text>
+            </View>
+          </View>
+          <View style={styles.bar}>
+            <View style={[styles.barFill, { width: roster.length ? `${Math.round((marked / roster.length) * 100)}%` : '0%' }]} />
+          </View>
+          <View style={styles.heroDate}>
+            <DatePickerField label="Date" value={date} onChange={setDate} />
+            <Pressable style={styles.loadButton} onPress={handleLoadDate} disabled={loadingDate} accessibilityRole="button">
+              <Text style={styles.loadButtonText}>{loadingDate ? 'Loading…' : 'Load saved'}</Text>
+            </Pressable>
+          </View>
+        </View>
 
-        <Text style={[styles.label, { marginTop: spacing.md }]}>Marked by</Text>
+        <Text style={styles.label}>Marked by</Text>
         {!isAdmin ? (
           <View style={styles.fixedMarker}>
             <Text style={styles.fixedMarkerText}>
@@ -183,7 +212,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
               <Text style={styles.markerCardLabel}>Class teacher</Text>
               <Text style={styles.markerCardName}>{teacherLabel || 'Not set'}</Text>
             </View>
-            <Pressable onPress={() => setShowTeacherSearch(true)}>
+            <Pressable onPress={() => setShowTeacherSearch(true)} accessibilityRole="button">
               <Text style={styles.changeLink}>Change</Text>
             </Pressable>
           </View>
@@ -222,7 +251,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
           </View>
         )}
 
-        {loadingRoster && <ActivityIndicator style={styles.loading} />}
+        {loadingRoster && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && <ErrorNotice message={error} />}
         {success && <Text style={styles.success}>Attendance saved for {date}.</Text>}
 
@@ -231,100 +260,127 @@ export function AttendanceTakeBody({ classSection }: Props) {
         )}
 
         {roster.length > 0 && (
-          <Pressable style={styles.selectAllButton} onPress={markAllPresent} disabled={allMarkedPresent}>
-            <View style={[styles.checkbox, allMarkedPresent && styles.checkboxChecked]}>
-              {allMarkedPresent && <Text style={styles.checkboxTick}>✓</Text>}
-            </View>
-            <Text style={styles.selectAllText}>Mark all students present</Text>
-          </Pressable>
+          <View style={styles.listHeader}>
+            <Text style={styles.label}>Students</Text>
+            <Pressable onPress={markAllPresent} disabled={allMarkedPresent} accessibilityRole="button" style={allMarkedPresent && styles.disabled}>
+              <Text style={styles.changeLink}>Mark all present</Text>
+            </Pressable>
+          </View>
         )}
 
-        {roster.map((student) => (
-          <View key={student.id} style={styles.studentCard}>
-            <Pressable
-              style={styles.studentHeaderRow}
-              onPress={() => setStatus(student.id, statuses[student.id] === 'PRESENT' ? 'ABSENT' : 'PRESENT')}
-            >
-              <View style={[styles.checkbox, statuses[student.id] === 'PRESENT' && styles.checkboxChecked]}>
-                {statuses[student.id] === 'PRESENT' && <Text style={styles.checkboxTick}>✓</Text>}
-              </View>
-              <Text style={styles.studentName}>
-                {student.name} · Roll {student.rollNumber}
-                {methods[student.id] ? ` · ${methodEmoji[methods[student.id] as AttendanceMethod]}` : ''}
-              </Text>
-            </Pressable>
-            <View style={styles.statusRow}>
-              {STATUSES.map((status) => {
-                const selected = statuses[student.id] === status;
-                return (
-                  <Pressable
-                    key={status}
-                    style={[
-                      styles.statusChip,
-                      selected && { backgroundColor: statusColor[status], borderColor: statusColor[status] },
-                    ]}
-                    onPress={() => setStatus(student.id, status)}
-                  >
-                    <Text style={[styles.statusChipText, selected && styles.statusChipTextSelected]}>
-                      {status.replace('_', ' ')}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        ))}
-
         {roster.length > 0 && (
+          <View style={styles.listCard}>
+            {roster.map((student, index) => {
+              const method = methods[student.id];
+              return (
+                <View key={student.id} style={[styles.studentRow, index === roster.length - 1 && styles.studentRowLast]}>
+                  <View style={styles.rollTile}>
+                    <Text style={styles.rollText} numberOfLines={1} adjustsFontSizeToFit>
+                      {student.rollNumber || '–'}
+                    </Text>
+                  </View>
+                  <View style={styles.studentText}>
+                    <Text style={styles.studentName} numberOfLines={1}>
+                      {student.name}
+                    </Text>
+                    {method ? <Text style={styles.studentMeta}>Marked by {methodLabel[method]} device</Text> : null}
+                  </View>
+                  <View style={styles.statusRow}>
+                    {STATUSES.map((status) => {
+                      const selected = statuses[student.id] === status;
+                      return (
+                        <Pressable
+                          key={status}
+                          style={[styles.pill, selected && { backgroundColor: statusColor[status], borderColor: statusColor[status] }]}
+                          onPress={() => setStatus(student.id, status)}
+                          accessibilityRole="radio"
+                          accessibilityState={{ selected }}
+                          accessibilityLabel={`${student.name}: ${statusWord[status]}`}
+                          hitSlop={4}
+                        >
+                          <Text style={[styles.pillText, selected && styles.pillTextSelected]}>{statusLetter[status]}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+      </ScreenContainer>
+
+      {roster.length > 0 && (
+        <View style={[styles.footer, { paddingBottom: footerBottom }]}>
           <Pressable
             style={[styles.submit, (!canSubmit || submitting) && styles.disabled]}
             onPress={handleSubmit}
             disabled={!canSubmit || submitting}
+            accessibilityRole="button"
           >
-            <Text style={styles.submitText}>{submitting ? 'Saving…' : 'Save attendance'}</Text>
+            <Text style={styles.submitText}>{submitting ? 'Saving…' : 'Submit attendance'}</Text>
           </Pressable>
-        )}
-    </ScreenContainer>
+        </View>
+      )}
+    </View>
   );
 }
 
+const SUBMIT_HEIGHT = 52;
+
 const styles = StyleSheet.create({
-  label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
-  loadButton: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-    marginBottom: spacing.sm,
+  root: { flex: 1, backgroundColor: colors.background },
+  hero: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    ...heroShadow,
   },
-  loadButtonText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
+  heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  heroTitle: { fontFamily: fonts.headingMedium, fontSize: 15, lineHeight: 20, color: colors.textPrimary, flexShrink: 1 },
+  heroCounts: { flexDirection: 'row', gap: spacing.md },
+  heroCount: { fontFamily: fonts.heading, fontSize: 16, lineHeight: 22 },
+  bar: { height: 8, borderRadius: 4, backgroundColor: colors.primaryLight, marginTop: spacing.md, overflow: 'hidden' },
+  barFill: { height: 8, borderRadius: 4, backgroundColor: colors.primaryBright },
+  heroDate: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginTop: spacing.md },
+  label: { fontFamily: fonts.bodySemibold, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginBottom: spacing.sm },
+  loadButton: {
+    height: 44,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  loadButtonText: { color: colors.primary, fontFamily: fonts.headingMedium, fontSize: 13 },
   loading: { marginVertical: spacing.md },
-  error: { color: colors.error, marginVertical: spacing.md },
-  success: { color: colors.success, marginVertical: spacing.md, fontWeight: '600' },
-  empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
+  success: { color: colors.success, marginVertical: spacing.md, fontFamily: fonts.bodySemibold, fontSize: 14 },
+  empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg, fontFamily: fonts.body, fontSize: 15 },
   fixedMarker: {
     backgroundColor: colors.surfaceMuted,
     borderRadius: radius.lg,
     padding: spacing.md,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
-  fixedMarkerText: { fontSize: 13.5, color: colors.textSecondary },
-  fixedMarkerName: { fontWeight: '700', color: colors.textPrimary },
+  fixedMarkerText: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary },
+  fixedMarkerName: { fontFamily: fonts.bodySemibold, color: colors.textPrimary },
   markerCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
+    borderRadius: radius.xl,
+    borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   markerCardBody: { flex: 1 },
-  markerCardLabel: { fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
-  markerCardName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginTop: 2 },
-  changeLink: { color: colors.primary, fontWeight: '700', fontSize: 13 },
+  markerCardLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary },
+  markerCardName: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary, marginTop: 2 },
+  changeLink: { color: colors.primary, fontFamily: fonts.headingMedium, fontSize: 13 },
   searchLoading: { marginVertical: spacing.sm },
   teacherRow: {
     backgroundColor: colors.surface,
@@ -334,56 +390,67 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  teacherRowText: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
-  selectAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginTop: spacing.md,
-  },
-  selectAllText: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-  checkboxChecked: { backgroundColor: colors.success, borderColor: colors.success },
-  checkboxTick: { color: colors.white, fontWeight: '800', fontSize: 13 },
-  studentCard: {
+  teacherRowText: { fontFamily: fonts.bodySemibold, fontSize: 14, color: colors.textPrimary },
+  listHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: spacing.sm },
+  listCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    padding: spacing.lg,
-    marginTop: spacing.md,
-    ...softShadow,
-  },
-  studentHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  studentName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
-  statusChip: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    overflow: 'hidden',
   },
-  statusChipText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
-  statusChipTextSelected: { color: colors.white },
-  submit: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.md,
+  studentRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.lg,
-    ...softShadow,
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  studentRowLast: { borderBottomWidth: 0 },
+  rollTile: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rollText: { fontFamily: fonts.headingMedium, fontSize: 12, color: colors.primary },
+  studentText: { flex: 1 },
+  studentName: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
+  studentMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
+  statusRow: { flexDirection: 'row', gap: 6 },
+  pill: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillText: { fontFamily: fonts.headingMedium, fontSize: 13, color: colors.textMuted },
+  pillTextSelected: { color: colors.onPrimary },
+  footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    backgroundColor: colors.background,
+  },
+  submit: {
+    height: SUBMIT_HEIGHT,
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...heroShadow,
   },
   disabled: { opacity: 0.5 },
-  submitText: { color: colors.white, fontWeight: '700' },
+  submitText: { color: colors.onPrimary, fontFamily: fonts.headingMedium, fontSize: 16 },
 });

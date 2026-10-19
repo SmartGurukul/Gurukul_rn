@@ -832,7 +832,12 @@
       "ledger": {
         "title": "Ledger & day book",
         "description": "Money in and out, day book, cash vs bank"
-      }
+      },
+      "subtitle": "Collections and settings",
+      "today": "Today",
+      "thisMonth": "This month",
+      "entries": "Entries",
+      "entriesHint": "this month"
     },
     "categories": {
       "title": "Fee Categories",
