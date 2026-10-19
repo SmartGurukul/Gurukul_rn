@@ -2,12 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { BASE_URL } from '../../api/client';
 import type { PublicTracking } from '../../api/types';
 import { BusMap } from '../../components/BusMap';
-import { colors, gradients, radius, softShadow, spacing } from '../../theme/colors';
+import { VioletHero } from '../../components/VioletHero';
+import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import { formatAgo, formatTime } from '../../transport/labels';
 
 const POLL_MS = 10_000;
@@ -49,8 +49,7 @@ export function TrackLinkView({ token, onClose }: { token: string; onClose: () =
   return (
     <Modal animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.root}>
-        <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+        <VioletHero style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
           <View style={styles.headerRow}>
             <View style={styles.headerText}>
               {data?.schoolName ? <Text style={styles.school}>{data.schoolName}</Text> : null}
@@ -68,7 +67,7 @@ export function TrackLinkView({ token, onClose }: { token: string; onClose: () =
               <Text style={styles.closeText}>✕</Text>
             </Pressable>
           </View>
-        </LinearGradient>
+        </VioletHero>
 
         <View style={styles.body}>
           {!data && !offline && <ActivityIndicator color={colors.primary} style={styles.loading} />}

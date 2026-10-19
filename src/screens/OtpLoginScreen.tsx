@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +7,9 @@ import { requestOtp, verifyOtp } from '../api/auth';
 import { setAuthSession } from '../api/client';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Logo } from '../components/Logo';
+import { VioletHero } from '../components/VioletHero';
 import LabeledInput from '../components/LabeledInput';
-import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
 import type { AuthProfile } from '../api/types';
 import { getErrorMessage } from '../api/errorMessage';
@@ -92,7 +92,7 @@ export default function OtpLoginScreen({
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <VioletHero style={styles.hero}>
         <Pressable onPress={onBack} style={[styles.backButton, { top: insets.top + spacing.xs }]} accessibilityRole="button">
           <Text style={styles.backText}>←</Text>
         </Pressable>
@@ -102,7 +102,7 @@ export default function OtpLoginScreen({
         <Logo width={120} onDarkBackground />
         <Text style={styles.title}>{schoolName ?? t('auth.signIn')}</Text>
         <Text style={styles.subtitle}>{t('auth.signInWithPhoneSubtitle')}</Text>
-      </LinearGradient>
+      </VioletHero>
 
       <View style={styles.form}>
         <LabeledInput
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
-    ...shadow,
   },
   // Top edge set from the safe-area inset at render time: a fixed offset left most of the button
   // under the status bar, where taps never reach the app.

@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -9,8 +8,9 @@ import { ApiError, setAuthSession } from '../api/client';
 import type { Session } from '../api/authStorage';
 import type { AuthProfile } from '../api/types';
 import { Logo } from '../components/Logo';
+import { VioletHero } from '../components/VioletHero';
 import { ProfileCard } from '../components/ProfileCard';
-import { gradients, colors, radius, shadow, spacing } from '../theme/colors';
+import { colors, radius, spacing } from '../theme/colors';
 import { getErrorMessage } from '../api/errorMessage';
 import { ErrorNotice } from '../components/ErrorNotice';
 
@@ -56,14 +56,14 @@ export default function ProfileSelectScreen({ schoolId, schoolName, selectionTok
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <VioletHero style={styles.hero}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
         <Logo width={100} onDarkBackground />
         <Text style={styles.title}>{t('auth.whoIsUsingApp')}</Text>
         <Text style={styles.subtitle}>{schoolName ?? t('auth.chooseProfileSubtitle')}</Text>
-      </LinearGradient>
+      </VioletHero>
 
       <View style={[styles.list, { paddingBottom: insets.bottom + spacing.lg }]}>
         {expired ? (
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
-    ...shadow,
   },
   backButton: {
     position: 'absolute',
