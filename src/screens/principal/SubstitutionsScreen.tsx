@@ -34,7 +34,8 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { useOnReturn } from '../../hooks/useOnReturn';
-import { colors, radius, softShadow, spacing } from '../../theme/colors';
+import { colors, radius, spacing } from '../../theme/colors';
+import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
   freshLists,
@@ -293,6 +294,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   });
 
   const groups = groupUncoveredByPeriod(uncoveredShown ?? []);
+  const awayNames = [...new Set((uncoveredShown ?? []).map((entry) => entry.teacherName))];
   // Covers already made, kept under their period greyed out, so "period 1 is handled" is something the
   // admin can see rather than infer, and a wrong pick is one tap from undo.
   const coveredByPeriod = new Map<number, TimetableOverride[]>();
@@ -309,9 +311,17 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={t('timetable.subs.title')} subtitle={t('timetable.subs.subtitle')} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('timetable.subs.title')} subtitle={dateLabel} onBack={() => navigation.goBack()}>
+        <TimetableDateBar value={date} onChange={(value) => value && setDate(value)} minimumDate={today} onViolet />
+        {uncoveredShown !== null && (
+          <Text style={styles.headerSummary}>
+            {uncoveredShown.length === 0
+              ? t('timetable.subs.noneUncovered')
+              : t('timetable.subs.summary', { away: awayNames.length, count: uncoveredShown.length })}
+          </Text>
+        )}
+      </ScreenHeader>
       <ScreenContainer refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />} keyboardShouldPersistTaps="handled">
-        <TimetableDateBar value={date} onChange={(value) => value && setDate(value)} minimumDate={today} />
         {past && <ErrorNotice message={t('timetable.subs.pastDate')} />}
         {error && <ErrorNotice message={error} />}
         <ClashList clashes={clashes} />
@@ -692,67 +702,60 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginVertical: spacing.md },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.xs },
-  hint: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.sm },
-  link: { color: colors.primary, fontWeight: '700', marginBottom: spacing.sm },
-  empty: { color: colors.textMuted, fontSize: 14, marginVertical: spacing.sm },
+  headerSummary: { fontFamily: fonts.bodySemibold, fontSize: 14, lineHeight: 20, color: colors.onPrimaryWarning, marginTop: spacing.xs },
+  sectionTitle: { fontFamily: fonts.headingMedium, fontSize: 17, lineHeight: 24, color: colors.textPrimary, marginTop: spacing.lg, marginBottom: spacing.xs },
+  hint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginBottom: spacing.sm },
+  link: { color: colors.primary, fontFamily: fonts.headingMedium, fontSize: 14, marginBottom: spacing.sm },
+  empty: { color: colors.textMuted, fontFamily: fonts.body, fontSize: 15, marginVertical: spacing.sm },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
     marginBottom: spacing.sm,
-    ...softShadow,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, flexShrink: 1 },
-  periodRow: { paddingTop: spacing.sm, marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  periodTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
-  periodMeta: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  warn: { color: colors.textSecondary, fontStyle: 'italic' },
+  cardTitle: { fontFamily: fonts.headingMedium, fontSize: 15, lineHeight: 20, color: colors.textPrimary, flexShrink: 1 },
+  periodRow: { paddingTop: spacing.md, marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  periodTitle: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary, flexShrink: 1 },
+  periodMeta: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginTop: 2 },
+  warn: { color: colors.warning },
   coveredRow: { opacity: 0.6 },
-  suggestion: { fontSize: 13, color: colors.textPrimary, fontWeight: '600', marginTop: 2 },
-  reason: { fontSize: 13, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  suggestion: { fontFamily: fonts.bodySemibold, fontSize: 13, lineHeight: 18, color: colors.primary, marginTop: 2 },
+  reason: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   actionButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    height: 40,
+    justifyContent: 'center',
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  actionText: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
-  actionDanger: { borderColor: 'transparent', backgroundColor: 'transparent' },
+  actionText: { fontFamily: fonts.headingMedium, fontSize: 13, color: colors.textPrimary },
+  actionDanger: { borderColor: 'transparent', backgroundColor: 'transparent', paddingHorizontal: spacing.sm },
   actionDangerText: { color: colors.textSecondary },
-  actionPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
-  actionPrimaryText: { color: colors.white },
+  actionPrimary: { backgroundColor: colors.primary, borderColor: colors.primary, height: 46, flexGrow: 1, alignItems: 'center' },
+  actionPrimaryText: { color: colors.onPrimary, fontSize: 14 },
   disabled: { opacity: 0.5 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(30,22,51,0.45)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    padding: spacing.lg,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: spacing.xl,
     maxHeight: '85%',
   },
-  sheetTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
-  sheetSubtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2, marginBottom: spacing.md },
-  fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.xs, fontWeight: '600' },
+  sheetTitle: { fontFamily: fonts.heading, fontSize: 18, lineHeight: 24, color: colors.textPrimary },
+  sheetSubtitle: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginTop: 2, marginBottom: spacing.md },
+  fieldLabel: { fontFamily: fonts.bodySemibold, fontSize: 13, color: colors.textSecondary, marginBottom: spacing.xs },
   spaced: { marginTop: spacing.md },
-  option: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    marginBottom: spacing.xs,
-    backgroundColor: colors.background,
-  },
-  optionSelected: { backgroundColor: colors.primaryLight },
-  optionTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  optionDetail: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  formButtons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  secondaryButton: { flex: 1, paddingVertical: spacing.md, borderRadius: radius.md, backgroundColor: colors.surfaceMuted, alignItems: 'center' },
-  secondaryText: { color: colors.textSecondary, fontWeight: '800' },
-  primaryButton: { flex: 1, paddingVertical: spacing.md, borderRadius: radius.md, backgroundColor: colors.primary, alignItems: 'center' },
-  primaryText: { color: colors.white, fontWeight: '800' },
+  formButtons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  secondaryButton: { flex: 1, height: 50, justifyContent: 'center', borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center' },
+  secondaryText: { color: colors.textPrimary, fontFamily: fonts.headingMedium, fontSize: 15 },
+  primaryButton: { flex: 1, height: 50, justifyContent: 'center', borderRadius: radius.lg, backgroundColor: colors.primary, alignItems: 'center' },
+  primaryText: { color: colors.onPrimary, fontFamily: fonts.headingMedium, fontSize: 15 },
 });

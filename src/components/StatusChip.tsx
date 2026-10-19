@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { accents, colors, radius, spacing } from '../theme/colors';
+import { colors, radius, spacing } from '../theme/colors';
+import { fonts } from '../theme/typography';
 
 type ChipVariant = 'success' | 'warning' | 'error' | 'neutral' | 'info';
 
@@ -9,12 +10,13 @@ interface StatusChipProps {
   variant?: ChipVariant;
 }
 
+/** Tinted pill: green / marigold / red for status, grey for neutral, violet for "info" (a change). */
 const variantStyles: Record<ChipVariant, { bg: string; text: string }> = {
-  success: { bg: '#E8F5E9', text: colors.success },
-  warning: { bg: '#FFF3E0', text: colors.warning },
-  error: { bg: '#FFEBEE', text: colors.error },
-  neutral: { bg: colors.primaryLight, text: colors.textSecondary },
-  info: { bg: accents.payroll.light, text: accents.payroll.base },
+  success: { bg: colors.successLight, text: colors.success },
+  warning: { bg: colors.warningLight, text: colors.warning },
+  error: { bg: colors.errorLight, text: colors.error },
+  neutral: { bg: colors.surfaceMuted, text: colors.textSecondary },
+  info: { bg: colors.primaryLight, text: colors.primary },
 };
 
 export function StatusChip({ label, variant = 'neutral' }: StatusChipProps) {
@@ -29,12 +31,13 @@ export function StatusChip({ label, variant = 'neutral' }: StatusChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 3,
     borderRadius: radius.pill,
   },
   text: {
+    fontFamily: fonts.bodySemibold,
     fontSize: 12,
-    fontWeight: '700',
+    lineHeight: 16,
   },
 });
