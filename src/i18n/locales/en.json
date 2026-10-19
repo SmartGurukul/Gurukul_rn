@@ -1857,7 +1857,14 @@
     "notRegistered": "This number isn't registered with any school yet. Ask your school to add it to your record."
   },
   "welcome": {
-    "registerSchool": "Register a new school (2 minutes)"
+    "title": "Smart Gurukul",
+    "subtitle": "Sign in to your school",
+    "tagline": "Your whole school,\nconnected.",
+    "lead": "Attendance, fees, timetable and messages in one app for principals, teachers and parents.",
+    "findSchool": "Find my school",
+    "newHere": "New here?",
+    "registerSchool": "Register your school",
+    "registerTime": "2 minutes"
   },
   "auth": {
     "sessionExpired": "Your session expired, please log in again.",

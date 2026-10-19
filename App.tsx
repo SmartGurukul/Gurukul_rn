@@ -10,6 +10,7 @@ import { ParentNavigator } from './src/navigation/ParentNavigator';
 import { DriverNavigator } from './src/navigation/DriverNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { colors } from './src/theme/colors';
+import { useAppFonts } from './src/theme/typography';
 import { SchoolContext } from './src/context/SchoolContext';
 import { AuthContext } from './src/context/AuthContext';
 import { ToastProvider, useToast } from './src/context/ToastContext';
@@ -78,6 +79,7 @@ export default function App() {
   // OTP screen and decides where "back" goes from there (the pick when there were several).
   const [phoneLogin, setPhoneLogin] = useState<{ phone: string; schools: SchoolSearchResult[] } | null>(null);
   const [i18nReady, setI18nReady] = useState(false);
+  const fontsReady = useAppFonts();
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(0);
   // A WhatsApp "track the bus" link opened in the app (App Links) - shown over whatever is open,
   // signed in or not, since the link itself grants access.
@@ -215,7 +217,7 @@ export default function App() {
     handleLoggedIn(principal);
   };
 
-  const loading = schoolId === undefined || session === undefined || !i18nReady;
+  const loading = schoolId === undefined || session === undefined || !i18nReady || !fontsReady;
 
   const renderPreAuth = () => {
     switch (preAuthStep.name) {
