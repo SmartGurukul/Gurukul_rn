@@ -1,7 +1,8 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { accents, colors, radius, softShadow, spacing } from '../theme/colors';
+import { colors, radius, spacing } from '../theme/colors';
+import { fonts } from '../theme/typography';
 import type { FeatureAction } from '../types/principal';
 
 interface FeatureTileProps {
@@ -9,13 +10,12 @@ interface FeatureTileProps {
   onPress: () => void;
 }
 
+/** A tool on the home grid: white card, Line border, violet icon tile - no per-feature colours. */
 export function FeatureTile({ feature, onPress }: FeatureTileProps) {
-  const accent = accents[feature.id];
-
   return (
     <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.75} accessibilityRole="button">
-      <View style={[styles.iconCircle, { backgroundColor: accent.light }]}>
-        <FontAwesome5 name={feature.icon} size={18} color={accent.base} />
+      <View style={styles.iconTile}>
+        <FontAwesome5 name={feature.icon} size={18} color={colors.primary} />
       </View>
       <Text style={styles.title} numberOfLines={1}>
         {feature.title}
@@ -32,27 +32,31 @@ const styles = StyleSheet.create({
     width: '48%',
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    ...softShadow,
   },
-  iconCircle: {
+  iconTile: {
     width: 44,
     height: 44,
     borderRadius: radius.lg,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
   title: {
+    fontFamily: fonts.headingMedium,
     fontSize: 15,
-    fontWeight: '700',
+    lineHeight: 20,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   description: {
-    fontSize: 12,
-    color: colors.textMuted,
-    lineHeight: 16,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    lineHeight: 17,
+    color: colors.textSecondary,
   },
 });

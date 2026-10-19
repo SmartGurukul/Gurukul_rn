@@ -2,28 +2,34 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { useLanguage } from '../../i18n/useLanguage';
 
 import { getClassSection, listClassSections } from '../../api/classSections';
 import { getEmployee, isActiveEmployee, listAllEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
 import { getStudent, listStudents } from '../../api/students';
+import { getDayBook } from '../../api/ledger';
+import { getStaffAttendanceRoster } from '../../api/staffAttendance';
 import { getUncoveredPeriods } from '../../api/timetable';
 import type { ClassSection, Employee, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
+import { HeroCard, type HeroStat } from '../../components/HeroCard';
+import { HomeTabBar, type HomeTab } from '../../components/HomeTabBar';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { NotificationPermissionPrompt } from '../../components/NotificationPermissionPrompt';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { SetupChecklistCard } from '../../components/SetupChecklistCard';
-import { StatSummaryCard } from '../../components/StatSummaryCard';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
-import { useBottomInset } from '../../hooks/useBottomInset';
-import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
+import { colors, radius, spacing } from '../../theme/colors';
+import { fonts } from '../../theme/typography';
 import type { FeatureAction, FeatureId, HubSection, PrincipalStackParamList } from '../../types/principal';
+import { compactInr, longDate, staffPresentCount } from '../../utils/homeSummary';
 import { setupComplete, setupSteps, type SetupStepId } from '../../utils/setupChecklist';
 import { coverCount } from '../../utils/substitutions';
 import { todayIso } from '../../utils/timetable';
@@ -234,7 +240,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const isStudent = session.ownerType === 'STUDENT';
   const isTeacher = session.role === 'TEACHER';
   const isAdmin = session.role === 'ADMIN';
-  const fabBottom = useBottomInset();
+  const { language } = useLanguage();
   const [school, setSchool] = useState<School | null>(null);
   const [myName, setMyName] = useState<string | null>(null);
   const [myClassSection, setMyClassSection] = useState<ClassSection | null>(null);
@@ -243,6 +249,9 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [loadingCounts, setLoadingCounts] = useState(true);
   // Periods that need a substitute today; null until loaded, or when it couldn't be (plain label then).
   const [coverNeeded, setCoverNeeded] = useState<number | null>(null);
+  // Today's numbers for the hero card (admin only): staff in / total marked, rupees received.
+  const [staffToday, setStaffToday] = useState<{ present: number; total: number } | null | undefined>(null);
+  const [collectedToday, setCollectedToday] = useState<number | null | undefined>(null);
   // The setup checklist: what the school still has to do, from the counts and roster loaded below.
   const [employees, setEmployees] = useState<Employee[] | null>(null);
   const [setupDismissed, setSetupDismissed] = useState(true);
@@ -384,9 +393,16 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
           .catch(() => setCounts((prev) => ({ ...prev, vendors: null }))),
       ]).finally(() => setLoadingCounts(false));
-      getUncoveredPeriods(schoolId, todayIso())
+      const today = todayIso();
+      getUncoveredPeriods(schoolId, today)
         .then((rows) => setCoverNeeded(coverCount(rows)))
         .catch(() => setCoverNeeded(null));
+      getStaffAttendanceRoster(schoolId, today)
+        .then((roster) => setStaffToday({ present: staffPresentCount(roster.entries), total: roster.entries.length }))
+        .catch(() => setStaffToday(undefined));
+      getDayBook(schoolId, today)
+        .then((book) => setCollectedToday(book.totalInflow))
+        .catch(() => setCollectedToday(undefined));
     };
     const unsubscribe = navigation.addListener('focus', load);
     load();
@@ -431,12 +447,61 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     else tellParents();
   };
 
+  const heroStats: HeroStat[] = [
+    {
+      label: t('dashboard.today.staffIn'),
+      value: staffToday === null ? null : staffToday === undefined ? undefined : `${staffToday.present}/${staffToday.total}`,
+      hint: staffToday ? t('dashboard.today.staffAway', { count: staffToday.total - staffToday.present }) : undefined,
+    },
+    {
+      label: t('dashboard.today.collected'),
+      value: collectedToday === null ? null : collectedToday === undefined ? undefined : compactInr(collectedToday),
+      hint: t('dashboard.today.collectedHint'),
+    },
+    {
+      label: t('dashboard.today.cover'),
+      value: coverNeeded === null ? '—' : String(coverNeeded),
+      tone: coverNeeded ? colors.warning : undefined,
+      pill: coverNeeded ? t('dashboard.today.actNow') : undefined,
+      hint: coverNeeded ? undefined : t('dashboard.today.allCovered'),
+    },
+  ];
+
+  const openAskAi = () => navigation.navigate('HelpdeskBot');
+  const tabs: HomeTab[] = isAdmin
+    ? [
+        { key: 'home', label: t('dashboard.tabs.home'), icon: 'home' },
+        { key: 'classes', label: t('dashboard.tabs.classes'), icon: 'chalkboard', onPress: () => navigation.navigate('ClassesList') },
+        { key: 'fees', label: t('dashboard.tabs.fees'), icon: 'rupee-sign', onPress: () => navigation.navigate('FeesHub') },
+        { key: 'people', label: t('dashboard.tabs.people'), icon: 'users', onPress: () => navigation.navigate('EmployeesList') },
+        { key: 'ai', label: t('dashboard.tabs.askAi'), icon: 'robot', onPress: openAskAi },
+      ]
+    : isTeacher
+      ? [
+          { key: 'home', label: t('dashboard.tabs.home'), icon: 'home' },
+          { key: 'classes', label: t('dashboard.tabs.classes'), icon: 'chalkboard', onPress: () => navigation.navigate('ClassesList', { homeroom: myHomeroomSection ?? undefined }) },
+          { key: 'timetable', label: t('dashboard.tabs.timetable'), icon: 'clock', onPress: () => navigation.navigate('MyTimetable') },
+          { key: 'students', label: t('dashboard.tabs.students'), icon: 'user-graduate', onPress: () => navigation.navigate('MyStudents') },
+          { key: 'ai', label: t('dashboard.tabs.askAi'), icon: 'robot', onPress: openAskAi },
+        ]
+      : [
+          { key: 'home', label: t('dashboard.tabs.home'), icon: 'home' },
+          { key: 'timetable', label: t('dashboard.tabs.timetable'), icon: 'clock', onPress: () => navigation.navigate('MyTimetable') },
+          { key: 'fees', label: t('dashboard.tabs.fees'), icon: 'rupee-sign', onPress: () => navigation.navigate('MyFees') },
+          { key: 'messages', label: t('dashboard.tabs.messages'), icon: 'comment-dots', onPress: () => navigation.navigate('ConversationsList') },
+          { key: 'ai', label: t('dashboard.tabs.askAi'), icon: 'robot', onPress: openAskAi },
+        ];
+
+  const greeting = t('dashboard.welcome', { name: myName ?? session.username });
+  const headerOverlap = isAdmin ? 52 : 0;
+
   return (
     <View style={styles.root}>
       <ScreenHeader
-        title={school?.name ?? t('dashboard.fallbackTitle')}
-        subtitle={t('dashboard.welcome', { name: myName ?? session.username })}
+        title={greeting}
+        subtitle={school?.name ?? t('dashboard.fallbackTitle')}
         showBadge={false}
+        overlap={headerOverlap}
         rightAction={
           <View style={styles.headerActions}>
             <Pressable
@@ -462,39 +527,60 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
             </Pressable>
           </View>
         }
-      />
-      {/* Leave room below the last tile so the floating bot button never covers it. */}
-      <ScreenContainer contentContainerStyle={{ paddingBottom: fabBottom + FAB_SIZE + spacing.lg }}>
-        <NotificationPermissionPrompt />
-        {showSetup && <SetupChecklistCard steps={steps} onStep={openSetupStep} onDismiss={dismissSetup} />}
+      >
+        <Text style={styles.headerDate}>{longDate(new Date(), language)}</Text>
         {isAdmin && (
-          <View style={styles.statRow}>
-            <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />
-            <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} loading={loadingCounts} />
-            <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} loading={loadingCounts} />
+          <View style={styles.keyNumberRow}>
+            {loadingCounts && counts.students === null ? (
+              <ActivityIndicator color={colors.onPrimary} />
+            ) : (
+              <Text style={styles.keyNumber} numberOfLines={1} adjustsFontSizeToFit>
+                {counts.students === null ? '—' : counts.students.toLocaleString('en-IN')}
+                <Text style={styles.keyNumberLabel}> {t('dashboard.today.students')}</Text>
+              </Text>
+            )}
+            <Text style={styles.keyNumberHint} numberOfLines={1}>
+              {t('dashboard.today.staffAndVendors', { staff: counts.employees ?? '—', vendors: counts.vendors ?? '—' })}
+            </Text>
           </View>
         )}
-        {/* The home grid is a fixed 12 tiles, so cover for absent teachers gets its own full-width card. */}
+      </ScreenHeader>
+      <ScreenContainer contentContainerStyle={styles.scrollContent}>
+        {isAdmin && <HeroCard stats={heroStats} overlap={headerOverlap} />}
+        <NotificationPermissionPrompt />
+        {showSetup && <SetupChecklistCard steps={steps} onStep={openSetupStep} onDismiss={dismissSetup} />}
+
         {isAdmin && (
-          <Pressable
-            style={[styles.coverCard, !!coverNeeded && styles.coverCardAlert]}
-            onPress={() => navigation.navigate('Substitutions')}
-            accessibilityRole="button"
-          >
-            <View style={[styles.coverIcon, { backgroundColor: accents.substitutions.light }]}>
-              <FontAwesome5 name="user-clock" size={16} color={accents.substitutions.base} />
+          <>
+            <Text style={styles.sectionTitle}>{t('dashboard.needsYou')}</Text>
+            <View style={styles.listCard}>
+              <Pressable style={styles.listRow} onPress={() => navigation.navigate('Substitutions')} accessibilityRole="button">
+                <View style={[styles.listIcon, !!coverNeeded && styles.listIconAlert]}>
+                  <FontAwesome5 name="user-clock" size={16} color={coverNeeded ? colors.warning : colors.primary} />
+                </View>
+                <View style={styles.listText}>
+                  <Text style={styles.listTitle}>
+                    {coverNeeded ? t('dashboard.cover.needed', { count: coverNeeded }) : t('dashboard.cover.arrange')}
+                  </Text>
+                  <Text style={styles.listDescription}>{t('dashboard.features.substitutions.description')}</Text>
+                </View>
+                <Text style={styles.listChevron}>›</Text>
+              </Pressable>
+              <Pressable style={[styles.listRow, styles.listRowLast]} onPress={() => navigation.navigate('StaffAttendance')} accessibilityRole="button">
+                <View style={styles.listIcon}>
+                  <FontAwesome5 name="clipboard-check" size={16} color={colors.primary} />
+                </View>
+                <View style={styles.listText}>
+                  <Text style={styles.listTitle}>{t('dashboard.features.staffAttendance.title')}</Text>
+                  <Text style={styles.listDescription}>{t('dashboard.features.staffAttendance.description')}</Text>
+                </View>
+                <Text style={styles.listChevron}>›</Text>
+              </Pressable>
             </View>
-            <View style={styles.coverText}>
-              <Text style={styles.coverTitle}>
-                {coverNeeded ? t('dashboard.cover.needed', { count: coverNeeded }) : t('dashboard.cover.arrange')}
-              </Text>
-              <Text style={styles.coverDescription}>{t('dashboard.features.substitutions.description')}</Text>
-            </View>
-            <Text style={styles.coverChevron}>›</Text>
-          </Pressable>
+          </>
         )}
 
-        <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
+        <Text style={styles.sectionTitle}>{isAdmin ? t('dashboard.allTools') : t('dashboard.quickActions')}</Text>
         <View style={styles.tileGrid}>
           {visibleFeatures.map((feature) => (
             <FeatureTile
@@ -544,14 +630,10 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           ))}
         </View>
       </ScreenContainer>
-      <Pressable style={[styles.fab, { bottom: fabBottom }]} onPress={() => navigation.navigate('HelpdeskBot')} accessibilityLabel="Helpdesk Bot">
-        <FontAwesome5 name="robot" size={22} color={colors.white} />
-      </Pressable>
+      <HomeTabBar tabs={tabs} activeKey="home" />
     </View>
   );
 }
-
-const FAB_SIZE = 56;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
@@ -563,60 +645,54 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(255,255,255,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    width: FAB_SIZE,
-    height: FAB_SIZE,
-    borderRadius: FAB_SIZE / 2,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0F1E3D',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  headerDate: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.onPrimaryMuted },
+  keyNumberRow: { marginTop: spacing.sm, gap: 2 },
+  keyNumber: { fontFamily: fonts.heading, fontSize: 40, lineHeight: 46, color: colors.onPrimary },
+  keyNumberLabel: { fontFamily: fonts.label, fontSize: 16, color: colors.onPrimaryMuted },
+  keyNumberHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.onPrimaryMuted },
+  scrollContent: { paddingBottom: spacing.xl },
+  sectionTitle: {
+    fontFamily: fonts.headingMedium,
+    fontSize: 17,
+    lineHeight: 24,
+    color: colors.textPrimary,
+    marginTop: spacing.lg,
     marginBottom: spacing.md,
   },
-  coverCard: {
+  listCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  listRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
     padding: spacing.md,
-    marginBottom: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    ...softShadow,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  coverCardAlert: { borderColor: accents.substitutions.base },
-  coverIcon: {
+  listRowLast: { borderBottomWidth: 0 },
+  listIcon: {
     width: 40,
     height: 40,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  coverText: { flex: 1 },
-  coverTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  coverDescription: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  coverChevron: { fontSize: 22, color: colors.textMuted, marginLeft: spacing.sm },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
-  },
+  listIconAlert: { backgroundColor: colors.warningLight },
+  listText: { flex: 1 },
+  listTitle: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
+  listDescription: { fontFamily: fonts.body, fontSize: 13, lineHeight: 17, color: colors.textSecondary, marginTop: 1 },
+  listChevron: { fontSize: 22, color: colors.textMuted, marginLeft: spacing.sm },
   tileGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

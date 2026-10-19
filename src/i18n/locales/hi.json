@@ -383,7 +383,31 @@
       "needed_one": "आज {{count}} पीरियड के लिए सब्स्टीट्यूट चाहिए",
       "needed_other": "आज {{count}} पीरियड के लिए सब्स्टीट्यूट चाहिए",
       "arrange": "सब्स्टीट्यूट तय करें"
-    }
+    },
+    "today": {
+      "students": "विद्यार्थी",
+      "staffAndVendors": "{{staff}} स्टाफ़ · {{vendors}} वेंडर",
+      "staffIn": "स्टाफ़ उपस्थित",
+      "staffAway_one": "{{count}} अनुपस्थित",
+      "staffAway_other": "{{count}} अनुपस्थित",
+      "collected": "आज की वसूली",
+      "collectedHint": "नकद + बैंक",
+      "cover": "सब्स्टीट्यूट",
+      "actNow": "अभी देखें",
+      "allCovered": "सब कवर है"
+    },
+    "tabs": {
+      "home": "होम",
+      "classes": "कक्षाएँ",
+      "fees": "फ़ीस",
+      "people": "स्टाफ़",
+      "askAi": "AI से पूछें",
+      "timetable": "टाइमटेबल",
+      "students": "विद्यार्थी",
+      "messages": "संदेश"
+    },
+    "needsYou": "आपका ध्यान चाहिए",
+    "allTools": "सभी टूल"
   },
   "academicHelper": {
     "title": "शैक्षणिक सहायक",

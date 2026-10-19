@@ -383,7 +383,31 @@
       "needed_one": "{{count}} period needs a substitute today",
       "needed_other": "{{count}} periods need a substitute today",
       "arrange": "Arrange substitutions"
-    }
+    },
+    "today": {
+      "students": "students",
+      "staffAndVendors": "{{staff}} staff · {{vendors}} vendors",
+      "staffIn": "Staff in",
+      "staffAway_one": "{{count}} away",
+      "staffAway_other": "{{count}} away",
+      "collected": "Collected today",
+      "collectedHint": "cash + bank",
+      "cover": "Cover",
+      "actNow": "Act now",
+      "allCovered": "all covered"
+    },
+    "tabs": {
+      "home": "Home",
+      "classes": "Classes",
+      "fees": "Fees",
+      "people": "People",
+      "askAi": "Ask AI",
+      "timetable": "Timetable",
+      "students": "Students",
+      "messages": "Messages"
+    },
+    "needsYou": "Needs you",
+    "allTools": "All tools"
   },
   "academicHelper": {
     "title": "Academic Helper",
