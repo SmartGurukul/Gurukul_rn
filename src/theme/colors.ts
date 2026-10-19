@@ -1,22 +1,41 @@
+/**
+ * "Deep Violet" theme (Oct 2026 redesign, workspace spec `app-ui-redesign-deep-violet`).
+ * Brand kit: Violet 700 for headers and primary actions, Violet 600 only as the decorative circle
+ * on a violet surface, paper ground below, marigold reserved for one attention element per screen.
+ * No gradients anywhere: `gradients.header` is kept for the remaining `LinearGradient` callers but
+ * is a solid Violet 700 and should be replaced by `colors.primary` as screens are restyled.
+ */
 export const colors = {
-  primary: '#7C3AED',
-  primaryLight: '#EFE8FC',
-  background: '#F6F3FC',
+  primary: '#6D28D9', // Violet 700: headers, primary buttons, active tab
+  primaryBright: '#7C3AED', // Violet 600: the decorative circle on a violet surface, progress fills
+  primaryDeep: '#3B1782', // Violet 900: wordmark, the "Ask AI" bar
+  primaryLight: '#EDE4FE', // Violet 100: icon tiles, soft chips, secondary text on violet
+  primarySoft: '#F5F0FF', // Violet 50: row icon backgrounds
+  background: '#FAF8FD', // Paper
   surface: '#FFFFFF',
-  surfaceMuted: '#F0EAFA',
-  textPrimary: '#201A2B',
-  textSecondary: '#5B5468',
-  textMuted: '#9A93A8',
-  success: '#2E7D32',
-  warning: '#B45309',
-  error: '#C62828',
-  accent: '#7C3AED',
-  border: '#E5DEF5',
+  surfaceMuted: '#F5F0FF',
+  textPrimary: '#1E1633', // Ink 900
+  textSecondary: '#564E6B', // Ink 600
+  textMuted: '#8C85A0', // Ink 400
+  success: '#1E9E5A',
+  successLight: '#E3F6EA',
+  warning: '#A86A00', // Marigold 700 (text on marigold 100)
+  warningLight: '#FFF1D0', // Marigold 100
+  marigold: '#F5A70A', // Marigold 500: badges, the progress bar on violet
+  error: '#D6453D',
+  errorLight: '#FBE3E1',
+  accent: '#6D28D9',
+  border: '#E6E1EF', // Line
   white: '#FFFFFF',
+  /** Text colours for use on a `colors.primary` surface. */
+  onPrimary: '#FFFFFF',
+  onPrimaryMuted: '#EDE4FE',
+  onPrimaryWarning: '#FFE7A8',
 } as const;
 
 export const gradients = {
-  header: ['#7C3AED', '#C026D3'] as const,
+  /** Solid Violet 700 - the redesign has no gradients. See the note above. */
+  header: ['#6D28D9', '#6D28D9'] as const,
 } as const;
 
 export const spacing = {
@@ -31,23 +50,34 @@ export const spacing = {
 export const radius = {
   sm: 8,
   md: 12,
-  lg: 16,
-  xl: 22,
+  lg: 14, // buttons, inputs, small tiles
+  xl: 20, // cards
   pill: 999,
 } as const;
 
-export const shadow = {
-  shadowColor: '#0F1E3D',
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  elevation: 3,
+/** The one real shadow in the design: the hero card that overlaps a violet header. */
+export const heroShadow = {
+  shadowColor: '#3B1782',
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.12,
+  shadowRadius: 16,
+  elevation: 4,
 } as const;
 
+/** Existing cards keep a faint violet-tinted lift until they are restyled with a 1 px border. */
+export const shadow = {
+  shadowColor: '#3B1782',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.06,
+  shadowRadius: 10,
+  elevation: 2,
+} as const;
+
+/** Cards below the hero use a 1 px `colors.border` instead of a shadow; this stays for callers not yet restyled. */
 export const softShadow = {
-  shadowColor: '#0F1E3D',
+  shadowColor: '#3B1782',
   shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
+  shadowOpacity: 0.04,
   shadowRadius: 6,
   elevation: 1,
 } as const;
