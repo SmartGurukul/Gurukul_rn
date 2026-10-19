@@ -13,7 +13,8 @@ import { NotificationPermissionPrompt } from '../components/NotificationPermissi
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useAuth } from '../context/AuthContext';
 import { useSchoolId } from '../context/SchoolContext';
-import { colors, radius, softShadow, spacing } from '../theme/colors';
+import { colors, radius, spacing } from '../theme/colors';
+import { fonts } from '../theme/typography';
 import type { PrincipalStackParamList } from '../types/principal';
 import { getErrorMessage } from '../api/errorMessage';
 import { ErrorNotice } from '../components/ErrorNotice';
@@ -109,20 +110,21 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
-  empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
+  empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl, fontFamily: fonts.body, fontSize: 15 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
     marginBottom: spacing.sm,
-    ...softShadow,
   },
   rowMain: { flex: 1, marginLeft: spacing.md, marginRight: spacing.sm },
-  rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
-  rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  rowName: { fontFamily: fonts.bodySemibold, fontSize: 16, lineHeight: 22, color: colors.textPrimary },
+  rowMeta: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 2 },
   chevron: { fontSize: 22, color: colors.textMuted },
   logoutButton: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.md },
-  logoutText: { color: colors.error, fontWeight: '700', fontSize: 14 },
+  logoutText: { color: colors.error, fontFamily: fonts.headingMedium, fontSize: 14 },
 });

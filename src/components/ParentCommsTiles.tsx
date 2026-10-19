@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next';
 
 import { getUnreadNotificationCount } from '../api/notifications';
 import { useSchoolId } from '../context/SchoolContext';
-import { accents, colors, radius, softShadow, spacing } from '../theme/colors';
+import { colors, radius, spacing } from '../theme/colors';
+import { fonts } from '../theme/typography';
 import type { PrincipalStackParamList } from '../types/principal';
 
 /**
@@ -32,19 +33,18 @@ export function ParentCommsTiles() {
   }, [navigation, refresh]);
 
   const tiles = [
-    { key: 'messages', title: t('parentComms.messages'), icon: 'comments', accentKey: 'chat' as const, screen: 'ConversationsList' as const, badge: 0 },
-    { key: 'announcements', title: t('parentComms.announcements'), icon: 'bullhorn', accentKey: 'announcements' as const, screen: 'Announcements' as const, badge: 0 },
-    { key: 'alerts', title: t('parentComms.alerts'), icon: 'bell', accentKey: 'alerts' as const, screen: 'Notifications' as const, badge: unread },
+    { key: 'messages', title: t('parentComms.messages'), icon: 'comments', screen: 'ConversationsList' as const, badge: 0 },
+    { key: 'announcements', title: t('parentComms.announcements'), icon: 'bullhorn', screen: 'Announcements' as const, badge: 0 },
+    { key: 'alerts', title: t('parentComms.alerts'), icon: 'bell', screen: 'Notifications' as const, badge: unread },
   ];
 
   return (
     <View style={styles.grid}>
       {tiles.map((tile) => {
-        const accent = accents[tile.accentKey];
         return (
           <Pressable key={tile.key} style={styles.tile} onPress={() => navigation.navigate(tile.screen)} accessibilityRole="button">
-            <View style={[styles.iconCircle, { backgroundColor: accent.light }]}>
-              <FontAwesome5 name={tile.icon} size={16} color={accent.base} />
+            <View style={styles.iconCircle}>
+              <FontAwesome5 name={tile.icon} size={16} color={colors.primary} />
               {tile.badge > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{tile.badge > 99 ? '99+' : tile.badge}</Text>
@@ -67,14 +67,16 @@ const styles = StyleSheet.create({
     width: '31%',
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingVertical: spacing.md,
     alignItems: 'center',
-    ...softShadow,
   },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: radius.lg,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
@@ -91,6 +93,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { color: colors.white, fontSize: 11, fontWeight: '800' },
-  title: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  badgeText: { color: colors.white, fontSize: 11, fontFamily: fonts.headingMedium },
+  title: { fontFamily: fonts.bodySemibold, fontSize: 13, color: colors.textPrimary },
 });

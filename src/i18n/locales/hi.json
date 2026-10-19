@@ -2013,6 +2013,21 @@
         "TEST": "टेस्ट",
         "EXAM": "परीक्षा"
       }
+    },
+    "today": {
+      "attendance": "आज",
+      "notMarked": "अभी दर्ज नहीं",
+      "status": {
+        "PRESENT": "उपस्थित",
+        "ABSENT": "अनुपस्थित",
+        "LATE": "देर से",
+        "HALF_DAY": "आधा दिन"
+      },
+      "feesDue": "फ़ीस बाकी",
+      "by": "{{date}} तक",
+      "allPaid": "सब चुकता",
+      "class": "कक्षा",
+      "roll": "रोल {{roll}}"
     }
   },
   "myFees": {

@@ -2013,6 +2013,21 @@
         "TEST": "Test",
         "EXAM": "Exam"
       }
+    },
+    "today": {
+      "attendance": "Today",
+      "notMarked": "Not marked yet",
+      "status": {
+        "PRESENT": "Present",
+        "ABSENT": "Absent",
+        "LATE": "Late",
+        "HALF_DAY": "Half day"
+      },
+      "feesDue": "Fees due",
+      "by": "by {{date}}",
+      "allPaid": "all paid",
+      "class": "Class",
+      "roll": "Roll {{roll}}"
     }
   },
   "myFees": {

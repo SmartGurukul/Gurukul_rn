@@ -1,25 +1,37 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { listSectionAssessments } from '../../api/assessments';
+import { getStudentAttendanceHistory } from '../../api/attendance';
 import { getErrorMessage } from '../../api/errorMessage';
-import type { Assessment } from '../../api/types';
+import { listStudentFeeAssessments } from '../../api/feeAssessments';
+import { getMyChildren } from '../../api/parents';
+import { getSchool } from '../../api/schools';
+import type { Assessment, Student } from '../../api/types';
 import { toIsoDate } from '../../components/DatePickerField';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { HeroCard, type HeroStat } from '../../components/HeroCard';
 import { ParentCommsTiles } from '../../components/ParentCommsTiles';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
-import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
+import { useLanguage } from '../../i18n/useLanguage';
+import { colors, radius, spacing } from '../../theme/colors';
+import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { compactInr, longDate } from '../../utils/homeSummary';
+import { feeDueSummary, statusOn } from '../../utils/parentHome';
+import { formatIsoDate, todayIso } from '../../utils/timetable';
 import { upcomingCardState } from '../../utils/upcomingAssessments';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ChildDashboard'>;
+
+const HERO_OVERLAP = 52;
 
 /**
  * The child's next tests and exams, read-only: families can't open an assessment (that screen is
@@ -71,114 +83,170 @@ function UpcomingAssessmentsCard({ classSectionId }: { classSectionId: string })
   const card = upcomingCardState(list, error, today);
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>{t('childDashboard.upcoming.title')}</Text>
-      {card.kind === 'loading' ? (
-        <ActivityIndicator color={colors.primary} style={styles.cardLoading} />
-      ) : card.kind === 'error' ? (
-        <View>
-          <ErrorNotice message={card.message} />
-          <Pressable onPress={retry} style={styles.retry} accessibilityRole="button">
-            <Text style={styles.retryText}>{t('common.retry')}</Text>
-          </Pressable>
-        </View>
-      ) : card.kind === 'empty' ? (
-        <Text style={styles.cardEmpty}>{t('childDashboard.upcoming.empty')}</Text>
-      ) : (
-        <>
-          {card.items.map((item) => (
-            <View key={item.id} style={styles.assessmentRow}>
-              <Text style={styles.assessmentTitle}>{item.title}</Text>
-              <Text style={styles.assessmentMeta}>
-                {[item.subjectName, t(`childDashboard.upcoming.types.${item.type}`, { defaultValue: item.type }), item.assessmentDate]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
-            </View>
-          ))}
-          {card.moreCount > 0 && (
-            <Text style={styles.more}>{t('childDashboard.upcoming.more', { count: card.moreCount })}</Text>
-          )}
-        </>
-      )}
-    </View>
+    <>
+      <Text style={styles.sectionTitle}>{t('childDashboard.upcoming.title')}</Text>
+      <View style={styles.card}>
+        {card.kind === 'loading' ? (
+          <ActivityIndicator color={colors.primary} style={styles.cardLoading} />
+        ) : card.kind === 'error' ? (
+          <View>
+            <ErrorNotice message={card.message} />
+            <Pressable onPress={retry} style={styles.retry} accessibilityRole="button">
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        ) : card.kind === 'empty' ? (
+          <Text style={styles.cardEmpty}>{t('childDashboard.upcoming.empty')}</Text>
+        ) : (
+          <>
+            {card.items.map((item, index) => (
+              <View key={item.id} style={[styles.assessmentRow, index === 0 && styles.assessmentRowFirst]}>
+                <View style={styles.assessmentIcon}>
+                  <FontAwesome5 name="pen" size={14} color={colors.primary} />
+                </View>
+                <View style={styles.assessmentText}>
+                  <Text style={styles.assessmentTitle}>{item.title}</Text>
+                  <Text style={styles.assessmentMeta}>
+                    {[item.subjectName, t(`childDashboard.upcoming.types.${item.type}`, { defaultValue: item.type }), item.assessmentDate]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </Text>
+                </View>
+              </View>
+            ))}
+            {card.moreCount > 0 && (
+              <Text style={styles.more}>{t('childDashboard.upcoming.more', { count: card.moreCount })}</Text>
+            )}
+          </>
+        )}
+      </View>
+    </>
   );
 }
 
+/** A parent's home for one child: today, fees due, the child's screens, what is coming up. */
 export function ChildDashboardScreen({ route, navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { language } = useLanguage();
   const { logout } = useAuth();
+  const schoolId = useSchoolId();
   const student = route.params.student;
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [children, setChildren] = useState<Student[]>([]);
+  // null while loading, undefined when it could not be loaded.
+  const [todayStatus, setTodayStatus] = useState<string | null | undefined>(null);
+  const [fees, setFees] = useState<{ due: number; earliestDueDate: string | null } | null | undefined>(null);
 
-  const tiles: { key: string; title: string; icon: string; accentKey: keyof typeof accents; onPress: () => void }[] = [
+  useEffect(() => {
+    getSchool(schoolId)
+      .then((school) => setSchoolName(school.name))
+      .catch(() => setSchoolName(null));
+    getMyChildren(schoolId)
+      .then(setChildren)
+      .catch(() => setChildren([]));
+  }, [schoolId]);
+
+  // Today's status and the dues follow the child shown, and refresh on every return (a payment
+  // made on the fees screen, attendance marked during the day).
+  useFocusEffect(
+    useCallback(() => {
+      const today = todayIso();
+      setTodayStatus(null);
+      setFees(null);
+      getStudentAttendanceHistory(schoolId, student.id, today, today)
+        .then((history) => setTodayStatus(statusOn(history, today)))
+        .catch(() => setTodayStatus(undefined));
+      listStudentFeeAssessments(schoolId, student.id)
+        .then((bills) => setFees(feeDueSummary(bills)))
+        .catch(() => setFees(undefined));
+    }, [schoolId, student.id])
+  );
+
+  const statusLabel =
+    todayStatus === null ? null : todayStatus === undefined ? undefined : todayStatus ? t(`childDashboard.today.status.${todayStatus}`) : t('childDashboard.today.notMarked');
+  const statusTone =
+    todayStatus === 'PRESENT' ? colors.success : todayStatus === 'ABSENT' ? colors.error : todayStatus === 'LATE' || todayStatus === 'HALF_DAY' ? colors.warning : undefined;
+
+  // The route carries only id/name/section; class label and roll come from the children list.
+  const me = children.find((child) => child.id === student.id);
+
+  const heroStats: HeroStat[] = [
+    { label: t('childDashboard.today.attendance'), value: statusLabel, tone: statusTone },
     {
-      key: 'attendance',
-      title: t('childDashboard.attendance'),
-      icon: 'calendar-check',
-      accentKey: 'myAttendance',
-      onPress: () => navigation.navigate('AttendanceHistory', { student }),
+      label: t('childDashboard.today.feesDue'),
+      value: fees === null ? null : fees === undefined ? undefined : compactInr(fees.due),
+      tone: fees && fees.due > 0 ? colors.warning : undefined,
+      pill: fees?.earliestDueDate && fees.due > 0 ? t('childDashboard.today.by', { date: formatIsoDate(fees.earliestDueDate, i18n.language) }) : undefined,
+      hint: fees && fees.due === 0 ? t('childDashboard.today.allPaid') : undefined,
     },
-    {
-      key: 'schoolBus',
-      title: t('childDashboard.schoolBus'),
-      icon: 'bus',
-      accentKey: 'schoolBus',
-      onPress: () => navigation.navigate('MyBus'),
-    },
-    {
-      key: 'fees',
-      title: t('childDashboard.fees'),
-      icon: 'file-invoice-dollar',
-      accentKey: 'fees',
-      onPress: () => navigation.navigate('ChildFees', { student }),
-    },
-    {
-      key: 'reportCard',
-      title: t('childDashboard.reportCard'),
-      icon: 'file-alt',
-      accentKey: 'reportCard',
-      onPress: () => navigation.navigate('ReportCard', { student }),
-    },
-    {
-      key: 'idCard',
-      title: t('childDashboard.idCard'),
-      icon: 'id-badge',
-      accentKey: 'idCards',
-      onPress: () => navigation.navigate('IdCard', { kind: 'STUDENT', id: student.id, name: student.name }),
-    },
-    {
-      key: 'timetable',
-      title: t('childDashboard.timetable'),
-      icon: 'clock',
-      accentKey: 'myTimetable',
-      onPress: () => navigation.navigate('MyTimetable', { student }),
-    },
+    { label: t('childDashboard.today.class'), value: me?.classSectionLabel ?? '—', hint: me?.rollNumber ? t('childDashboard.today.roll', { roll: me.rollNumber }) : undefined },
+  ];
+
+  const tiles: { key: string; title: string; icon: string; onPress: () => void }[] = [
+    { key: 'attendance', title: t('childDashboard.attendance'), icon: 'calendar-check', onPress: () => navigation.navigate('AttendanceHistory', { student }) },
+    { key: 'fees', title: t('childDashboard.fees'), icon: 'rupee-sign', onPress: () => navigation.navigate('ChildFees', { student }) },
+    { key: 'timetable', title: t('childDashboard.timetable'), icon: 'clock', onPress: () => navigation.navigate('MyTimetable', { student }) },
+    { key: 'reportCard', title: t('childDashboard.reportCard'), icon: 'file-alt', onPress: () => navigation.navigate('ReportCard', { student }) },
+    { key: 'schoolBus', title: t('childDashboard.schoolBus'), icon: 'bus', onPress: () => navigation.navigate('MyBus') },
+    { key: 'idCard', title: t('childDashboard.idCard'), icon: 'id-badge', onPress: () => navigation.navigate('IdCard', { kind: 'STUDENT', id: student.id, name: student.name }) },
   ];
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={student.name} onBack={() => navigation.navigate('ParentHome')} />
+      <ScreenHeader
+        title={student.name}
+        subtitle={schoolName ?? t('dashboard.fallbackTitle')}
+        onBack={children.length > 1 ? () => navigation.navigate('ParentHome') : undefined}
+        showBadge={false}
+        overlap={HERO_OVERLAP}
+      >
+        <Text style={styles.headerDate}>{longDate(new Date(), language)}</Text>
+        {children.length > 1 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.switcher}>
+            {children.map((child) => {
+              const active = child.id === student.id;
+              return (
+                <Pressable
+                  key={child.id}
+                  style={[styles.childChip, active && styles.childChipActive]}
+                  onPress={() => !active && navigation.setParams({ student: child })}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                >
+                  <View style={[styles.childInitial, active && styles.childInitialActive]}>
+                    <Text style={[styles.childInitialText, active && styles.childInitialTextActive]}>{child.name.trim().charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <Text style={[styles.childChipText, active && styles.childChipTextActive]} numberOfLines={1}>
+                    {child.name}
+                    {child.classSectionLabel ? ` · ${child.classSectionLabel}` : ''}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
+      </ScreenHeader>
       <ScreenContainer>
-        <ParentCommsTiles />
+        <HeroCard stats={heroStats} overlap={HERO_OVERLAP} />
+        <View style={styles.commsWrap}>
+          <ParentCommsTiles />
+        </View>
         <View style={styles.tileGrid}>
-          {tiles.map((tile) => {
-            const accent = accents[tile.accentKey];
-            return (
-              <Pressable key={tile.key} style={styles.tile} onPress={tile.onPress}>
-                <View style={[styles.iconCircle, { backgroundColor: accent.light }]}>
-                  <FontAwesome5 name={tile.icon} size={18} color={accent.base} />
-                </View>
-                <Text style={styles.tileTitle}>{tile.title}</Text>
-              </Pressable>
-            );
-          })}
+          {tiles.map((tile) => (
+            <Pressable key={tile.key} style={styles.tile} onPress={tile.onPress} accessibilityRole="button">
+              <View style={styles.iconCircle}>
+                <FontAwesome5 name={tile.icon} size={18} color={colors.primary} />
+              </View>
+              <Text style={styles.tileTitle}>{tile.title}</Text>
+            </Pressable>
+          ))}
         </View>
 
         {!!student.classSectionId && (
           <UpcomingAssessmentsCard key={student.classSectionId} classSectionId={student.classSectionId} />
         )}
 
-        <Pressable style={styles.logoutButton} onPress={logout}>
+        <Pressable style={styles.logoutButton} onPress={logout} accessibilityRole="button">
           <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
       </ScreenContainer>
@@ -188,44 +256,73 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  headerDate: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.onPrimaryMuted },
+  switcher: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.md },
+  childChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 5,
+    paddingLeft: 5,
+    paddingRight: spacing.md,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  childChipActive: { backgroundColor: colors.white },
+  childInitial: { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  childInitialActive: { backgroundColor: colors.primaryLight },
+  childInitialText: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.onPrimary },
+  childInitialTextActive: { color: colors.primary },
+  childChipText: { fontFamily: fonts.body, fontSize: 14, color: colors.onPrimary, maxWidth: 180 },
+  childChipTextActive: { fontFamily: fonts.bodySemibold, color: colors.primaryDeep },
+  commsWrap: { marginTop: spacing.lg },
   tileGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   tile: {
     width: '48%',
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    ...softShadow,
   },
   iconCircle: {
     width: 44,
     height: 44,
     borderRadius: radius.lg,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  tileTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  tileTitle: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
+  sectionTitle: { fontFamily: fonts.bodyBold, fontSize: 17, lineHeight: 24, color: colors.textPrimary, marginTop: spacing.sm, marginBottom: spacing.md },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.lg,
-    marginTop: spacing.sm,
-    ...softShadow,
   },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.sm },
   cardLoading: { marginVertical: spacing.md },
-  cardEmpty: { color: colors.textMuted, fontSize: 14 },
+  cardEmpty: { color: colors.textMuted, fontFamily: fonts.body, fontSize: 15 },
   retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm },
-  retryText: { color: colors.primary, fontWeight: '700' },
+  retryText: { color: colors.primary, fontFamily: fonts.headingMedium, fontSize: 14 },
   assessmentRow: {
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingTop: spacing.md,
+    marginTop: spacing.md,
+    borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  assessmentTitle: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  assessmentMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  more: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, fontWeight: '600' },
+  assessmentRowFirst: { paddingTop: 0, marginTop: 0, borderTopWidth: 0 },
+  assessmentIcon: { width: 36, height: 36, borderRadius: radius.md, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  assessmentText: { flex: 1 },
+  assessmentTitle: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
+  assessmentMeta: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 1 },
+  more: { fontFamily: fonts.bodySemibold, fontSize: 13, color: colors.primary, marginTop: spacing.md },
   logoutButton: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.md },
-  logoutText: { color: colors.error, fontWeight: '700', fontSize: 14 },
+  logoutText: { color: colors.error, fontFamily: fonts.headingMedium, fontSize: 14 },
 });
