@@ -7,6 +7,7 @@ import {
   cellEditMode,
   cellsToSlotRequests,
   clearCellAction,
+  currentPeriodNumber,
   dateViewSlots,
   defaultDay,
   describeClash,
@@ -433,5 +434,20 @@ describe('date helpers', () => {
   it('gives the weekday of a date', () => {
     expect(isoDayOfWeek('2026-10-14')).toBe('WEDNESDAY');
     expect(isoDayOfWeek('2026-10-18')).toBe('SUNDAY');
+  });
+});
+
+describe('currentPeriodNumber', () => {
+  const periods = [
+    { periodNumber: 1, startTime: '08:00', endTime: '08:40', breakPeriod: false, label: null },
+    { periodNumber: 2, startTime: '08:40', endTime: '09:20', breakPeriod: false, label: null },
+  ];
+  const at = (h: number, m: number) => new Date(2026, 9, 19, h, m);
+  it('finds the period by the clock, start inclusive and end exclusive', () => {
+    expect(currentPeriodNumber(periods, at(8, 0))).toBe(1);
+    expect(currentPeriodNumber(periods, at(8, 39))).toBe(1);
+    expect(currentPeriodNumber(periods, at(8, 40))).toBe(2);
+    expect(currentPeriodNumber(periods, at(9, 20))).toBeNull();
+    expect(currentPeriodNumber(periods, at(7, 59))).toBeNull();
   });
 });

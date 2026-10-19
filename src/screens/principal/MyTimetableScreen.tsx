@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -19,10 +19,12 @@ import { TimetableDateBar } from '../../components/TimetableDateBar';
 import { TimetableDayTabs } from '../../components/TimetableDayTabs';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, softShadow, spacing } from '../../theme/colors';
+import { colors, radius, spacing } from '../../theme/colors';
+import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
   addDaysIso,
+  currentPeriodNumber,
   dateViewSlots,
   defaultDay,
   formatIsoDate,
@@ -141,31 +143,59 @@ export function MyTimetableScreen({ route, navigation }: Props) {
       ? t(`timetable.badge.${badge.kind}`)
       : t(`timetable.badge.${badge.kind}`, { teacher: badge.teacher });
 
+  const nowPeriod = selectedDate === today && timetable ? currentPeriodNumber(timetable.periods) : null;
+  const dateChanges = dateSlots.filter((slot) => !!slot.overrideKind).length;
+  const dateTaught = [...dateByPeriod.values()].filter((slots) => slots.length > 0).length;
+
   const renderSlot = (slot: TimetableSlot, index: number) => {
     const badge = slotBadge(slot, viewerId, { thirdPerson });
     const cancelled = slot.overrideKind === 'CANCELLED';
     return (
       <View key={`${slot.sectionId}-${slot.overrideId ?? 'regular'}`} style={index > 0 ? styles.slotDivider : undefined}>
-        <Text style={[styles.subject, cancelled && styles.struck]}>{slot.subjectName}</Text>
-        <Text style={[styles.detail, cancelled && styles.struck]}>
+        <View style={styles.slotTop}>
+          <Text style={[styles.subject, cancelled && styles.struck]} numberOfLines={1}>
+            {slot.subjectName}
+          </Text>
+          {badge && <StatusChip label={badgeText(badge)} variant={BADGE_VARIANT[badge.kind]} />}
+        </View>
+        <Text style={[styles.detail, cancelled && styles.struck]} numberOfLines={1}>
           {isTeacherView ? `${slot.className} - ${slot.section}` : slot.teacherName}
+          {!!slot.roomName && !cancelled ? ` · ${slot.roomName}` : ''}
         </Text>
-        {!!slot.roomName && !cancelled && <Text style={styles.room}>{t('timetable.room', { name: slot.roomName })}</Text>}
-        {badge && (
-          <View style={styles.badge}>
-            <StatusChip label={badgeText(badge)} variant={BADGE_VARIANT[badge.kind]} />
-          </View>
-        )}
       </View>
     );
   };
 
+  /** One row of the day: the time on a rail, then a card (or a dashed break line, or "Free"). */
+  const periodRow = (period: Timetable['periods'][number], body: ReactNode | null, isNow: boolean) => (
+    <View key={period.periodNumber} style={styles.row}>
+      <View style={styles.timeCol}>
+        <Text style={[styles.time, period.breakPeriod && styles.timeMuted]}>{period.startTime}</Text>
+        {!period.breakPeriod && <Text style={styles.timeEnd}>{period.endTime}</Text>}
+      </View>
+      {period.breakPeriod ? (
+        <View style={styles.breakLine}>
+          <Text style={styles.breakText}>{period.label ?? t('timetable.break')}</Text>
+        </View>
+      ) : (
+        <View style={[styles.card, isNow && styles.cardNow]}>
+          {isNow && <Text style={styles.now}>{t('timetable.now')}</Text>}
+          {body ?? <Text style={styles.free}>{t('timetable.free')}</Text>}
+          <Text style={styles.periodNo}>{period.label ?? t('timetable.periodN', { n: period.periodNumber })}</Text>
+        </View>
+      )}
+    </View>
+  );
+
   return (
     <View style={styles.root}>
-      <ScreenHeader title={title} subtitle={subtitle} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={title} subtitle={subtitle} onBack={() => navigation.goBack()}>
+        <TimetableDateBar value={selectedDate} onChange={setSelectedDate} showWeek onViolet />
+        {ready && !selectedDate && timetable.periods.length > 0 && (
+          <TimetableDayTabs days={timetable.days} selected={day} onSelect={setDay} onViolet />
+        )}
+      </ScreenHeader>
       <ScreenContainer>
-        <TimetableDateBar value={selectedDate} onChange={setSelectedDate} showWeek />
-
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && (
           <View>
@@ -201,29 +231,16 @@ export function MyTimetableScreen({ route, navigation }: Props) {
 
         {ready && !noSchool && selectedDate && timetable.periods.length > 0 && (
           <>
-            {dateSlots.length === 0 && <Text style={styles.empty}>{t('timetable.my.nothingToday')}</Text>}
+            <Text style={styles.summary}>
+              {dateSlots.length === 0
+                ? t('timetable.my.nothingToday')
+                : dateChanges > 0
+                  ? t('timetable.my.summaryWithChanges', { periods: dateTaught, changes: dateChanges })
+                  : t('timetable.my.summary', { periods: dateTaught })}
+            </Text>
             {timetable.periods.map((period) => {
               const slots = dateByPeriod.get(period.periodNumber) ?? [];
-              return (
-                <View key={period.periodNumber} style={[styles.row, period.breakPeriod && styles.breakRow]}>
-                  <View style={styles.timeCol}>
-                    <Text style={styles.time}>{period.startTime}</Text>
-                    <Text style={styles.timeEnd}>{period.endTime}</Text>
-                  </View>
-                  <View style={styles.bodyCol}>
-                    {period.breakPeriod ? (
-                      <Text style={styles.breakText}>{period.label ?? t('timetable.break')}</Text>
-                    ) : slots.length > 0 ? (
-                      slots.map(renderSlot)
-                    ) : (
-                      <Text style={styles.free}>{t('timetable.free')}</Text>
-                    )}
-                  </View>
-                  <Text style={styles.periodNo}>
-                    {period.breakPeriod ? '' : (period.label ?? t('timetable.periodN', { n: period.periodNumber }))}
-                  </Text>
-                </View>
-              );
+              return periodRow(period, slots.length > 0 ? slots.map(renderSlot) : null, nowPeriod === period.periodNumber);
             })}
           </>
         )}
@@ -235,34 +252,22 @@ export function MyTimetableScreen({ route, navigation }: Props) {
                 {isTeacherView ? t('timetable.my.emptyTeacher') : t('timetable.my.emptySection')}
               </Text>
             )}
-            <TimetableDayTabs days={timetable.days} selected={day} onSelect={setDay} />
             {timetable.periods.map((period) => {
               const slot = weekSlots.get(period.periodNumber);
-              return (
-                <View key={period.periodNumber} style={[styles.row, period.breakPeriod && styles.breakRow]}>
-                  <View style={styles.timeCol}>
-                    <Text style={styles.time}>{period.startTime}</Text>
-                    <Text style={styles.timeEnd}>{period.endTime}</Text>
-                  </View>
-                  <View style={styles.bodyCol}>
-                    {period.breakPeriod ? (
-                      <Text style={styles.breakText}>{period.label ?? t('timetable.break')}</Text>
-                    ) : slot ? (
-                      <>
-                        <Text style={styles.subject}>{slot.subjectName}</Text>
-                        <Text style={styles.detail}>
-                          {isTeacherView ? `${slot.className} - ${slot.section}` : slot.teacherName}
-                        </Text>
-                        {!!slot.roomName && <Text style={styles.room}>{t('timetable.room', { name: slot.roomName })}</Text>}
-                      </>
-                    ) : (
-                      <Text style={styles.free}>{t('timetable.free')}</Text>
-                    )}
-                  </View>
-                  <Text style={styles.periodNo}>
-                    {period.breakPeriod ? '' : (period.label ?? t('timetable.periodN', { n: period.periodNumber }))}
-                  </Text>
-                </View>
+              return periodRow(
+                period,
+                slot ? (
+                  <>
+                    <Text style={styles.subject} numberOfLines={1}>
+                      {slot.subjectName}
+                    </Text>
+                    <Text style={styles.detail} numberOfLines={1}>
+                      {isTeacherView ? `${slot.className} - ${slot.section}` : slot.teacherName}
+                      {slot.roomName ? ` · ${slot.roomName}` : ''}
+                    </Text>
+                  </>
+                ) : null,
+                false
               );
             })}
           </>
@@ -276,46 +281,57 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: spacing.xl },
   retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm },
-  retryText: { color: colors.primary, fontWeight: '700' },
-  empty: { color: colors.textMuted, marginBottom: spacing.md, fontSize: 14 },
+  retryText: { color: colors.primary, fontFamily: fonts.headingMedium, fontSize: 14 },
+  empty: { color: colors.textMuted, marginBottom: spacing.md, fontFamily: fonts.body, fontSize: 15 },
+  summary: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginBottom: spacing.md },
   notice: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    ...softShadow,
   },
-  noticeTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
-  noticeText: { color: colors.textSecondary, fontSize: 14, marginTop: spacing.xs },
+  noticeTitle: { color: colors.textPrimary, fontFamily: fonts.headingMedium, fontSize: 15, lineHeight: 20 },
+  noticeText: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 14, marginTop: spacing.xs },
   noticeButtons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   noticeButton: {
     backgroundColor: colors.primaryLight,
-    borderRadius: radius.pill,
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  noticeButtonText: { color: colors.primary, fontWeight: '700' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  noticeButtonText: { color: colors.primary, fontFamily: fonts.headingMedium, fontSize: 14 },
+  row: { flexDirection: 'row', alignItems: 'stretch', marginBottom: spacing.sm },
+  timeCol: { width: 52, paddingTop: spacing.md, alignItems: 'flex-end', paddingRight: spacing.md },
+  time: { fontFamily: fonts.bodySemibold, fontSize: 12, lineHeight: 16, color: colors.textSecondary },
+  timeMuted: { color: colors.textMuted, fontFamily: fonts.body },
+  timeEnd: { fontFamily: fonts.body, fontSize: 11, lineHeight: 14, color: colors.textMuted },
+  card: {
+    flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    ...softShadow,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
-  breakRow: { backgroundColor: colors.surfaceMuted },
-  timeCol: { width: 56 },
-  time: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
-  timeEnd: { fontSize: 12, color: colors.textMuted },
-  bodyCol: { flex: 1, paddingHorizontal: spacing.sm },
+  cardNow: { borderColor: colors.primaryBright, borderWidth: 2 },
+  now: { position: 'absolute', top: spacing.sm, right: spacing.md, fontFamily: fonts.bodySemibold, fontSize: 11, color: colors.primary },
+  breakLine: {
+    flex: 1,
+    justifyContent: 'center',
+    marginVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  breakText: { position: 'absolute', left: spacing.md, top: -9, backgroundColor: colors.background, paddingHorizontal: 6, fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   slotDivider: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  subject: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  detail: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  room: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  slotTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  subject: { fontFamily: fonts.headingMedium, fontSize: 15, lineHeight: 20, color: colors.textPrimary, flexShrink: 1 },
+  detail: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginTop: 2 },
   struck: { textDecorationLine: 'line-through', color: colors.textMuted },
-  badge: { flexDirection: 'row', marginTop: spacing.xs },
-  free: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic' },
-  breakText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
-  periodNo: { fontSize: 12, color: colors.textMuted },
+  free: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
+  periodNo: { fontFamily: fonts.body, fontSize: 11, lineHeight: 14, color: colors.textMuted, marginTop: spacing.xs },
 });

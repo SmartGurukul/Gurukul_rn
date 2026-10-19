@@ -2264,7 +2264,9 @@
       "sectionTitle": "कक्षा की समय-सारणी",
       "emptyTeacher": "अभी आपको कोई पीरियड नहीं दिया गया है।",
       "emptySection": "इस कक्षा की समय-सारणी अभी नहीं बनी है।",
-      "nothingToday": "इस दिन कोई पीरियड नहीं है।"
+      "nothingToday": "इस दिन कोई पीरियड नहीं है।",
+      "summary": "{{periods}} पीरियड",
+      "summaryWithChanges": "{{periods}} पीरियड · आज {{changes}} बदलाव"
     },
     "editor": {
       "title": "समय-सारणी",
@@ -2436,8 +2438,11 @@
       "suggestedFallback": "सुझाव: {{name}} - {{subject}} का कोई शिक्षक खाली नहीं",
       "noTeacherFree": "इस पीरियड में कोई खाली नहीं है",
       "fallbackChip": "{{subject}} नहीं पढ़ाते",
-      "fallbackPickerHint": "इस पीरियड में {{subject}} का कोई शिक्षक खाली नहीं है। ये शिक्षक खाली हैं।"
-    }
+      "fallbackPickerHint": "इस पीरियड में {{subject}} का कोई शिक्षक खाली नहीं है। ये शिक्षक खाली हैं।",
+      "summary_one": "{{away}} अनुपस्थित · {{count}} पीरियड अभी बाकी",
+      "summary_other": "{{away}} अनुपस्थित · {{count}} पीरियड अभी बाकी"
+    },
+    "now": "अभी"
   },
   "reportCardPdf": {
     "download": "PDF डाउनलोड करें",

@@ -325,3 +325,17 @@ export function describeClash(clash: TimetableClash): ClashDescription {
     date: clash.date ?? null,
   };
 }
+
+/**
+ * The period that `now` falls in (start inclusive, end exclusive), by the "HH:mm" times of the
+ * bell schedule; null outside every period. Used to mark "Now" on a date view of today.
+ */
+export function currentPeriodNumber(periods: readonly Period[], now: Date = new Date()): number | null {
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const toMinutes = (time: string) => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+  const hit = periods.find((p) => minutes >= toMinutes(p.startTime) && minutes < toMinutes(p.endTime));
+  return hit ? hit.periodNumber : null;
+}

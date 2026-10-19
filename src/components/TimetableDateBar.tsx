@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { colors, radius, spacing } from '../theme/colors';
+import { fonts } from '../theme/typography';
 import { addDaysIso, formatIsoDate, pickedDate, todayIso } from '../utils/timetable';
 import { parseIsoDate, toIsoDate } from './DatePickerField';
 
@@ -16,13 +17,15 @@ interface Props {
   showWeek?: boolean;
   /** Earliest date that can be picked (YYYY-MM-DD). Reading past days is allowed, so most screens leave it out. */
   minimumDate?: string;
+  /** Rendered inside a violet ScreenHeader: white chips on the violet surface. */
+  onViolet?: boolean;
 }
 
 /**
  * Today / Tomorrow / Week / a picked date, as one row of chips above a timetable. The last chip
  * opens the same calendar DatePickerField uses, and shows the picked date once there is one.
  */
-export function TimetableDateBar({ value, onChange, showWeek = false, minimumDate }: Props) {
+export function TimetableDateBar({ value, onChange, showWeek = false, minimumDate, onViolet = false }: Props) {
   const { t, i18n } = useTranslation();
   const [picking, setPicking] = useState(false);
   const today = todayIso();
@@ -33,12 +36,21 @@ export function TimetableDateBar({ value, onChange, showWeek = false, minimumDat
     <Pressable
       key={key}
       onPress={onPress}
-      style={[styles.chip, active && styles.chipActive]}
+      style={[styles.chip, onViolet && styles.chipOnViolet, active && (onViolet ? styles.chipActiveOnViolet : styles.chipActive)]}
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
     >
-      {icon && <FontAwesome5 name={icon} size={12} color={active ? colors.white : colors.textSecondary} style={styles.icon} />}
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+      {icon && (
+        <FontAwesome5
+          name={icon}
+          size={12}
+          color={onViolet ? (active ? colors.primary : colors.onPrimary) : active ? colors.white : colors.textSecondary}
+          style={styles.icon}
+        />
+      )}
+      <Text style={[styles.chipText, onViolet && styles.chipTextOnViolet, active && (onViolet ? styles.chipTextActiveOnViolet : styles.chipTextActive)]}>
+        {label}
+      </Text>
     </Pressable>
   );
 
@@ -87,7 +99,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipOnViolet: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'transparent' },
+  chipActiveOnViolet: { backgroundColor: colors.white, borderColor: colors.white },
   icon: { marginRight: spacing.xs },
-  chipText: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  chipText: { fontFamily: fonts.headingMedium, fontSize: 13, lineHeight: 18, color: colors.textPrimary },
   chipTextActive: { color: colors.white },
+  chipTextOnViolet: { color: colors.onPrimary },
+  chipTextActiveOnViolet: { color: colors.primary },
 });

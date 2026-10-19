@@ -2264,7 +2264,9 @@
       "sectionTitle": "Class Timetable",
       "emptyTeacher": "No periods are assigned to you yet.",
       "emptySection": "This class has no timetable yet.",
-      "nothingToday": "No periods on this day."
+      "nothingToday": "No periods on this day.",
+      "summary": "{{periods}} periods",
+      "summaryWithChanges": "{{periods}} periods · {{changes}} changes today"
     },
     "editor": {
       "title": "Timetables",
@@ -2436,8 +2438,11 @@
       "suggestedFallback": "Suggested: {{name}} - no {{subject}} teacher is free",
       "noTeacherFree": "Nobody is free in this period",
       "fallbackChip": "Doesn't teach {{subject}}",
-      "fallbackPickerHint": "No {{subject}} teacher is free in this period. These teachers are free."
-    }
+      "fallbackPickerHint": "No {{subject}} teacher is free in this period. These teachers are free.",
+      "summary_one": "{{away}} away · {{count}} period still uncovered",
+      "summary_other": "{{away}} away · {{count}} periods still uncovered"
+    },
+    "now": "Now"
   },
   "reportCardPdf": {
     "download": "Download PDF",
