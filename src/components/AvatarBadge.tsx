@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { accents, radius, type AccentKey } from '../theme/colors';
+import { colors, radius, type AccentKey } from '../theme/colors';
+import { fonts } from '../theme/typography';
 
 interface Props {
   name: string;
@@ -14,17 +15,17 @@ function initialsOf(name: string) {
   return initials.toUpperCase();
 }
 
-export function AvatarBadge({ name, accentKey, size = 44 }: Props) {
-  const accent = accents[accentKey];
+// `accentKey` is kept for callers; the redesign gives every avatar the same violet tile.
+export function AvatarBadge({ name, size = 44 }: Props) {
 
   return (
     <View
       style={[
         styles.circle,
-        { width: size, height: size, borderRadius: radius.lg, backgroundColor: accent.light },
+        { width: size, height: size, borderRadius: radius.lg, backgroundColor: colors.primaryLight },
       ]}
     >
-      <Text style={[styles.text, { color: accent.base, fontSize: size * 0.36 }]}>{initialsOf(name)}</Text>
+      <Text style={[styles.text, { color: colors.primary, fontSize: size * 0.36 }]}>{initialsOf(name)}</Text>
     </View>
   );
 }
@@ -35,6 +36,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    fontWeight: '800',
+    fontFamily: fonts.headingMedium,
   },
 });
