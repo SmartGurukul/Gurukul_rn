@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +7,9 @@ import { login } from '../api/auth';
 import { setAuthSession } from '../api/client';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Logo } from '../components/Logo';
+import { VioletHero } from '../components/VioletHero';
 import LabeledInput from '../components/LabeledInput';
-import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
 import { getErrorMessage } from '../api/errorMessage';
 
@@ -46,7 +46,7 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <VioletHero style={styles.hero}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
@@ -55,7 +55,7 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
         </View>
         <Logo width={160} onDarkBackground />
         <Text style={styles.subtitle}>{t('auth.signInSubtitle')}</Text>
-      </LinearGradient>
+      </VioletHero>
 
       <View style={styles.form}>
         <LabeledInput label={t('auth.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
-    ...shadow,
   },
   backButton: {
     position: 'absolute',

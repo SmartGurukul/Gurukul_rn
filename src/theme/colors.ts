@@ -2,8 +2,7 @@
  * "Deep Violet" theme (Oct 2026 redesign, workspace spec `app-ui-redesign-deep-violet`).
  * Brand kit: Violet 700 for headers and primary actions, Violet 600 only as the decorative circle
  * on a violet surface, paper ground below, marigold reserved for one attention element per screen.
- * No gradients anywhere: `gradients.header` is kept for the remaining `LinearGradient` callers but
- * is a solid Violet 700 and should be replaced by `colors.primary` as screens are restyled.
+ * No gradients anywhere (the game hub keeps its own `gameColors` surfaces on purpose).
  */
 export const colors = {
   primary: '#6D28D9', // Violet 700: headers, primary buttons, active tab
@@ -31,11 +30,6 @@ export const colors = {
   onPrimary: '#FFFFFF',
   onPrimaryMuted: '#EDE4FE',
   onPrimaryWarning: '#FFE7A8',
-} as const;
-
-export const gradients = {
-  /** Solid Violet 700 - the redesign has no gradients. See the note above. */
-  header: ['#6D28D9', '#6D28D9'] as const,
 } as const;
 
 export const spacing = {

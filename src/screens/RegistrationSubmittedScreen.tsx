@@ -1,10 +1,10 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LanguageSwitch } from '../components/LanguageSwitch';
-import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { VioletHero } from '../components/VioletHero';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 
 interface Props {
   message: string;
@@ -17,7 +17,7 @@ export default function RegistrationSubmittedScreen({ message, onDone }: Props) 
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <VioletHero style={styles.hero}>
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.sm }]}>
           <LanguageSwitch />
         </View>
@@ -25,7 +25,7 @@ export default function RegistrationSubmittedScreen({ message, onDone }: Props) 
           <Text style={styles.badgeText}>✓</Text>
         </View>
         <Text style={styles.title}>{t('registration.submitted.title')}</Text>
-      </LinearGradient>
+      </VioletHero>
 
       <View style={styles.body}>
         <Text style={styles.message}>{message}</Text>
@@ -46,7 +46,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
-    ...shadow,
   },
   languageSwitchWrapper: {
     position: 'absolute',

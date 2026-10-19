@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +10,8 @@ import { ErrorNotice } from '../components/ErrorNotice';
 import LabeledInput from '../components/LabeledInput';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Logo } from '../components/Logo';
-import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { VioletHero } from '../components/VioletHero';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 import { normalizePhone } from '../utils/phoneLogin';
 
 interface Props {
@@ -56,14 +56,14 @@ export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool }: P
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <VioletHero style={styles.hero}>
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
         <Logo width={160} onDarkBackground />
         <Text style={styles.title}>{t('phoneLogin.title')}</Text>
         <Text style={styles.subtitle}>{t('phoneLogin.subtitle')}</Text>
-      </LinearGradient>
+      </VioletHero>
 
       <View style={styles.form}>
         <LabeledInput
@@ -111,7 +111,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
-    ...shadow,
   },
   languageSwitchWrapper: {
     position: 'absolute',

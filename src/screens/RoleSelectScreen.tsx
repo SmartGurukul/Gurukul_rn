@@ -1,11 +1,11 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Logo } from '../components/Logo';
-import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { VioletHero } from '../components/VioletHero';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 
 export type RegistrationRole = 'student' | 'teacher' | 'parent';
 
@@ -27,7 +27,7 @@ export default function RoleSelectScreen({ schoolName, onBack, onSelectRole }: P
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <VioletHero style={styles.hero}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
@@ -37,7 +37,7 @@ export default function RoleSelectScreen({ schoolName, onBack, onSelectRole }: P
         <Logo width={120} onDarkBackground />
         <Text style={styles.title}>{schoolName ?? t('roleSelect.createAccount')}</Text>
         <Text style={styles.subtitle}>{t('roleSelect.subtitle')}</Text>
-      </LinearGradient>
+      </VioletHero>
 
       <View style={styles.form}>
         {ROLES.map((item) => (
@@ -59,7 +59,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
-    ...shadow,
   },
   backButton: {
     position: 'absolute',

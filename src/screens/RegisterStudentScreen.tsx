@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { registerStudent, registerStudentWithInvite } from '../api/registration';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
-import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { VioletHero } from '../components/VioletHero';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 import { getErrorMessage } from '../api/errorMessage';
 import { ErrorNotice } from '../components/ErrorNotice';
 
@@ -51,7 +51,7 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <VioletHero style={styles.hero}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
@@ -60,7 +60,7 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
         </View>
         <Text style={styles.title}>{t('registration.student.title')}</Text>
         <Text style={styles.subtitle}>{t('registration.student.subtitle')}</Text>
-      </LinearGradient>
+      </VioletHero>
 
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
         <View style={styles.toggleRow}>
@@ -133,7 +133,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
-    ...shadow,
   },
   backButton: {
     position: 'absolute',
