@@ -14,7 +14,7 @@ import { useAppFonts } from './src/theme/typography';
 import { SchoolContext } from './src/context/SchoolContext';
 import { AuthContext } from './src/context/AuthContext';
 import { ToastProvider, useToast } from './src/context/ToastContext';
-import { getStoredSchoolId, setStoredSchoolId } from './src/api/schoolStorage';
+import { clearStoredSchoolId, getStoredSchoolId, setStoredSchoolId } from './src/api/schoolStorage';
 import { getStoredSession, setStoredSession, clearStoredSession, type Session } from './src/api/authStorage';
 import {
   getAuthToken,
@@ -35,6 +35,8 @@ import { trackTokenFromUrl } from './src/transport/trackLink';
 import { phoneLookupOutcome } from './src/utils/phoneLogin';
 import { TrackLinkView } from './src/screens/transport/TrackLinkView';
 import PhoneEntryScreen from './src/screens/PhoneEntryScreen';
+import PublicSignupScreen from './src/screens/PublicSignupScreen';
+import { PUBLIC_SCHOOL_ID } from './src/config/publicSchool';
 import SchoolPickScreen from './src/screens/SchoolPickScreen';
 import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
 import OtpLoginScreen from './src/screens/OtpLoginScreen';
@@ -48,6 +50,7 @@ import RegistrationSubmittedScreen from './src/screens/RegistrationSubmittedScre
 
 type PreAuthStep =
   | { name: 'phone' }
+  | { name: 'publicSignup'; phone: string }
   | { name: 'pickSchool'; phone: string; schools: SchoolSearchResult[] }
   | { name: 'register' }
   | { name: 'otpLogin'; schoolId: string; schoolName?: string; autoSend?: boolean }
@@ -201,6 +204,15 @@ export default function App() {
     setPreAuthStep({ name: 'otpLogin', schoolId: school.id, schoolName: school.name, autoSend: true });
   };
 
+  // A number on file at no school becomes a schoolless (public) student under the virtual Open
+  // School. Persist that school id up front, exactly like openOtpLogin, so a restart mid-signup
+  // still has a school to land on.
+  const openPublicSignup = (phone: string) => {
+    setSchoolId(PUBLIC_SCHOOL_ID);
+    setStoredSchoolId(PUBLIC_SCHOOL_ID);
+    setPreAuthStep({ name: 'publicSignup', phone });
+  };
+
   // One school goes straight to its OTP, code already on its way; several ask which. A number
   // registered nowhere never gets here - the screen handles it.
   const handlePhoneSchools = (phone: string, schools: SchoolSearchResult[]) => {
@@ -226,6 +238,21 @@ export default function App() {
           <PhoneEntryScreen
             onSchoolsFound={handlePhoneSchools}
             onRegisterSchool={() => setPreAuthStep({ name: 'register' })}
+            onContinueAsPublic={openPublicSignup}
+          />
+        );
+      case 'publicSignup':
+        return (
+          <PublicSignupScreen
+            initialPhone={preAuthStep.phone}
+            onLoggedIn={handleLoggedIn}
+            onBack={() => {
+              // Back out of the virtual school too, or the stored Open-School id strands a restart
+              // on a screenless public shell.
+              setSchoolId(null);
+              clearStoredSchoolId();
+              setPreAuthStep({ name: 'phone' });
+            }}
           />
         );
       case 'pickSchool':

@@ -9,3 +9,7 @@ export function getStoredSchoolId() {
 export function setStoredSchoolId(schoolId: string) {
   return AsyncStorage.setItem(SCHOOL_ID_KEY, schoolId);
 }
+
+export function clearStoredSchoolId() {
+  return AsyncStorage.removeItem(SCHOOL_ID_KEY);
+}

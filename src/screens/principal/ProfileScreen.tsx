@@ -6,8 +6,10 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { listProfiles } from '../../api/auth';
+import { changeMyClass, listProfiles } from '../../api/auth';
 import { getEmployee } from '../../api/employees';
+import { getStudent } from '../../api/students';
+import { getErrorMessage } from '../../api/errorMessage';
 import { downloadIdCardPdf, getMyIdCards } from '../../api/idCards';
 import type { IdCard } from '../../api/idCards';
 import type { Employee } from '../../api/types';
@@ -17,6 +19,8 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
+import { isPublicSchool, PUBLIC_CLASSES } from '../../config/publicSchool';
 import { usePdfDownload } from '../../hooks/usePdfDownload';
 import { useLanguage } from '../../i18n/useLanguage';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
@@ -73,8 +77,13 @@ export function ProfileScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
+  const { showToast } = useToast();
+  const isPublic = isPublicSchool(schoolId);
   const { language, languages, setLanguage } = useLanguage();
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [classMenuOpen, setClassMenuOpen] = useState(false);
+  const [myClass, setMyClass] = useState<string | null>(null);
+  const [changingClass, setChangingClass] = useState(false);
   const currentLanguageLabel = languages.find((l) => l.code === language)?.nativeLabel ?? language.toUpperCase();
   const [card, setCard] = useState<IdCard | null>(null);
   const [cardLoading, setCardLoading] = useState(true);
@@ -107,6 +116,28 @@ export function ProfileScreen({ navigation }: Props) {
       .catch(() => setHasOtherProfiles(false));
   }, [schoolId, session.ownerId, session.ownerType]);
 
+  // Public students pick a class at sign-up and may change it here; load the current one to show it.
+  useEffect(() => {
+    if (!isPublic) return;
+    getStudent(schoolId, session.ownerId)
+      .then((student) => setMyClass(student.className))
+      .catch(() => setMyClass(null));
+  }, [isPublic, schoolId, session.ownerId]);
+
+  const changeClass = async (grade: number) => {
+    setChangingClass(true);
+    try {
+      await changeMyClass({ grade });
+      setMyClass(String(grade));
+      setClassMenuOpen(false);
+      showToast(t('publicLogin.classChanged', { class: grade }), 'success');
+    } catch (e) {
+      showToast(getErrorMessage(e), 'error');
+    } finally {
+      setChangingClass(false);
+    }
+  };
+
   const openCard = () => {
     if (card) navigation.navigate('IdCard', { kind: card.ownerType, id: card.ownerId, name: card.name });
   };
@@ -115,6 +146,17 @@ export function ProfileScreen({ navigation }: Props) {
   };
 
   const settingsRows: Omit<RowProps, 'last'>[] = [
+    ...(isPublic
+      ? [
+          {
+            icon: 'graduation-cap',
+            label: t('publicLogin.changeClass'),
+            subtitle: t('publicLogin.changeClassSubtitle'),
+            value: myClass ? t('dashboard.classLabel', { class: myClass }) : undefined,
+            onPress: () => setClassMenuOpen(true),
+          },
+        ]
+      : []),
     {
       icon: 'globe',
       label: t('language.toggleLabel'),
@@ -251,6 +293,34 @@ export function ProfileScreen({ navigation }: Props) {
           </View>
         </Pressable>
       </Modal>
+
+      <Modal
+        visible={classMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setClassMenuOpen(false)}
+      >
+        <Pressable style={styles.languageBackdrop} onPress={() => setClassMenuOpen(false)}>
+          <View style={[styles.languageMenu, { paddingBottom: insets.bottom + spacing.md }]}>
+            <Text style={styles.classMenuTitle}>{t('publicLogin.classPrompt')}</Text>
+            <View style={styles.classMenuGrid}>
+              {PUBLIC_CLASSES.map((g) => {
+                const selected = myClass === String(g);
+                return (
+                  <Pressable
+                    key={g}
+                    style={[styles.classMenuChip, selected && styles.classMenuChipOn]}
+                    onPress={() => changeClass(g)}
+                    disabled={changingClass}
+                  >
+                    <Text style={[styles.classMenuChipText, selected && styles.classMenuChipTextOn]}>{g}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -362,4 +432,19 @@ const styles = StyleSheet.create({
   languageOptionActive: { backgroundColor: colors.primaryLight },
   languageOptionText: { fontSize: 15, color: colors.textPrimary },
   languageOptionTextActive: { color: colors.primary, fontWeight: '700' },
+  classMenuTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
+  classMenuGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  classMenuChip: {
+    width: 56,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  classMenuChipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  classMenuChipText: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  classMenuChipTextOn: { color: colors.white },
 });

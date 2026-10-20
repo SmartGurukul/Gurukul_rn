@@ -407,7 +407,8 @@
       "messages": "Messages"
     },
     "needsYou": "Needs you",
-    "allTools": "All tools"
+    "allTools": "All tools",
+    "classLabel": "Class {{class}}"
   },
   "academicHelper": {
     "title": "Academic Helper",
@@ -3815,5 +3816,23 @@
     "linked": "Linked. {{count}} chapters added to the class lists.",
     "unlinked": "Unlinked.",
     "empty": "No subjects yet. Add subjects first."
+  },
+  "publicLogin": {
+    "continueAsStudent": "Continue as a student",
+    "title": "Start learning",
+    "subtitle": "No school needed - pick your class and learn with students across India.",
+    "nameLabel": "Your name",
+    "classPrompt": "Which class are you in?",
+    "sendCode": "Send code",
+    "sending": "Sending...",
+    "verify": "Start learning",
+    "verifying": "Verifying...",
+    "otpLabel": "Enter the code",
+    "codeSentTo": "We sent a code to {{phone}}",
+    "editDetails": "Edit details",
+    "changeClass": "Change class",
+    "changeClassSubtitle": "Switch the class you're learning in",
+    "classChanged": "You're now in Class {{class}}",
+    "learnerTag": "Learner"
   }
 }

@@ -1390,6 +1390,19 @@ export interface OtpVerifyRequest {
   otp: string;
 }
 
+// Public (schoolless) student self-signup at the virtual Open School. An unknown phone creates a
+// student at the chosen grade; a known one just logs in. See the backend /auth/public/* endpoints.
+export interface PublicSignupRequest {
+  phone: string;
+  otp: string;
+  name: string;
+  grade: number;
+}
+
+export interface ChangeClassRequest {
+  grade: number;
+}
+
 // A phone number shared by siblings (or a teacher who is also a parent) resolves to more than one
 // profile - verify/select-profile/switch all use this same shape so the UI can render one card
 // component across the pre-login picker and the post-login "switch child" screen.
