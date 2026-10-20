@@ -1,26 +1,29 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { colors, radius, spacing } from '../theme/colors';
+import { colors, radius, spacing, tints, type TintKey } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import type { FeatureAction } from '../types/principal';
 
 interface FeatureTileProps {
   feature: FeatureAction;
   onPress: () => void;
+  /** The block's tint; a grid cycles the four with `tintAt(index)`. */
+  tint?: TintKey;
 }
 
-/** A tool on the home grid: white card, Line border, violet icon tile - no per-feature colours. */
-export function FeatureTile({ feature, onPress }: FeatureTileProps) {
+/** A tool on the home grid: a tinted block with the icon in a white square. */
+export function FeatureTile({ feature, onPress, tint = 'violet' }: FeatureTileProps) {
+  const t = tints[tint];
   return (
-    <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.75} accessibilityRole="button">
+    <TouchableOpacity style={[styles.tile, { backgroundColor: t.bg }]} onPress={onPress} activeOpacity={0.75} accessibilityRole="button">
       <View style={styles.iconTile}>
-        <FontAwesome5 name={feature.icon} size={18} color={colors.primary} />
+        <FontAwesome5 name={feature.icon} size={18} color={t.fg} />
       </View>
       <Text style={styles.title} numberOfLines={1}>
         {feature.title}
       </Text>
-      <Text style={styles.description} numberOfLines={2}>
+      <Text style={[styles.description, { color: t.fg }]} numberOfLines={2}>
         {feature.description}
       </Text>
     </TouchableOpacity>
@@ -30,18 +33,15 @@ export function FeatureTile({ feature, onPress }: FeatureTileProps) {
 const styles = StyleSheet.create({
   tile: {
     width: '48%',
-    backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
   iconTile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.lg,
-    backgroundColor: colors.primaryLight,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
@@ -57,6 +57,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 13,
     lineHeight: 17,
-    color: colors.textSecondary,
   },
 });

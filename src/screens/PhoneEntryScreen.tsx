@@ -60,7 +60,7 @@ export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool }: P
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
-        <Logo width={160} onDarkBackground />
+        <Logo width={160} />
         <Text style={styles.title}>{t('phoneLogin.title')}</Text>
         <Text style={styles.subtitle}>{t('phoneLogin.subtitle')}</Text>
       </VioletHero>
@@ -116,9 +116,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
   },
-  title: { color: colors.white, fontSize: 22, fontWeight: '800', marginTop: spacing.md, textAlign: 'center' },
+  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '800', marginTop: spacing.md, textAlign: 'center' },
   subtitle: {
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.textSecondary,
     fontSize: 14,
     marginTop: 4,
     paddingHorizontal: spacing.lg,

@@ -1893,7 +1893,12 @@
     "findSchool": "Find my school",
     "newHere": "New here?",
     "registerSchool": "Register your school",
-    "registerTime": "2 minutes"
+    "registerTime": "2 minutes",
+    "blocks": {
+      "attendance": "Attendance",
+      "fees": "Fees",
+      "timetable": "Timetable"
+    }
   },
   "auth": {
     "sessionExpired": "Your session expired, please log in again.",

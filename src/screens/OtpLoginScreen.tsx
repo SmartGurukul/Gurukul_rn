@@ -99,7 +99,7 @@ export default function OtpLoginScreen({
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
-        <Logo width={120} onDarkBackground />
+        <Logo width={120} />
         <Text style={styles.title}>{schoolName ?? t('auth.signIn')}</Text>
         <Text style={styles.subtitle}>{t('auth.signInWithPhoneSubtitle')}</Text>
       </VioletHero>
@@ -179,17 +179,17 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  backText: { color: colors.textPrimary, fontSize: 18, fontWeight: '700' },
   languageSwitchWrapper: {
     position: 'absolute',
     right: spacing.lg,
   },
-  title: { color: colors.white, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
-  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
+  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
+  subtitle: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
   otpHint: { color: colors.textSecondary, fontSize: 13, marginBottom: spacing.sm },

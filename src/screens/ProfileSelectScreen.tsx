@@ -60,7 +60,7 @@ export default function ProfileSelectScreen({ schoolId, schoolName, selectionTok
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
-        <Logo width={100} onDarkBackground />
+        <Logo width={100} />
         <Text style={styles.title}>{t('auth.whoIsUsingApp')}</Text>
         <Text style={styles.subtitle}>{schoolName ?? t('auth.chooseProfileSubtitle')}</Text>
       </VioletHero>
@@ -108,13 +108,13 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
-  title: { color: colors.white, fontSize: 20, fontWeight: '800', marginTop: spacing.sm, textAlign: 'center' },
-  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4, textAlign: 'center', paddingHorizontal: spacing.lg },
+  backText: { color: colors.textPrimary, fontSize: 18, fontWeight: '700' },
+  title: { color: colors.textPrimary, fontSize: 20, fontWeight: '800', marginTop: spacing.sm, textAlign: 'center' },
+  subtitle: { color: colors.textSecondary, fontSize: 13, marginTop: 4, textAlign: 'center', paddingHorizontal: spacing.lg },
   list: { flex: 1, padding: spacing.lg },
   error: { color: colors.error, marginBottom: spacing.md, textAlign: 'center' },
   spinner: { marginTop: spacing.sm },

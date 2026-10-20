@@ -2,7 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '../theme/colors';
+import { colors, spacing, tints } from '../theme/colors';
 import { fonts } from '../theme/typography';
 
 export interface HomeTab {
@@ -40,7 +40,9 @@ export function HomeTabBar({ tabs, activeKey }: Props) {
             accessibilityState={{ selected: active }}
             accessibilityLabel={tab.label}
           >
-            <FontAwesome5 name={tab.icon} size={20} color={color} />
+            <View style={[styles.iconWrap, active && styles.iconWrapActive]}>
+              <FontAwesome5 name={tab.icon} size={20} color={color} />
+            </View>
             <Text style={[styles.label, { color, fontFamily: active ? fonts.bodySemibold : fonts.body }]} numberOfLines={1}>
               {tab.label}
             </Text>
@@ -56,10 +58,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.hairline,
     paddingTop: spacing.sm,
     paddingHorizontal: spacing.sm,
   },
-  tab: { flex: 1, alignItems: 'center', gap: 4, minHeight: HOME_TAB_BAR_HEIGHT - spacing.sm },
+  tab: { flex: 1, alignItems: 'center', gap: 2, minHeight: HOME_TAB_BAR_HEIGHT - spacing.sm },
+  iconWrap: { width: 56, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  iconWrapActive: { backgroundColor: tints.violet.bg },
   label: { fontSize: 11, lineHeight: 14 },
 });

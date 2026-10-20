@@ -9,7 +9,7 @@ interface Props {
   days: DayOfWeek[];
   selected: DayOfWeek;
   onSelect: (day: DayOfWeek) => void;
-  /** Rendered inside a violet ScreenHeader: white chips on the violet surface. */
+  /** Kept for callers from the previous design; the chips look the same everywhere now. */
   onViolet?: boolean;
 }
 
@@ -50,15 +50,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.surface,
     minWidth: 52,
     alignItems: 'center',
   },
   tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  tabOnViolet: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'transparent' },
-  tabActiveOnViolet: { backgroundColor: colors.white, borderColor: colors.white },
+  tabOnViolet: {},
+  tabActiveOnViolet: { backgroundColor: colors.primary, borderColor: colors.primary },
   tabText: { fontFamily: fonts.headingMedium, fontSize: 14, lineHeight: 20, color: colors.textPrimary },
   tabTextActive: { color: colors.white },
-  tabTextOnViolet: { color: colors.onPrimary },
-  tabTextActiveOnViolet: { color: colors.primary },
+  tabTextOnViolet: {},
+  tabTextActiveOnViolet: { color: colors.white },
 });

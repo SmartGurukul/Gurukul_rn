@@ -67,8 +67,6 @@ const styles = StyleSheet.create({
     width: '31%',
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
     paddingVertical: spacing.md,
     alignItems: 'center',
   },
