@@ -314,6 +314,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     .filter((feature) => FEATURE_FLAGS.videoCalls || feature.id !== 'calls')
     .filter((feature) => FEATURE_FLAGS.resourceHub || feature.id !== 'resources')
     .filter((feature) => !isPublic || feature.id === 'resources' || feature.id === 'gamification')
+    // Students reach Fees and Timetable from the bottom tab bar, so drop the duplicate tiles.
+    .filter((feature) => !(isStudent && (feature.id === 'fees' || feature.id === 'myTimetable')))
     .filter((feature) => {
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
       if (TEACHER_AND_STUDENT_FEATURES.includes(feature.id)) return isTeacher || isStudent;
@@ -506,20 +508,24 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         showBadge={false}
         rightAction={
           <View style={styles.headerActions}>
-            <Pressable
-              style={styles.headerChatButton}
-              onPress={() => navigation.navigate('GlobalSearch')}
-              accessibilityLabel="Search"
-            >
-              <FontAwesome5 name="search" size={18} color={colors.textPrimary} />
-            </Pressable>
-            <Pressable
-              style={styles.headerChatButton}
-              onPress={() => navigation.navigate('ConversationsList')}
-              accessibilityLabel="Messages"
-            >
-              <FontAwesome5 name="comment-dots" size={18} color={colors.textPrimary} />
-            </Pressable>
+            {!isStudent && (
+              <>
+                <Pressable
+                  style={styles.headerChatButton}
+                  onPress={() => navigation.navigate('GlobalSearch')}
+                  accessibilityLabel="Search"
+                >
+                  <FontAwesome5 name="search" size={18} color={colors.textPrimary} />
+                </Pressable>
+                <Pressable
+                  style={styles.headerChatButton}
+                  onPress={() => navigation.navigate('ConversationsList')}
+                  accessibilityLabel="Messages"
+                >
+                  <FontAwesome5 name="comment-dots" size={18} color={colors.textPrimary} />
+                </Pressable>
+              </>
+            )}
             <Pressable
               style={styles.headerChatButton}
               onPress={() => navigation.navigate('Profile')}
