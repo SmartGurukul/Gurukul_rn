@@ -18,6 +18,8 @@ interface Props {
   /** The number is on file at these schools (never empty); App picks between OTP and a school choice. */
   onSchoolsFound: (phone: string, schools: SchoolSearchResult[]) => void;
   onRegisterSchool: () => void;
+  /** A number registered at no school can still learn as a schoolless (public) student. */
+  onContinueAsPublic: (phone: string) => void;
 }
 
 /**
@@ -26,7 +28,7 @@ interface Props {
  * directory to browse: a number registered nowhere is told so and stays here - its school has
  * to add it. The one other way in is registering a new school.
  */
-export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool }: Props) {
+export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool, onContinueAsPublic }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
@@ -84,6 +86,12 @@ export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool }: P
         {notRegistered && (
           <View style={styles.notice} accessibilityRole="alert">
             <Text style={styles.noticeText}>{t('phoneLogin.notRegistered')}</Text>
+            <Pressable
+              style={styles.publicCta}
+              onPress={() => onContinueAsPublic(normalizePhone(phone))}
+            >
+              <Text style={styles.publicCtaText}>{t('publicLogin.continueAsStudent')}</Text>
+            </Pressable>
           </View>
         )}
 
@@ -132,6 +140,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   noticeText: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
+  publicCta: {
+    marginTop: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+  },
+  publicCtaText: { color: colors.white, fontWeight: '700', fontSize: 15 },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

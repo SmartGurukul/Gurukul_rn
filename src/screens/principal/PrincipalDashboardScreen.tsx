@@ -26,6 +26,7 @@ import { SetupChecklistCard } from '../../components/SetupChecklistCard';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { isPublicSchool } from '../../config/publicSchool';
 import { colors, radius, spacing, tintAt, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import type { FeatureAction, FeatureId, HubSection, PrincipalStackParamList } from '../../types/principal';
@@ -238,6 +239,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const isStudent = session.ownerType === 'STUDENT';
+  // Schoolless (public) students: only Resources + Gamification, and never the Open School's name.
+  const isPublic = isPublicSchool(schoolId);
   const isTeacher = session.role === 'TEACHER';
   const isAdmin = session.role === 'ADMIN';
   const { language } = useLanguage();
@@ -310,6 +313,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const roleFeatures = featureActions
     .filter((feature) => FEATURE_FLAGS.videoCalls || feature.id !== 'calls')
     .filter((feature) => FEATURE_FLAGS.resourceHub || feature.id !== 'resources')
+    .filter((feature) => !isPublic || feature.id === 'resources' || feature.id === 'gamification')
     .filter((feature) => {
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
       if (TEACHER_AND_STUDENT_FEATURES.includes(feature.id)) return isTeacher || isStudent;
@@ -482,13 +486,15 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           { key: 'students', label: t('dashboard.tabs.students'), icon: 'user-graduate', onPress: () => navigation.navigate('MyStudents') },
           { key: 'ai', label: t('dashboard.tabs.askAi'), icon: 'robot', onPress: openAskAi },
         ]
-      : [
-          { key: 'home', label: t('dashboard.tabs.home'), icon: 'home' },
-          { key: 'timetable', label: t('dashboard.tabs.timetable'), icon: 'clock', onPress: () => navigation.navigate('MyTimetable') },
-          { key: 'fees', label: t('dashboard.tabs.fees'), icon: 'rupee-sign', onPress: () => navigation.navigate('MyFees') },
-          { key: 'messages', label: t('dashboard.tabs.messages'), icon: 'comment-dots', onPress: () => navigation.navigate('ConversationsList') },
-          { key: 'ai', label: t('dashboard.tabs.askAi'), icon: 'robot', onPress: openAskAi },
-        ];
+      : isPublic
+        ? [{ key: 'home', label: t('dashboard.tabs.home'), icon: 'home' }]
+        : [
+            { key: 'home', label: t('dashboard.tabs.home'), icon: 'home' },
+            { key: 'timetable', label: t('dashboard.tabs.timetable'), icon: 'clock', onPress: () => navigation.navigate('MyTimetable') },
+            { key: 'fees', label: t('dashboard.tabs.fees'), icon: 'rupee-sign', onPress: () => navigation.navigate('MyFees') },
+            { key: 'messages', label: t('dashboard.tabs.messages'), icon: 'comment-dots', onPress: () => navigation.navigate('ConversationsList') },
+            { key: 'ai', label: t('dashboard.tabs.askAi'), icon: 'robot', onPress: openAskAi },
+          ];
 
   const greeting = t('dashboard.welcome', { name: myName ?? session.username });
 
@@ -496,7 +502,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={greeting}
-        subtitle={school?.name ?? t('dashboard.fallbackTitle')}
+        subtitle={isPublic ? t('publicLogin.learnerTag') : (school?.name ?? t('dashboard.fallbackTitle'))}
         showBadge={false}
         rightAction={
           <View style={styles.headerActions}>

@@ -98,7 +98,8 @@
         }
       ],
       "expo-asset",
-      "expo-secure-store"
+      "expo-secure-store",
+      "./plugins/withNoMediaPlaybackFgs.js"
     ],
     "extra": {
       "eas": {

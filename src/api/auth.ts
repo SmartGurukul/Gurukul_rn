@@ -1,12 +1,15 @@
 import { api, getRefreshToken } from './client';
+import { PUBLIC_SCHOOL_ID } from '../config/publicSchool';
 import type {
   AuthProfile,
+  ChangeClassRequest,
   GoogleLoginRequest,
   LoginRequest,
   LoginResponse,
   OtpRequest,
   OtpVerifyRequest,
   OtpVerifyResponse,
+  PublicSignupRequest,
   SchoolSearchResult,
   SelectProfileRequest,
   SwitchProfileRequest,
@@ -39,6 +42,20 @@ export function verifyOtp(schoolId: string, req: OtpVerifyRequest) {
 
 export function selectProfile(schoolId: string, req: SelectProfileRequest) {
   return api.post<LoginResponse>('/api/v1/auth/otp/select-profile', req, schoolId);
+}
+
+// Public (schoolless) students: the virtual Open School. Unlike requestOtp, an unknown phone is
+// allowed to self-sign-up here; publicSignup returns a full student session.
+export function requestPublicOtp(req: OtpRequest) {
+  return api.post<void>('/api/v1/auth/public/otp/request', req, PUBLIC_SCHOOL_ID);
+}
+
+export function publicSignup(req: PublicSignupRequest) {
+  return api.post<LoginResponse>('/api/v1/auth/public/signup', req, PUBLIC_SCHOOL_ID);
+}
+
+export function changeMyClass(req: ChangeClassRequest) {
+  return api.put<void>('/api/v1/auth/public/class', req, PUBLIC_SCHOOL_ID);
 }
 
 export function listProfiles(schoolId: string) {
