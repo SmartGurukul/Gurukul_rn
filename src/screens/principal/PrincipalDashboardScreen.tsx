@@ -2,7 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useLanguage } from '../../i18n/useLanguage';
@@ -21,12 +21,12 @@ import { HeroCard, type HeroStat } from '../../components/HeroCard';
 import { HomeTabBar, type HomeTab } from '../../components/HomeTabBar';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { NotificationPermissionPrompt } from '../../components/NotificationPermissionPrompt';
-import { ScreenHeader } from '../../components/ScreenHeader';
+import { ScreenHeader, headerButtonStyle } from '../../components/ScreenHeader';
 import { SetupChecklistCard } from '../../components/SetupChecklistCard';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, spacing, tintAt, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import type { FeatureAction, FeatureId, HubSection, PrincipalStackParamList } from '../../types/principal';
 import { compactInr, longDate, staffPresentCount } from '../../utils/homeSummary';
@@ -449,6 +449,11 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   const heroStats: HeroStat[] = [
     {
+      label: t('dashboard.today.students'),
+      value: loadingCounts && counts.students === null ? null : counts.students === null ? undefined : counts.students.toLocaleString('en-IN'),
+      hint: t('dashboard.today.staffAndVendors', { staff: counts.employees ?? '—', vendors: counts.vendors ?? '—' }),
+    },
+    {
       label: t('dashboard.today.staffIn'),
       value: staffToday === null ? null : staffToday === undefined ? undefined : `${staffToday.present}/${staffToday.total}`,
       hint: staffToday ? t('dashboard.today.staffAway', { count: staffToday.total - staffToday.present }) : undefined,
@@ -457,13 +462,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       label: t('dashboard.today.collected'),
       value: collectedToday === null ? null : collectedToday === undefined ? undefined : compactInr(collectedToday),
       hint: t('dashboard.today.collectedHint'),
-    },
-    {
-      label: t('dashboard.today.cover'),
-      value: coverNeeded === null ? '—' : String(coverNeeded),
-      tone: coverNeeded ? colors.warning : undefined,
-      pill: coverNeeded ? t('dashboard.today.actNow') : undefined,
-      hint: coverNeeded ? undefined : t('dashboard.today.allCovered'),
     },
   ];
 
@@ -493,7 +491,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         ];
 
   const greeting = t('dashboard.welcome', { name: myName ?? session.username });
-  const headerOverlap = isAdmin ? 52 : 0;
 
   return (
     <View style={styles.root}>
@@ -501,7 +498,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         title={greeting}
         subtitle={school?.name ?? t('dashboard.fallbackTitle')}
         showBadge={false}
-        overlap={headerOverlap}
         rightAction={
           <View style={styles.headerActions}>
             <Pressable
@@ -509,44 +505,45 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('GlobalSearch')}
               accessibilityLabel="Search"
             >
-              <FontAwesome5 name="search" size={18} color={colors.white} />
+              <FontAwesome5 name="search" size={18} color={colors.textPrimary} />
             </Pressable>
             <Pressable
               style={styles.headerChatButton}
               onPress={() => navigation.navigate('ConversationsList')}
               accessibilityLabel="Messages"
             >
-              <FontAwesome5 name="comment-dots" size={18} color={colors.white} />
+              <FontAwesome5 name="comment-dots" size={18} color={colors.textPrimary} />
             </Pressable>
             <Pressable
               style={styles.headerChatButton}
               onPress={() => navigation.navigate('Profile')}
               accessibilityLabel="Profile"
             >
-              <FontAwesome5 name="user" size={18} color={colors.white} />
+              <FontAwesome5 name="user" size={18} color={colors.textPrimary} />
             </Pressable>
           </View>
         }
       >
         <Text style={styles.headerDate}>{longDate(new Date(), language)}</Text>
-        {isAdmin && (
-          <View style={styles.keyNumberRow}>
-            {loadingCounts && counts.students === null ? (
-              <ActivityIndicator color={colors.onPrimary} />
-            ) : (
-              <Text style={styles.keyNumber} numberOfLines={1} adjustsFontSizeToFit>
-                {counts.students === null ? '—' : counts.students.toLocaleString('en-IN')}
-                <Text style={styles.keyNumberLabel}> {t('dashboard.today.students')}</Text>
-              </Text>
-            )}
-            <Text style={styles.keyNumberHint} numberOfLines={1}>
-              {t('dashboard.today.staffAndVendors', { staff: counts.employees ?? '—', vendors: counts.vendors ?? '—' })}
-            </Text>
-          </View>
-        )}
       </ScreenHeader>
       <ScreenContainer contentContainerStyle={styles.scrollContent}>
-        {isAdmin && <HeroCard stats={heroStats} overlap={headerOverlap} />}
+        {isAdmin && <HeroCard stats={heroStats} tint="violet" />}
+        {isAdmin && (
+          <Pressable
+            style={[styles.coverStrip, !coverNeeded && styles.coverStripCalm]}
+            onPress={() => navigation.navigate('Substitutions')}
+            accessibilityRole="button"
+          >
+            <View style={styles.coverNumber}>
+              <Text style={[styles.coverNumberText, !coverNeeded && { color: tints.mint.fg }]}>{coverNeeded === null ? '—' : coverNeeded}</Text>
+            </View>
+            <View style={styles.listText}>
+              <Text style={styles.listTitle}>{coverNeeded ? t('dashboard.cover.needed', { count: coverNeeded }) : t('dashboard.today.allCovered')}</Text>
+              <Text style={[styles.coverHint, !coverNeeded && { color: tints.mint.fg }]}>{coverNeeded ? t('dashboard.today.actNow') : t('dashboard.features.substitutions.description')}</Text>
+            </View>
+            <Text style={styles.listChevron}>›</Text>
+          </Pressable>
+        )}
         <NotificationPermissionPrompt />
         {showSetup && <SetupChecklistCard steps={steps} onStep={openSetupStep} onDismiss={dismissSetup} />}
 
@@ -582,10 +579,11 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
         <Text style={styles.sectionTitle}>{isAdmin ? t('dashboard.allTools') : t('dashboard.quickActions')}</Text>
         <View style={styles.tileGrid}>
-          {visibleFeatures.map((feature) => (
+          {visibleFeatures.map((feature, index) => (
             <FeatureTile
               key={feature.id}
               feature={feature}
+              tint={tintAt(index)}
               onPress={() => {
                 const adminSection = session.role === 'ADMIN' ? ADMIN_SECTIONS[feature.id] : undefined;
                 if (adminSection) {
@@ -641,20 +639,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  headerChatButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerDate: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.onPrimaryMuted },
-  keyNumberRow: { marginTop: spacing.sm, gap: 2 },
-  keyNumber: { fontFamily: fonts.heading, fontSize: 40, lineHeight: 46, color: colors.onPrimary },
-  keyNumberLabel: { fontFamily: fonts.label, fontSize: 16, color: colors.onPrimaryMuted },
-  keyNumberHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.onPrimaryMuted },
+  headerChatButton: { ...headerButtonStyle, width: 40, height: 40, borderRadius: 14 },
+  headerDate: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary },
   scrollContent: { paddingBottom: spacing.xl },
+  coverStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: tints.marigold.bg,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
+  coverStripCalm: { backgroundColor: tints.mint.bg },
+  coverNumber: { width: 40, height: 40, borderRadius: 14, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  coverNumberText: { fontFamily: fonts.heading, fontSize: 18, color: tints.marigold.fg },
+  coverHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 17, color: tints.marigold.fg, marginTop: 1 },
   sectionTitle: {
     fontFamily: fonts.headingMedium,
     fontSize: 17,
@@ -665,9 +666,7 @@ const styles = StyleSheet.create({
   },
   listCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.xxl,
     overflow: 'hidden',
   },
   listRow: {
@@ -676,19 +675,19 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.hairline,
   },
   listRowLast: { borderBottomWidth: 0 },
   listIcon: {
     width: 40,
     height: 40,
-    borderRadius: radius.lg,
-    backgroundColor: colors.primarySoft,
+    borderRadius: 14,
+    backgroundColor: tints.violet.bg,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  listIconAlert: { backgroundColor: colors.warningLight },
+  listIconAlert: { backgroundColor: tints.marigold.bg },
   listText: { flex: 1 },
   listTitle: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
   listDescription: { fontFamily: fonts.body, fontSize: 13, lineHeight: 17, color: colors.textSecondary, marginTop: 1 },

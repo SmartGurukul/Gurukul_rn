@@ -17,8 +17,6 @@ import { todayIso } from '../../utils/timetable';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeesHub'>;
 
-const HERO_OVERLAP = 52;
-
 /** Money received this month and today (from the ledger), then the fee screens as a list. */
 export function FeesHubScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -60,9 +58,9 @@ export function FeesHubScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={t('fees.hub.title')} subtitle={t('fees.hub.subtitle')} onBack={() => navigation.goBack()} overlap={HERO_OVERLAP} />
+      <ScreenHeader title={t('fees.hub.title')} subtitle={t('fees.hub.subtitle')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <HeroCard stats={stats} overlap={HERO_OVERLAP} />
+        <HeroCard stats={stats} tint="marigold" />
         <View style={styles.listCard}>
           {items.map((item, index) => (
             <Pressable
@@ -94,9 +92,7 @@ const styles = StyleSheet.create({
   listCard: {
     marginTop: spacing.lg,
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.xxl,
     overflow: 'hidden',
   },
   row: {
@@ -104,14 +100,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.hairline,
   },
   rowLast: { borderBottomWidth: 0 },
   icon: {
     width: 40,
     height: 40,
     borderRadius: radius.lg,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,

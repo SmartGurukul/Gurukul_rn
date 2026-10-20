@@ -1893,7 +1893,12 @@
     "findSchool": "मेरा स्कूल खोजें",
     "newHere": "नए हैं?",
     "registerSchool": "अपना स्कूल रजिस्टर करें",
-    "registerTime": "2 मिनट"
+    "registerTime": "2 मिनट",
+    "blocks": {
+      "attendance": "उपस्थिति",
+      "fees": "फ़ीस",
+      "timetable": "टाइमटेबल"
+    }
   },
   "auth": {
     "sessionExpired": "आपका सत्र समाप्त हो गया है, कृपया फिर से लॉग इन करें।",

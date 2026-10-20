@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LanguageSwitch } from './LanguageSwitch';
-import { colors, radius, spacing } from '../theme/colors';
+import { colors, radius, spacing, tints } from '../theme/colors';
 import { fonts } from '../theme/typography';
 
 interface ScreenHeaderProps {
@@ -11,39 +11,27 @@ interface ScreenHeaderProps {
   subtitle?: string;
   onBack?: () => void;
   rightAction?: ReactNode;
-  /** Set false to omit the leading initial-letter badge on a root screen (no onBack). Defaults to true. */
+  /** Set false to omit the leading initial-letter tile on a root screen (no onBack). Defaults to true. */
   showBadge?: boolean;
-  /** Rendered inside the violet surface under the title row (a day picker, a key number, ...). */
+  /** Rendered under the title row (a day picker, a segmented control, a child switcher, ...). */
   children?: ReactNode;
-  /**
-   * Extra bottom padding so the first card of the screen can overlap the header (the design's
-   * "hero card": give the card a negative top margin of the same size). Defaults to none.
-   */
+  /** Kept for callers from the previous design; the light header has nothing to overlap. */
   overlap?: number;
 }
 
 /**
- * The solid Violet 700 header of the Deep Violet design: title and subtitle in white, one
- * decorative Violet 600 circle, no gradient and no shadow.
+ * The light header of the Playful Blocks design: paper ground, dark title, a white round back
+ * button (or a violet initial tile on a root screen), the screen's actions on the right.
  */
-export function ScreenHeader({
-  title,
-  subtitle,
-  onBack,
-  rightAction,
-  showBadge = true,
-  children,
-  overlap = 0,
-}: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, onBack, rightAction, showBadge = true, children }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const initial = (title ?? '').trim().charAt(0).toUpperCase() || '?';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.md, paddingBottom: spacing.xl + overlap }]}>
-      <View style={styles.circle} pointerEvents="none" />
+    <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
       <View style={styles.row}>
         {onBack ? (
-          <TouchableOpacity onPress={onBack} style={styles.badge} accessibilityRole="button" accessibilityLabel="Back">
+          <TouchableOpacity onPress={onBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Back">
             <Text style={styles.backText}>‹</Text>
           </TouchableOpacity>
         ) : showBadge ? (
@@ -68,45 +56,46 @@ export function ScreenHeader({
   );
 }
 
+/** A white round header button, for a screen's own right-hand actions. */
+export const headerButtonStyle = {
+  width: 44,
+  height: 44,
+  borderRadius: radius.lg,
+  backgroundColor: colors.surface,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+};
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
-    overflow: 'hidden',
-  },
-  circle: {
-    position: 'absolute',
-    right: -60,
-    top: -40,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: colors.primaryBright,
+    paddingBottom: spacing.md,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
+  },
+  backButton: { ...headerButtonStyle },
+  backText: {
+    color: colors.textPrimary,
+    fontSize: 28,
+    lineHeight: 32,
+    fontFamily: fonts.headingMedium,
+    marginTop: -3,
   },
   badge: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
+    backgroundColor: tints.violet.bg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.sm,
-  },
-  backText: {
-    color: colors.onPrimary,
-    fontSize: 26,
-    lineHeight: 30,
-    fontFamily: fonts.headingMedium,
-    marginTop: -2,
   },
   badgeText: {
-    color: colors.onPrimary,
-    fontSize: 15,
+    color: tints.violet.fg,
+    fontSize: 16,
     fontFamily: fonts.headingMedium,
   },
   titleBlock: {
@@ -118,13 +107,13 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   title: {
-    color: colors.onPrimary,
+    color: colors.textPrimary,
     fontSize: 22,
     lineHeight: 28,
     fontFamily: fonts.heading,
   },
   subtitle: {
-    color: colors.onPrimaryMuted,
+    color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
     fontFamily: fonts.body,

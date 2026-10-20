@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLanguage } from '../i18n/useLanguage';
 import { colors, radius, shadow, spacing } from '../theme/colors';
+import { fonts } from '../theme/typography';
 
 export function LanguageSwitch() {
   const { language, languages, setLanguage } = useLanguage();
@@ -50,14 +51,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: colors.primary,
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: fonts.headingMedium,
   },
   backdrop: {
     flex: 1,

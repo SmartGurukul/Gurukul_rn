@@ -17,7 +17,7 @@ interface Props {
   showWeek?: boolean;
   /** Earliest date that can be picked (YYYY-MM-DD). Reading past days is allowed, so most screens leave it out. */
   minimumDate?: string;
-  /** Rendered inside a violet ScreenHeader: white chips on the violet surface. */
+  /** Kept for callers from the previous design; the chips look the same everywhere now. */
   onViolet?: boolean;
 }
 
@@ -44,7 +44,7 @@ export function TimetableDateBar({ value, onChange, showWeek = false, minimumDat
         <FontAwesome5
           name={icon}
           size={12}
-          color={onViolet ? (active ? colors.primary : colors.onPrimary) : active ? colors.white : colors.textSecondary}
+          color={active ? colors.white : colors.textSecondary}
           style={styles.icon}
         />
       )}
@@ -96,14 +96,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.surface,
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipOnViolet: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'transparent' },
-  chipActiveOnViolet: { backgroundColor: colors.white, borderColor: colors.white },
+  chipOnViolet: {},
+  chipActiveOnViolet: { backgroundColor: colors.primary, borderColor: colors.primary },
   icon: { marginRight: spacing.xs },
   chipText: { fontFamily: fonts.headingMedium, fontSize: 13, lineHeight: 18, color: colors.textPrimary },
   chipTextActive: { color: colors.white },
-  chipTextOnViolet: { color: colors.onPrimary },
-  chipTextActiveOnViolet: { color: colors.primary },
+  chipTextOnViolet: {},
+  chipTextActiveOnViolet: { color: colors.white },
 });

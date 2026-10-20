@@ -19,7 +19,7 @@ import { TimetableDateBar } from '../../components/TimetableDateBar';
 import { TimetableDayTabs } from '../../components/TimetableDayTabs';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, spacing, tintAt, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
@@ -167,7 +167,7 @@ export function MyTimetableScreen({ route, navigation }: Props) {
   };
 
   /** One row of the day: the time on a rail, then a card (or a dashed break line, or "Free"). */
-  const periodRow = (period: Timetable['periods'][number], body: ReactNode | null, isNow: boolean) => (
+  const periodRow = (period: Timetable['periods'][number], body: ReactNode | null, isNow: boolean, tintIndex: number) => (
     <View key={period.periodNumber} style={styles.row}>
       <View style={styles.timeCol}>
         <Text style={[styles.time, period.breakPeriod && styles.timeMuted]}>{period.startTime}</Text>
@@ -178,7 +178,7 @@ export function MyTimetableScreen({ route, navigation }: Props) {
           <Text style={styles.breakText}>{period.label ?? t('timetable.break')}</Text>
         </View>
       ) : (
-        <View style={[styles.card, isNow && styles.cardNow]}>
+        <View style={[styles.card, body ? { backgroundColor: tints[tintAt(tintIndex)].bg } : null, isNow && styles.cardNow]}>
           {isNow && <Text style={styles.now}>{t('timetable.now')}</Text>}
           {body ?? <Text style={styles.free}>{t('timetable.free')}</Text>}
           <Text style={styles.periodNo}>{period.label ?? t('timetable.periodN', { n: period.periodNumber })}</Text>
@@ -238,9 +238,9 @@ export function MyTimetableScreen({ route, navigation }: Props) {
                   ? t('timetable.my.summaryWithChanges', { periods: dateTaught, changes: dateChanges })
                   : t('timetable.my.summary', { periods: dateTaught })}
             </Text>
-            {timetable.periods.map((period) => {
+            {timetable.periods.map((period, index) => {
               const slots = dateByPeriod.get(period.periodNumber) ?? [];
-              return periodRow(period, slots.length > 0 ? slots.map(renderSlot) : null, nowPeriod === period.periodNumber);
+              return periodRow(period, slots.length > 0 ? slots.map(renderSlot) : null, nowPeriod === period.periodNumber, index);
             })}
           </>
         )}
@@ -252,7 +252,7 @@ export function MyTimetableScreen({ route, navigation }: Props) {
                 {isTeacherView ? t('timetable.my.emptyTeacher') : t('timetable.my.emptySection')}
               </Text>
             )}
-            {timetable.periods.map((period) => {
+            {timetable.periods.map((period, index) => {
               const slot = weekSlots.get(period.periodNumber);
               return periodRow(
                 period,
@@ -267,7 +267,8 @@ export function MyTimetableScreen({ route, navigation }: Props) {
                     </Text>
                   </>
                 ) : null,
-                false
+                false,
+                index
               );
             })}
           </>
@@ -286,9 +287,7 @@ const styles = StyleSheet.create({
   summary: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 13, lineHeight: 18, marginBottom: spacing.md },
   notice: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.xxl,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -311,12 +310,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
   },
-  cardNow: { borderColor: colors.primaryBright, borderWidth: 2 },
+  cardNow: { borderColor: colors.primary, borderWidth: 2 },
   now: { position: 'absolute', top: spacing.sm, right: spacing.md, fontFamily: fonts.bodySemibold, fontSize: 11, color: colors.primary },
   breakLine: {
     flex: 1,
@@ -327,7 +324,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   breakText: { position: 'absolute', left: spacing.md, top: -9, backgroundColor: colors.background, paddingHorizontal: 6, fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
-  slotDivider: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  slotDivider: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.7)' },
   slotTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   subject: { fontFamily: fonts.headingMedium, fontSize: 15, lineHeight: 20, color: colors.textPrimary, flexShrink: 1 },
   detail: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginTop: 2 },

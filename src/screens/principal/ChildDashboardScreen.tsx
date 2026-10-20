@@ -21,7 +21,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useLanguage } from '../../i18n/useLanguage';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, spacing, tintAt, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { compactInr, longDate } from '../../utils/homeSummary';
@@ -30,8 +30,6 @@ import { formatIsoDate, todayIso } from '../../utils/timetable';
 import { upcomingCardState } from '../../utils/upcomingAssessments';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ChildDashboard'>;
-
-const HERO_OVERLAP = 52;
 
 /**
  * The child's next tests and exams, read-only: families can't open an assessment (that screen is
@@ -198,7 +196,6 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
         subtitle={schoolName ?? t('dashboard.fallbackTitle')}
         onBack={children.length > 1 ? () => navigation.navigate('ParentHome') : undefined}
         showBadge={false}
-        overlap={HERO_OVERLAP}
       >
         <Text style={styles.headerDate}>{longDate(new Date(), language)}</Text>
         {children.length > 1 && (
@@ -227,15 +224,15 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
         )}
       </ScreenHeader>
       <ScreenContainer>
-        <HeroCard stats={heroStats} overlap={HERO_OVERLAP} />
+        <HeroCard stats={heroStats} tint="mint" />
         <View style={styles.commsWrap}>
           <ParentCommsTiles />
         </View>
         <View style={styles.tileGrid}>
-          {tiles.map((tile) => (
-            <Pressable key={tile.key} style={styles.tile} onPress={tile.onPress} accessibilityRole="button">
+          {tiles.map((tile, index) => (
+            <Pressable key={tile.key} style={[styles.tile, { backgroundColor: tints[tintAt(index)].bg }]} onPress={tile.onPress} accessibilityRole="button">
               <View style={styles.iconCircle}>
-                <FontAwesome5 name={tile.icon} size={18} color={colors.primary} />
+                <FontAwesome5 name={tile.icon} size={18} color={tints[tintAt(index)].fg} />
               </View>
               <Text style={styles.tileTitle}>{tile.title}</Text>
             </Pressable>
@@ -256,7 +253,7 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  headerDate: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.onPrimaryMuted },
+  headerDate: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary },
   switcher: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.md },
   childChip: {
     flexDirection: 'row',
@@ -266,31 +263,28 @@ const styles = StyleSheet.create({
     paddingLeft: 5,
     paddingRight: spacing.md,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: colors.surface,
   },
-  childChipActive: { backgroundColor: colors.white },
-  childInitial: { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  childInitialActive: { backgroundColor: colors.primaryLight },
-  childInitialText: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.onPrimary },
+  childChipActive: { backgroundColor: colors.primary },
+  childInitial: { width: 26, height: 26, borderRadius: 13, backgroundColor: tints.violet.bg, alignItems: 'center', justifyContent: 'center' },
+  childInitialActive: { backgroundColor: colors.white },
+  childInitialText: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.primary },
   childInitialTextActive: { color: colors.primary },
-  childChipText: { fontFamily: fonts.body, fontSize: 14, color: colors.onPrimary, maxWidth: 180 },
-  childChipTextActive: { fontFamily: fonts.bodySemibold, color: colors.primaryDeep },
+  childChipText: { fontFamily: fonts.body, fontSize: 14, color: colors.textPrimary, maxWidth: 180 },
+  childChipTextActive: { fontFamily: fonts.bodySemibold, color: colors.white },
   commsWrap: { marginTop: spacing.lg },
   tileGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   tile: {
     width: '48%',
-    backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.lg,
-    backgroundColor: colors.primaryLight,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
@@ -299,9 +293,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontFamily: fonts.bodyBold, fontSize: 17, lineHeight: 24, color: colors.textPrimary, marginTop: spacing.sm, marginBottom: spacing.md },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.xxl,
     padding: spacing.lg,
   },
   cardLoading: { marginVertical: spacing.md },
@@ -315,7 +307,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     marginTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.hairline,
   },
   assessmentRowFirst: { paddingTop: 0, marginTop: 0, borderTopWidth: 0 },
   assessmentIcon: { width: 36, height: 36, borderRadius: radius.md, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },

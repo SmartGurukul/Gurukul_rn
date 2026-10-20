@@ -53,7 +53,7 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
-        <Logo width={160} onDarkBackground />
+        <Logo width={160} />
         <Text style={styles.subtitle}>{t('auth.signInSubtitle')}</Text>
       </VioletHero>
 
@@ -101,16 +101,16 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  backText: { color: colors.textPrimary, fontSize: 18, fontWeight: '700' },
   languageSwitchWrapper: {
     position: 'absolute',
     right: spacing.lg,
   },
-  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
+  subtitle: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
   pendingNotice: { color: colors.warning, fontWeight: '600' },

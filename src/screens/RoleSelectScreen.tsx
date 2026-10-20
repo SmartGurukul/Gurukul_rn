@@ -34,7 +34,7 @@ export default function RoleSelectScreen({ schoolName, onBack, onSelectRole }: P
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
-        <Logo width={120} onDarkBackground />
+        <Logo width={120} />
         <Text style={styles.title}>{schoolName ?? t('roleSelect.createAccount')}</Text>
         <Text style={styles.subtitle}>{t('roleSelect.subtitle')}</Text>
       </VioletHero>
@@ -67,17 +67,17 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  backText: { color: colors.textPrimary, fontSize: 18, fontWeight: '700' },
   languageSwitchWrapper: {
     position: 'absolute',
     right: spacing.lg,
   },
-  title: { color: colors.white, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
-  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
+  title: { color: colors.textPrimary, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
+  subtitle: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.md },
   roleCard: {
     backgroundColor: colors.surface,

@@ -1,8 +1,8 @@
 /**
- * "Deep Violet" theme (Oct 2026 redesign, workspace spec `app-ui-redesign-deep-violet`).
- * Brand kit: Violet 700 for headers and primary actions, Violet 600 only as the decorative circle
- * on a violet surface, paper ground below, marigold reserved for one attention element per screen.
- * No gradients anywhere (the game hub keeps its own `gameColors` surfaces on purpose).
+ * "Playful Blocks" theme (Oct 2026 redesign, workspace spec `app-ui-redesign-deep-violet`, direction C).
+ * Paper ground everywhere with a light header; content lives in tinted blocks (`tints`), each tint
+ * owning a meaning; solid Violet 700 only on the primary button and the selected day/tab. No
+ * gradients, no borders, no drop shadows (the game hub keeps its own `gameColors` surfaces on purpose).
  */
 export const colors = {
   primary: '#6D28D9', // Violet 700: headers, primary buttons, active tab
@@ -24,7 +24,8 @@ export const colors = {
   error: '#D6453D',
   errorLight: '#FBE3E1',
   accent: '#6D28D9',
-  border: '#E6E1EF', // Line
+  border: '#E6E1EF', // Line (inputs)
+  hairline: '#F1EDF7', // dividers inside a white list block
   white: '#FFFFFF',
   /** Text colours for use on a `colors.primary` surface. */
   onPrimary: '#FFFFFF',
@@ -44,19 +45,32 @@ export const spacing = {
 export const radius = {
   sm: 8,
   md: 12,
-  lg: 14, // buttons, inputs, small tiles
-  xl: 20, // cards
+  lg: 16, // buttons, inputs, round header buttons, small tiles
+  xl: 20, // tiles, period cards
+  xxl: 24, // hero blocks, list blocks
   pill: 999,
 } as const;
 
-/** The one real shadow in the design: the hero card that overlaps a violet header. */
-export const heroShadow = {
-  shadowColor: '#3B1782',
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.12,
-  shadowRadius: 16,
-  elevation: 4,
+/**
+ * The four block tints. `bg` is the block, `fg` the text and icon colour on it. Meaning:
+ * violet = primary / AI, marigold = money / attention, mint = attendance / present, sky = timetable / info.
+ */
+export const tints = {
+  violet: { bg: '#EDE4FE', fg: '#6D28D9' },
+  marigold: { bg: '#FFF1D0', fg: '#A86A00' },
+  mint: { bg: '#DDF5E8', fg: '#157A45' },
+  sky: { bg: '#DDEEFF', fg: '#1B5FA8' },
 } as const;
+
+export type TintKey = keyof typeof tints;
+
+/** Cycles the four tints for a grid of tiles. */
+export function tintAt(index: number): TintKey {
+  return (['violet', 'marigold', 'mint', 'sky'] as const)[index % 4];
+}
+
+/** Playful Blocks has no drop shadows; kept as a no-op so older call sites compile. */
+export const heroShadow = {} as const;
 
 /** Existing cards keep a faint violet-tinted lift until they are restyled with a 1 px border. */
 export const shadow = {

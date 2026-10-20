@@ -10,7 +10,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { SearchBar } from '../../components/SearchBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, heroShadow, radius, spacing } from '../../theme/colors';
+import { colors, radius, spacing, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -18,8 +18,6 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 
 interface Props {
   classSection: ClassSection;
-  /** How far the summary card overlaps the header above (match the header's `overlap`). */
-  overlap?: number;
 }
 
 const STATUSES: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'LATE', 'HALF_DAY'];
@@ -42,7 +40,7 @@ const methodLabel: Record<AttendanceMethod, string> = {
   FACE: 'face',
 };
 
-export function AttendanceTakeBody({ classSection, overlap = 0 }: Props) {
+export function AttendanceTakeBody({ classSection }: Props) {
   const schoolId = useSchoolId();
   const footerBottom = useBottomInset();
   const { session } = useAuth();
@@ -177,7 +175,7 @@ export function AttendanceTakeBody({ classSection, overlap = 0 }: Props) {
   return (
     <View style={styles.root}>
       <ScreenContainer contentContainerStyle={{ paddingBottom: footerBottom + SUBMIT_HEIGHT + spacing.lg }}>
-        <View style={[styles.hero, { marginTop: -overlap }]}>
+        <View style={styles.hero}>
           <View style={styles.heroTop}>
             <Text style={styles.heroTitle}>
               {roster.length === 0 ? 'No students yet' : `${marked} of ${roster.length} marked`}
@@ -331,30 +329,29 @@ const SUBMIT_HEIGHT = 52;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   hero: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    backgroundColor: tints.mint.bg,
+    borderRadius: radius.xxl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
-    ...heroShadow,
   },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   heroTitle: { fontFamily: fonts.headingMedium, fontSize: 15, lineHeight: 20, color: colors.textPrimary, flexShrink: 1 },
   heroCounts: { flexDirection: 'row', gap: spacing.md },
   heroCount: { fontFamily: fonts.heading, fontSize: 16, lineHeight: 22 },
-  bar: { height: 8, borderRadius: 4, backgroundColor: colors.primaryLight, marginTop: spacing.md, overflow: 'hidden' },
-  barFill: { height: 8, borderRadius: 4, backgroundColor: colors.primaryBright },
+  bar: { height: 8, borderRadius: 4, backgroundColor: colors.surface, marginTop: spacing.md, overflow: 'hidden' },
+  barFill: { height: 8, borderRadius: 4, backgroundColor: colors.success },
   heroDate: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginTop: spacing.md },
   label: { fontFamily: fonts.bodySemibold, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginBottom: spacing.sm },
   loadButton: {
     height: 44,
     paddingHorizontal: spacing.md,
     borderRadius: radius.lg,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.lg,
   },
-  loadButtonText: { color: colors.primary, fontFamily: fonts.headingMedium, fontSize: 13 },
+  loadButtonText: { color: tints.mint.fg, fontFamily: fonts.headingMedium, fontSize: 13 },
   loading: { marginVertical: spacing.md },
   success: { color: colors.success, marginVertical: spacing.md, fontFamily: fonts.bodySemibold, fontSize: 14 },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg, fontFamily: fonts.body, fontSize: 15 },
@@ -372,8 +369,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -394,9 +389,7 @@ const styles = StyleSheet.create({
   listHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: spacing.sm },
   listCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.xxl,
     overflow: 'hidden',
   },
   studentRow: {
@@ -406,7 +399,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.hairline,
   },
   studentRowLast: { borderBottomWidth: 0 },
   rollTile: {
@@ -426,9 +419,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -446,10 +437,9 @@ const styles = StyleSheet.create({
   submit: {
     height: SUBMIT_HEIGHT,
     backgroundColor: colors.primary,
-    borderRadius: radius.lg,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    ...heroShadow,
   },
   disabled: { opacity: 0.5 },
   submitText: { color: colors.onPrimary, fontFamily: fonts.headingMedium, fontSize: 16 },

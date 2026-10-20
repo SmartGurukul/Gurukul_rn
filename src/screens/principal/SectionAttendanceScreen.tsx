@@ -22,7 +22,6 @@ export function SectionAttendanceScreen({ route, navigation }: Props) {
         title={`${classSection.className} - ${classSection.section}`}
         subtitle="Attendance"
         onBack={() => navigation.goBack()}
-        overlap={tab === 'take' ? HERO_OVERLAP : 0}
       >
         <View style={styles.tabRow}>
           <Pressable style={[styles.tab, tab === 'take' && styles.tabActive]} onPress={() => setTab('take')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'take' }}>
@@ -35,7 +34,7 @@ export function SectionAttendanceScreen({ route, navigation }: Props) {
       </ScreenHeader>
 
       {tab === 'take' ? (
-        <AttendanceTakeBody classSection={classSection} overlap={HERO_OVERLAP} />
+        <AttendanceTakeBody classSection={classSection} />
       ) : (
         <SectionAttendanceHistoryBody
           classSection={classSection}
@@ -46,19 +45,17 @@ export function SectionAttendanceScreen({ route, navigation }: Props) {
   );
 }
 
-const HERO_OVERLAP = 44;
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: 4,
     marginTop: spacing.xs,
   },
   tab: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.md, alignItems: 'center' },
-  tabActive: { backgroundColor: colors.white },
-  tabText: { fontFamily: fonts.headingMedium, fontSize: 13, lineHeight: 18, color: colors.onPrimary },
-  tabTextActive: { color: colors.primary },
+  tabActive: { backgroundColor: colors.primary },
+  tabText: { fontFamily: fonts.headingMedium, fontSize: 13, lineHeight: 18, color: colors.textSecondary },
+  tabTextActive: { color: colors.white },
 });
