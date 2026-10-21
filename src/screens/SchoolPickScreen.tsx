@@ -31,6 +31,7 @@ export default function SchoolPickScreen({ phone, schools, onBack, onSelect }: P
       />
       <View style={styles.body}>
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={schools}
           keyExtractor={(item) => item.id}

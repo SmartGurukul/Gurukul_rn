@@ -68,6 +68,7 @@ export function AiMyRecordsSheet({ schoolId, visible, onClose }: { schoolId: str
           {!error && rows === null ? <ActivityIndicator style={styles.loader} color={colors.primary} /> : null}
           {rows !== null ? (
             <FlatList
+              keyboardShouldPersistTaps="handled"
               style={styles.list}
               data={rows}
               keyExtractor={(item, index) => `${item.createdAt}-${index}`}

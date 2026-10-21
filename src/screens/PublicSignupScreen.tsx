@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
+
 import { publicSignup, requestPublicOtp } from '../api/auth';
 import { getErrorMessage } from '../api/errorMessage';
 import type { Session } from '../api/authStorage';
@@ -28,6 +30,7 @@ interface Props {
 export default function PublicSignupScreen({ initialPhone, onLoggedIn, onBack }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const [phone, setPhone] = useState(initialPhone ?? '');
   const [name, setName] = useState('');
   const [grade, setGrade] = useState<number | null>(null);
@@ -76,7 +79,10 @@ export default function PublicSignupScreen({ initialPhone, onLoggedIn, onBack }:
         <Text style={styles.subtitle}>{t('publicLogin.subtitle')}</Text>
       </VioletHero>
 
-      <ScrollView contentContainerStyle={[styles.form, { paddingBottom: insets.bottom + spacing.xl }]}>
+      <ScrollView
+        contentContainerStyle={[styles.form, { paddingBottom: insets.bottom + spacing.xl + keyboardInset }]}
+        keyboardShouldPersistTaps="handled"
+      >
         {!sent ? (
           <>
             <LabeledInput label={t('publicLogin.nameLabel')} value={name} onChangeText={setName} autoCapitalize="words" />

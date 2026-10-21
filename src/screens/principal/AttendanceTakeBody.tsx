@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, spacing, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { useBottomInset } from '../../hooks/useBottomInset';
+import { useKeyboardInset } from '../../hooks/useKeyboardInset';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -43,6 +44,7 @@ const methodLabel: Record<AttendanceMethod, string> = {
 export function AttendanceTakeBody({ classSection }: Props) {
   const schoolId = useSchoolId();
   const footerBottom = useBottomInset();
+  const keyboardInset = useKeyboardInset();
   const { session } = useAuth();
   const isAdmin = session.role === 'ADMIN';
 
@@ -309,7 +311,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
       </ScreenContainer>
 
       {roster.length > 0 && (
-        <View style={[styles.footer, { paddingBottom: footerBottom }]}>
+        <View style={[styles.footer, { paddingBottom: footerBottom, bottom: keyboardInset }]}>
           <Pressable
             style={[styles.submit, (!canSubmit || submitting) && styles.disabled]}
             onPress={handleSubmit}

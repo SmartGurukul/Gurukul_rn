@@ -23,6 +23,7 @@ import { AiPausedBanner } from '../../components/AiPausedBanner';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useKeyboardInset } from '../../hooks/useKeyboardInset';
 import { useToast } from '../../context/ToastContext';
 import { useAiStatus } from '../../hooks/useAiStatus';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
@@ -59,6 +60,7 @@ const accent = accents.academicHelper;
 export function AcademicHelperScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
+  const androidKeyboardInset = useKeyboardInset(Platform.OS === 'android');
   const { session } = useAuth();
   const { showToast } = useToast();
   const composerBottomPadding = useComposerBottomPadding();
@@ -122,11 +124,11 @@ export function AcademicHelperScreen({ navigation }: Props) {
       <AiMyRecordsSheet schoolId={schoolId} visible={recordsOpen} onClose={() => setRecordsOpen(false)} />
 
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={[styles.flex, { paddingBottom: androidKeyboardInset }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <FlatList
+          keyboardShouldPersistTaps="handled"
           ref={listRef}
           data={messages}
           keyExtractor={(item) => item.id}

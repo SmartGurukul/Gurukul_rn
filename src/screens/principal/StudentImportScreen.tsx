@@ -165,7 +165,7 @@ export function StudentImportScreen({ navigation }: Props) {
             )}
 
             {badRows.length > 0 && (
-              <ScrollView style={styles.problemList} nestedScrollEnabled>
+              <ScrollView keyboardShouldPersistTaps="handled" style={styles.problemList} nestedScrollEnabled>
                 {badRows.slice(0, 50).map((row) => (
                   <Text key={row.line} style={styles.previewProblem}>
                     {t('studentImport.lineProblem', { line: row.line, name: row.name || '—', problems: problemText(row) })}

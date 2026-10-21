@@ -129,6 +129,7 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         )}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={visibleAssessments}
           keyExtractor={(item) => item.id}

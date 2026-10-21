@@ -1,7 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { useKeyboardInset } from '../../hooks/useKeyboardInset';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getGradingScale, replaceGradingScale } from '../../api/gradingScale';
 import type { GradingBand } from '../../api/types';
@@ -31,6 +33,7 @@ const newRowKey = () => `new-${nextKey++}`;
 
 export function GradingScaleScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const keyboardInset = useKeyboardInset();
   const schoolId = useSchoolId();
   const [rows, setRows] = useState<BandRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +122,12 @@ export function GradingScaleScreen({ navigation }: Props) {
         subtitle={t('gradingScale.subtitle')}
         onBack={() => navigation.goBack()}
       />
-      <View style={styles.body}>
+      <ScrollView
+        style={styles.body}
+        contentContainerStyle={{ paddingBottom: spacing.xl + keyboardInset }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.description}>{t('gradingScale.description')}</Text>
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
@@ -183,7 +191,7 @@ export function GradingScaleScreen({ navigation }: Props) {
             )}
           </Pressable>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }

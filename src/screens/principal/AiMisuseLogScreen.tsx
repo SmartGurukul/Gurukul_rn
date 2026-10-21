@@ -448,6 +448,7 @@ export function AiMisuseLogScreen({ navigation, route }: Props) {
           </View>
         ) : tab === 'refused' ? (
           <FlatList
+            keyboardShouldPersistTaps="handled"
             data={refused}
             keyExtractor={(item) => item.id}
             renderItem={renderRefused}
@@ -456,6 +457,7 @@ export function AiMisuseLogScreen({ navigation, route }: Props) {
           />
         ) : tab === 'lookups' ? (
           <FlatList
+            keyboardShouldPersistTaps="handled"
             data={lookups}
             keyExtractor={(item) => item.id}
             renderItem={renderLookup}
@@ -464,6 +466,7 @@ export function AiMisuseLogScreen({ navigation, route }: Props) {
           />
         ) : (
           <FlatList
+            keyboardShouldPersistTaps="handled"
             data={pauses}
             keyExtractor={(item) => item.id}
             renderItem={renderPause}

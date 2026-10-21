@@ -173,6 +173,7 @@ export function ActivityLogScreen({ navigation }: Props) {
           <ActivityIndicator style={styles.loader} color={accent.base} />
         ) : (
           <FlatList
+            keyboardShouldPersistTaps="handled"
             data={entries}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}

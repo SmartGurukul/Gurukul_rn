@@ -65,6 +65,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
         )}
         {!debouncedQuery && <Text style={styles.empty}>Start typing to search across students and staff.</Text>}
         <FlatList
+          keyboardShouldPersistTaps="handled"
           data={results}
           scrollEnabled={false}
           keyExtractor={resultKey}

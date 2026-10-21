@@ -107,7 +107,7 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
   return (
     <View style={styles.root}>
       {header}
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         {payment.reversed && (
           <View style={styles.cancelledBanner} accessibilityRole="alert">
             <Text style={styles.cancelledTitle}>{t('fees.receipt.cancelled')}</Text>

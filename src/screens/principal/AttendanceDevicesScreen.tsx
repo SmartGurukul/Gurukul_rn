@@ -159,6 +159,7 @@ export function AttendanceDevicesScreen({ navigation }: Props) {
         )}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={devices}
           keyExtractor={(item) => item.id}

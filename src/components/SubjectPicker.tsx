@@ -81,6 +81,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
             {error && <ErrorNotice message={error} />}
 
             <FlatList
+              keyboardShouldPersistTaps="handled"
               data={subjects}
               keyExtractor={(item) => item.id}
               style={styles.list}

@@ -42,6 +42,7 @@ export default function Dropdown({ label, value, options, onSelect, placeholder,
           <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={() => {}}>
             <Text style={styles.sheetTitle}>{label}</Text>
             <FlatList
+              keyboardShouldPersistTaps="handled"
               data={options}
               keyExtractor={(item) => item.value}
               style={styles.list}

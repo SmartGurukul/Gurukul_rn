@@ -58,6 +58,7 @@ export function VendorsListScreen({ navigation }: Props) {
         </Pressable>
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={vendors}
           keyExtractor={(item) => item.id}
