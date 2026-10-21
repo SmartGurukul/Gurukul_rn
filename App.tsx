@@ -428,7 +428,7 @@ export default function App() {
         )}
         {trackToken && i18nReady && <TrackLinkView token={trackToken} onClose={() => setTrackToken(null)} />}
       </ToastProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </SafeAreaProvider>
   );
 }
