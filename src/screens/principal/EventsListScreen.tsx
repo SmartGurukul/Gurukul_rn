@@ -119,6 +119,7 @@ export function EventsListScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={events}
           keyExtractor={(item) => item.id}

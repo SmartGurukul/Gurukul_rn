@@ -107,6 +107,7 @@ export function InfraExpensesListScreen({ navigation }: Props) {
         {error && <ErrorNotice message={error} />}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={requests}
           keyExtractor={(item) => item.id}

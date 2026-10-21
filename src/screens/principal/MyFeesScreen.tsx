@@ -64,6 +64,7 @@ export function MyFeesScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={assessments}
           keyExtractor={(item) => item.id}

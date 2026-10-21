@@ -76,6 +76,7 @@ export function AdmissionsListScreen({ navigation }: Props) {
         {loading && rows.length === 0 && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={rows}
           keyExtractor={(item) => item.id}

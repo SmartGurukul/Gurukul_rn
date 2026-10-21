@@ -48,6 +48,7 @@ export function ClassesListScreen({ route, navigation }: Props) {
       <View style={styles.body}>
         {error && <ErrorNotice message={error} />}
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={classNames}
           keyExtractor={(item) => item}

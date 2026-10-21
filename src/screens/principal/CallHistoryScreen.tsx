@@ -80,6 +80,7 @@ export function CallHistoryScreen({ navigation }: Props) {
         )}
         {error && <ErrorNotice message={error} />}
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={logs}
           keyExtractor={(log) => log.id}

@@ -80,7 +80,7 @@ export function AttendanceExportScreen({ navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader title={t('attendanceExport.title')} onBack={() => navigation.goBack()} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
         <Text style={styles.intro}>{t('attendanceExport.intro')}</Text>
 
         <Text style={styles.fieldLabel}>{t('attendanceExport.whose')}</Text>

@@ -114,6 +114,7 @@ export function NewConversationScreen({ navigation }: Props) {
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <ErrorNotice message={error} inset />}
         <FlatList
+          keyboardShouldPersistTaps="handled"
           data={visibleParties}
           scrollEnabled={false}
           keyExtractor={(item) => `${item.ownerType}:${item.ownerId}`}

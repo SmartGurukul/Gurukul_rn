@@ -78,6 +78,7 @@ export function PickCallTargetScreen({ navigation }: Props) {
           </View>
         )}
         <FlatList
+          keyboardShouldPersistTaps="handled"
           data={studentResults}
           scrollEnabled={false}
           keyExtractor={(item) => `${item.ownerType}:${item.ownerId}`}
@@ -108,6 +109,7 @@ export function PickCallTargetScreen({ navigation }: Props) {
           </Text>
         )}
         <FlatList
+          keyboardShouldPersistTaps="handled"
           data={filteredTargets}
           scrollEnabled={false}
           keyExtractor={(item) => `${item.ownerType}:${item.ownerId}`}

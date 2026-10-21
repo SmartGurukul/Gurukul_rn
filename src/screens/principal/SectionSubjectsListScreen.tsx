@@ -136,6 +136,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
         {error && <ErrorNotice message={error} />}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           data={assignments}
           scrollEnabled={false}
           keyExtractor={(item) => item.subjectId}

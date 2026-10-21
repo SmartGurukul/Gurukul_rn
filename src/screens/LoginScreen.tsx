@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 
 import { login } from '../api/auth';
 import { setAuthSession } from '../api/client';
@@ -23,6 +25,7 @@ interface Props {
 export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -57,7 +60,12 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
         <Text style={styles.subtitle}>{t('auth.signInSubtitle')}</Text>
       </VioletHero>
 
-      <View style={styles.form}>
+      <ScrollView
+        style={styles.formScroll}
+        contentContainerStyle={[styles.form, { paddingBottom: spacing.xl + keyboardInset }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <LabeledInput label={t('auth.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
         <LabeledInput label={t('auth.password')} value={password} onChangeText={setPassword} secureTextEntry />
 
@@ -80,7 +88,7 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
             <Text style={styles.linkText}>{t('auth.newHereCreateAccount')}</Text>
           </Pressable>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -111,6 +119,7 @@ const styles = StyleSheet.create({
     right: spacing.lg,
   },
   subtitle: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
+  formScroll: { flex: 1 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
   pendingNotice: { color: colors.warning, fontWeight: '600' },

@@ -61,6 +61,7 @@ export function FeeStructuresListScreen({ navigation }: Props) {
         </Pressable>
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={structures}
           keyExtractor={(item) => item.id}

@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
+
 import { registerStudent, registerStudentWithInvite } from '../api/registration';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
@@ -20,6 +22,7 @@ interface Props {
 export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const [useInviteCode, setUseInviteCode] = useState(false);
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [inviteCode, setInviteCode] = useState('');
@@ -62,7 +65,11 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
         <Text style={styles.subtitle}>{t('registration.student.subtitle')}</Text>
       </VioletHero>
 
-      <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
+      <ScrollView
+        style={styles.form}
+        contentContainerStyle={[styles.formContent, { paddingBottom: spacing.xl + keyboardInset }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.toggleRow}>
           <Pressable
             style={[styles.toggleButton, !useInviteCode && styles.toggleButtonActive]}

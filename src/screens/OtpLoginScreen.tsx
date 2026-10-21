@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 
 import { requestOtp, verifyOtp } from '../api/auth';
 import { setAuthSession } from '../api/client';
@@ -44,6 +46,7 @@ export default function OtpLoginScreen({
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const [phone, setPhone] = useState(initialPhone ?? '');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -104,7 +107,12 @@ export default function OtpLoginScreen({
         <Text style={styles.subtitle}>{t('auth.signInWithPhoneSubtitle')}</Text>
       </VioletHero>
 
-      <View style={styles.form}>
+      <ScrollView
+        style={styles.formScroll}
+        contentContainerStyle={[styles.form, { paddingBottom: spacing.xl + keyboardInset }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <LabeledInput
           label={t('auth.phoneNumber')}
           value={phone}
@@ -157,7 +165,7 @@ export default function OtpLoginScreen({
             <Text style={styles.linkText}>{t('auth.newHereCreateAccount')}</Text>
           </Pressable>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -190,6 +198,7 @@ const styles = StyleSheet.create({
   },
   title: { color: colors.textPrimary, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
   subtitle: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
+  formScroll: { flex: 1 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
   otpHint: { color: colors.textSecondary, fontSize: 13, marginBottom: spacing.sm },

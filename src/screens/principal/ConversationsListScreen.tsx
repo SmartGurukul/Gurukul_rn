@@ -114,6 +114,7 @@ export function ConversationsListScreen({ navigation }: Props) {
         {error && <ErrorNotice message={error} inset />}
         {!loading && conversations.length === 0 && <Text style={styles.empty}>No conversations yet.</Text>}
         <FlatList
+          keyboardShouldPersistTaps="handled"
           data={conversations}
           scrollEnabled={false}
           keyExtractor={(item) => item.id}

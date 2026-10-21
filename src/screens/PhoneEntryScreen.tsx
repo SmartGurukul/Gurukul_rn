@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 
 import { lookupSchoolsByPhone } from '../api/auth';
 import { getErrorMessage } from '../api/errorMessage';
@@ -31,6 +33,7 @@ interface Props {
 export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool, onContinueAsPublic }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const [phone, setPhone] = useState('');
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +70,12 @@ export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool, onC
         <Text style={styles.subtitle}>{t('phoneLogin.subtitle')}</Text>
       </VioletHero>
 
-      <View style={styles.form}>
+      <ScrollView
+        style={styles.formScroll}
+        contentContainerStyle={[styles.form, { paddingBottom: spacing.xl + keyboardInset }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <LabeledInput
           label={t('auth.phoneNumber')}
           value={phone}
@@ -106,7 +114,7 @@ export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool, onC
         <Pressable onPress={onRegisterSchool} style={styles.linkButton}>
           <Text style={styles.linkText}>{t('welcome.registerSchool')}</Text>
         </Pressable>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -132,6 +140,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     textAlign: 'center',
   },
+  formScroll: { flex: 1 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   notice: {
     backgroundColor: colors.primaryLight,

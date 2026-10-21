@@ -59,6 +59,7 @@ export function PayrollRunsListScreen({ navigation }: Props) {
         {error && runs.length > 0 ? <ErrorNotice message={error} /> : null}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={runs}
           keyExtractor={(item) => item.id}

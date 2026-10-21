@@ -40,6 +40,7 @@ import { BotActionCard } from '../../components/BotActionCard';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useKeyboardInset } from '../../hooks/useKeyboardInset';
 import { useToast } from '../../context/ToastContext';
 import { useAiStatus } from '../../hooks/useAiStatus';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -85,6 +86,8 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const { conversationId, title, isBot = false } = route.params;
   const { t } = useTranslation();
   const schoolId = useSchoolId();
+  // On Android the window normally shrinks for the keyboard; this covers builds where it does not.
+  const androidKeyboardInset = useKeyboardInset(Platform.OS === 'android');
   const { session } = useAuth();
   const { showToast } = useToast();
   const composerBottomPadding = useComposerBottomPadding();
@@ -530,7 +533,10 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView
+      style={[styles.root, { paddingBottom: androidKeyboardInset }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScreenHeader title={title} onBack={() => navigation.goBack()} />
       {isBot ? (
         <>
@@ -542,6 +548,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         <ActivityIndicator style={styles.loading} color={colors.primary} />
       ) : (
         <FlatList
+          keyboardShouldPersistTaps="handled"
           ref={listRef}
           style={styles.list}
           data={messages}

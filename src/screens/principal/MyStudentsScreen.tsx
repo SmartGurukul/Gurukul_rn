@@ -54,6 +54,7 @@ export function MyStudentsScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={sections}
           keyExtractor={(item) => item.id}

@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
+
 import { registerParent } from '../api/registration';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
@@ -20,6 +22,7 @@ interface Props {
 export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const [studentRegistrationNumber, setStudentRegistrationNumber] = useState('');
   const [parentContact, setParentContact] = useState('');
   const [username, setUsername] = useState('');
@@ -59,7 +62,11 @@ export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: 
         <Text style={styles.subtitle}>{t('registration.parent.subtitle')}</Text>
       </VioletHero>
 
-      <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
+      <ScrollView
+        style={styles.form}
+        contentContainerStyle={[styles.formContent, { paddingBottom: spacing.xl + keyboardInset }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <LabeledInput
           label={t('registration.parent.childRegistrationNumber')}
           value={studentRegistrationNumber}

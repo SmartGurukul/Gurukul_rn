@@ -85,6 +85,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
             {error && <ErrorNotice message={error} />}
 
             <FlatList
+              keyboardShouldPersistTaps="handled"
               data={sections}
               keyExtractor={(item) => item.id}
               style={styles.list}
