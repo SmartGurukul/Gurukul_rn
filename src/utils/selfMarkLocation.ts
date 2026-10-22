@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { Platform } from 'react-native';
 
@@ -31,14 +32,25 @@ export function deviceCheckProblem(checks: DeviceChecks | null): string | null {
 }
 
 /**
+ * Expo Go can't load the native module, so the fake-GPS device checks can't run there. The check-in is
+ * sent without them, and the server accepts it only for a school that allows unverified phones (the
+ * JNV demo school); every other school refuses it with "Update Smart Gurukul".
+ */
+export function skipsDeviceChecks(): boolean {
+  return !LocationIntegrity && Constants.appOwnership === 'expo';
+}
+
+/**
  * Takes a fresh fix plus the device checks, refusing anything that could be faked. The server
  * repeats every check, so this is for a clear message, not the security boundary.
  */
 export async function readSelfMarkLocation(): Promise<SelfMarkAttendanceRequest> {
   const deviceChecks = LocationIntegrity?.getDeviceChecks() ?? null;
-  const problem = deviceCheckProblem(deviceChecks);
-  if (problem || !deviceChecks) {
-    throw new SelfMarkLocationError(problem ?? '');
+  if (deviceChecks || !skipsDeviceChecks()) {
+    const problem = deviceCheckProblem(deviceChecks);
+    if (problem) {
+      throw new SelfMarkLocationError(problem);
+    }
   }
 
   let fix: { latitude: number; longitude: number; accuracy?: number; timestamp: number; mocked: boolean };
@@ -65,6 +77,6 @@ export async function readSelfMarkLocation(): Promise<SelfMarkAttendanceRequest>
     accuracy: fix.accuracy,
     mocked: fix.mocked,
     fixTimestamp: fix.timestamp,
-    deviceChecks,
+    deviceChecks: deviceChecks ?? undefined,
   };
 }

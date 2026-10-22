@@ -18,7 +18,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { defaultIntegrityDeps, isIntegrityRefusal, withPlayIntegrity } from '../../utils/selfMarkIntegrity';
-import { readSelfMarkLocation, SelfMarkLocationError } from '../../utils/selfMarkLocation';
+import { readSelfMarkLocation, SelfMarkLocationError, skipsDeviceChecks } from '../../utils/selfMarkLocation';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MarkMyAttendance'>;
 
@@ -188,6 +188,12 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
               {status === 'locating' && <Text style={styles.hint}>Getting your location...</Text>}
               {status === 'verifying' && <Text style={styles.hint}>Checking this phone with Google Play...</Text>}
               {status === 'submitting' && <Text style={styles.hint}>Verifying you&apos;re within range...</Text>}
+              {skipsDeviceChecks() && (
+                <Text style={styles.hint}>
+                  Expo Go: this phone&apos;s fake-GPS checks are skipped. Only a school that allows unverified phones
+                  (the demo school) accepts the check-in.
+                </Text>
+              )}
             </>
           )}
         </View>
