@@ -45,6 +45,7 @@ import { AwardRecognitionScreen } from '../screens/principal/AwardRecognitionScr
 import { EventsListScreen } from '../screens/principal/EventsListScreen';
 import { EventDetailScreen } from '../screens/principal/EventDetailScreen';
 import { EventFormScreen } from '../screens/principal/EventFormScreen';
+import { AnnouncementComposeScreen } from '../screens/principal/AnnouncementComposeScreen';
 import { ChallengeDetailScreen } from '../screens/principal/ChallengeDetailScreen';
 import { GamificationHubScreen } from '../screens/principal/GamificationHubScreen';
 import { HouseWarsScreen } from '../screens/principal/HouseWarsScreen';
@@ -240,6 +241,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="EventsList" component={EventsListScreen} />
         <Stack.Screen name="EventDetail" component={EventDetailScreen} />
         <Stack.Screen name="EventForm" component={EventFormScreen} />
+        <Stack.Screen name="AnnouncementCompose" component={AnnouncementComposeScreen} />
         <Stack.Screen name="AwardRecognition" component={AwardRecognitionScreen} />
         <Stack.Screen name="Arena" component={ArenaScreen} />
         <Stack.Screen name="BattleRoomMatch" component={BattleRoomMatchScreen} />

@@ -230,6 +230,8 @@ export type PrincipalStackParamList = {
   EventsList: undefined;
   EventDetail: { eventId: string };
   EventForm: undefined;
+  /** "Post a notice" (ADMIN or TEACHER), opened from School Events. */
+  AnnouncementCompose: undefined;
   AcademicHelper: undefined;
   TeacherPerformance: { employee: Employee };
   TeacherToolsHub: undefined;

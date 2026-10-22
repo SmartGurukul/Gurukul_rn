@@ -1675,6 +1675,27 @@ export interface CreateAnnouncementRequest {
   body: string;
 }
 
+/** A class-section the caller may post a notice to (GET /api/v1/chat/announcements/audiences). */
+export interface AnnouncementAudienceSection {
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  displayLabel: string;
+}
+
+/**
+ * Exactly the targets POST /api/v1/chat/announcements accepts from the caller: the whole school
+ * (admin only), the sections they may post to (every section for an admin, their own class
+ * sections for a teacher) and those sections' classes. `canPost` is false when there are none.
+ */
+export interface AnnouncementAudiences {
+  canPost: boolean;
+  school: boolean;
+  sections: AnnouncementAudienceSection[];
+  grades: string[];
+}
+
 export interface GameProfileResponse {
   totalXp: number;
   level: number;

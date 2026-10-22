@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   Announcement,
+  AnnouncementAudiences,
   BotAction,
   ChatContact,
   Conversation,
@@ -67,8 +68,21 @@ export function presignChatAttachment(
   );
 }
 
+/**
+ * Posts a notice (ADMIN or TEACHER). Saved means sent: the broadcast and the push follow on the
+ * server within seconds, after the save commits. The same notice by the same person within 10
+ * minutes returns the one already saved instead of a second copy, so a retry after a timeout is safe.
+ */
 export function createAnnouncement(schoolId: string, req: CreateAnnouncementRequest) {
   return api.post<Announcement>('/api/v1/chat/announcements', req, schoolId);
+}
+
+/**
+ * Where the caller may post a notice - exactly what createAnnouncement accepts from them. ADMIN
+ * and TEACHER only (403 for anyone else); an older server without it answers 404.
+ */
+export function getAnnouncementAudiences(schoolId: string) {
+  return api.get<AnnouncementAudiences>('/api/v1/chat/announcements/audiences', schoolId);
 }
 
 export function listAnnouncements(schoolId: string, sectionId?: string, className?: string) {

@@ -2,7 +2,9 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { getAnnouncementAudiences } from '../../api/chat';
 import { listClassNames } from '../../api/classSections';
 import { listEvents } from '../../api/events';
 import type { SchoolEvent } from '../../api/types';
@@ -13,6 +15,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { noticeEntryVisible } from '../../utils/announcementCompose';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -52,10 +55,14 @@ function statusVariant(status: string | null): 'success' | 'warning' | 'error' |
 }
 
 export function EventsListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const canCreate = session.ownerType === 'EMPLOYEE';
+  // "Post a notice" shows only when the server says this admin or teacher has somewhere to post.
+  const role = session.role;
+  const [canPostNotice, setCanPostNotice] = useState(false);
   // Teachers/admin can see events across every grade, so a grade filter helps them browse one at a
   // time. A student's GRADE-scoped events are already limited to their own grade server-side, so
   // this filter isn't shown to them - there'd be nothing else to toggle to.
@@ -79,23 +86,47 @@ export function EventsListScreen({ navigation }: Props) {
       .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, gradeFilter]);
 
+  // Any failure (an older server answers 404) only hides the button; the events list is unaffected.
+  const loadNoticeAccess = useCallback(() => {
+    noticeEntryVisible(role, () => getAnnouncementAudiences(schoolId)).then(setCanPostNotice);
+  }, [schoolId, role]);
+
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       setLoading(true);
       load().finally(() => setLoading(false));
+      loadNoticeAccess();
     });
     return unsubscribe;
-  }, [navigation, load]);
+  }, [navigation, load, loadNoticeAccess]);
 
   return (
     <View style={styles.root}>
       <ScreenHeader title="School Events" onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        {canCreate && (
-          <Pressable style={styles.addButton} onPress={() => navigation.navigate('EventForm')}>
-            <FontAwesome5 name="plus" size={14} color={colors.white} />
-            <Text style={styles.addButtonText}>Create event</Text>
-          </Pressable>
+        {(canCreate || canPostNotice) && (
+          <View style={styles.actions}>
+            {canCreate && (
+              <Pressable
+                style={styles.addButton}
+                onPress={() => navigation.navigate('EventForm')}
+                accessibilityRole="button"
+              >
+                <FontAwesome5 name="plus" size={14} color={colors.white} />
+                <Text style={styles.addButtonText}>Create event</Text>
+              </Pressable>
+            )}
+            {canPostNotice && (
+              <Pressable
+                style={styles.addButton}
+                onPress={() => navigation.navigate('AnnouncementCompose')}
+                accessibilityRole="button"
+              >
+                <FontAwesome5 name="bullhorn" size={14} color={colors.white} />
+                <Text style={styles.addButtonText}>{t('announcementCompose.entry')}</Text>
+              </Pressable>
+            )}
+          </View>
         )}
 
         {canFilterByGrade && classNames.length > 0 && (
@@ -164,7 +195,9 @@ const styles = StyleSheet.create({
   loading: { marginTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  actions: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   addButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -172,7 +205,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
     paddingVertical: spacing.md,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
     ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
