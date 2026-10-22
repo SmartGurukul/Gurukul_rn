@@ -25,6 +25,8 @@ export interface School {
   latitude: number | null;
   longitude: number | null;
   geofenceRadiusMeters: number;
+  /** Staff may self check-in from phones whose fake-GPS device checks the app could not run (Expo Go). Off by default. */
+  allowUnverifiedSelfMark?: boolean;
   /** Short-lived presigned URL, null if no logo was uploaded (or storage isn't configured). */
   logoUrl: string | null;
   studentCount: number;
@@ -54,6 +56,8 @@ export interface SchoolLocationUpdateRequest {
   latitude: number;
   longitude: number;
   geofenceRadiusMeters: number;
+  /** Leave out to keep the school's current value. */
+  allowUnverifiedSelfMark?: boolean;
 }
 
 export interface SchoolRegistrationRequest {
