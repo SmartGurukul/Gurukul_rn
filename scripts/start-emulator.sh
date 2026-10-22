@@ -21,6 +21,8 @@
 set -uo pipefail
 
 AVD=${1:-${AVD:-Pixel_10_Pro_XL}}
+# The console port adb scans. Its adb port is this + 1.
+PORT=${PORT:-5554}
 SDK=${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}
 EMULATOR="$SDK/emulator/emulator"
 export PATH="$PATH:$SDK/platform-tools"
@@ -46,7 +48,12 @@ else
 
   echo "Starting $AVD..."
   # (2) Host GPU. -no-metrics keeps it from phoning home; -no-boot-anim shaves a few seconds.
-  "$EMULATOR" -avd "$AVD" -gpu host -no-metrics -no-boot-anim -noaudio \
+  #
+  # (3) -port is not optional. Left to choose, the emulator sometimes takes a high console port
+  #     (53295 here) and never registers with the adb server: qemu runs, the window appears, and
+  #     `adb devices` stays empty - indistinguishable from a boot that hung. 5554 is the port adb
+  #     scans for.
+  "$EMULATOR" -avd "$AVD" -port "$PORT" -gpu host -no-metrics -no-boot-anim -noaudio \
     > "${TMPDIR:-/tmp}/emulator-$AVD.log" 2>&1 &
 
   printf 'Waiting for boot'
