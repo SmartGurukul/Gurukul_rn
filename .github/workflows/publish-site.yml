@@ -1,0 +1,57 @@
+# Builds smartgurukul.org and publishes it to the public site repo.
+#
+# The generator and the page sources live here, in the private app repo, because build.py checks
+# every <span class="ui"> label in the marketing copy against src/i18n/locales/{en,hi}.json - a
+# renamed button has to fail the build rather than leave the site quoting a button nobody can find.
+# Only the built output goes out, so the public repo holds finished HTML and nothing else.
+#
+# Needs the secret SITE_DEPLOY_KEY: the private half of a deploy key with write access on
+# SmartGurukul/smartgurukul-site. See website/PUBLISHING.md.
+
+name: Publish site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'src/i18n/locales/**'
+      - '.github/workflows/publish-site.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # build.py has no third-party dependencies and exits 1 when a check FAILs, so a broken link
+      # or a stale app label stops the publish here rather than reaching the live site.
+      - name: Build site
+        run: python website/build.py
+
+      - name: Check the build produced a site
+        run: test -s docs/index.html && test -s docs/CNAME
+
+      - name: Publish to the public site repo
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.SITE_DEPLOY_KEY }}
+          external_repository: SmartGurukul/smartgurukul-site
+          publish_branch: main
+          publish_dir: ./docs
+          # The custom domain lives in docs/CNAME, which build.py writes; keep it in the publish.
+          cname: smartgurukul.org
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: "Site: ${{ github.event.head_commit.message || 'manual publish' }}"
