@@ -7,6 +7,19 @@ import type { ApiResponse, LoginResponse, PagedResponse } from './types';
 // time, so changing .env needs Metro restarted with a cleared cache to take effect.
 export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.smartgurukul.org';
 
+// A runtime override of the server, for preview bundles that must talk to a laptop's backend (the
+// AI Tutor preview, workspace specs/ai-tutor-preview). Set from the Server screen and kept in
+// AsyncStorage by src/api/serverUrl.ts; empty means BASE_URL. Never set in production bundles.
+let baseUrlOverride: string | null = null;
+
+export function setBaseUrlOverride(url: string | null) {
+  baseUrlOverride = url && url.trim() ? url.trim().replace(/\/+$/, '') : null;
+}
+
+export function getBaseUrl(): string {
+  return baseUrlOverride ?? BASE_URL;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -256,15 +269,17 @@ async function send(path: string, options: RequestOptions) {
   const resolvedBody = typeof body === 'function' ? body() : body;
   const tokenUsed = currentSession?.token ?? null;
 
+  // A FormData body (a file upload) goes as multipart; fetch sets the boundary itself, so no Content-Type here.
+  const isForm = typeof FormData !== 'undefined' && resolvedBody instanceof FormData;
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (schoolId) headers['X-School-Id'] = schoolId;
-  if (resolvedBody !== undefined) headers['Content-Type'] = 'application/json';
+  if (resolvedBody !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   if (tokenUsed) headers['Authorization'] = `Bearer ${tokenUsed}`;
   if (extraHeaders) Object.assign(headers, extraHeaders);
 
   const response = await fetchWithTimeout(
-    `${BASE_URL}${path}`,
-    { method, headers, body: resolvedBody !== undefined ? JSON.stringify(resolvedBody) : undefined },
+    `${getBaseUrl()}${path}`,
+    { method, headers, body: isForm ? (resolvedBody as FormData) : resolvedBody !== undefined ? JSON.stringify(resolvedBody) : undefined },
     timeoutMs
   );
   syncClockOffset(response);

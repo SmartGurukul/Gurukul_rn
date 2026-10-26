@@ -12,9 +12,14 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      channel:
+        description: 'EAS Update channel to publish to (main for the shared Expo Go app; a feature name for a preview of that branch)'
+        required: false
+        default: main
 
 concurrency:
-  group: eas-update-main
+  group: eas-update-${{ github.event.inputs.channel || 'main' }}
   cancel-in-progress: true
 
 permissions:
@@ -49,10 +54,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to the main channel for Expo Go
+      - name: Publish to the channel for Expo Go
         env:
           EXPO_GO_UPDATE: '1'
+          CHANNEL: ${{ github.event.inputs.channel || 'main' }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message || 'Manual publish' }}
         run: |
           MESSAGE="$(printf '%s' "$COMMIT_MESSAGE" | head -n 1 | cut -c1-200)"
-          eas update --channel main --environment preview --platform all --message "$MESSAGE" --non-interactive
+          eas update --channel "$CHANNEL" --environment preview --platform all --message "$MESSAGE" --non-interactive
+          echo "Open in Expo Go: exp://u.expo.dev/f610c224-f96d-4706-a22c-38f27170b00c?channel-name=$CHANNEL&runtime-version=exposdk:57.0.0"
