@@ -83,6 +83,12 @@ export type PrincipalStackParamList = {
   PrincipalDashboard: undefined;
   Profile: undefined;
   PushDebug: undefined;
+  // AI Tutor (parent)
+  /** A parent's (or admin's) AI Tutor report for one child; studentName shows until the report loads. */
+  TutorParentReport: { studentId: string; studentName?: string };
+  /** One tutor session read back; role-neutral, the server decides who may read it. */
+  TutorTranscript: { sessionId: string };
+  // end AI Tutor (parent)
   SwitchChild: undefined;
   ConnectGoogleAccount: undefined;
   GlobalSearch: undefined;

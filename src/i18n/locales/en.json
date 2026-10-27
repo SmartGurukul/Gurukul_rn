@@ -2041,6 +2041,88 @@
       "roll": "Roll {{roll}}"
     }
   },
+  "tutorParent": {
+    "_comment": "AI Tutor (parent)",
+    "tile": "AI Tutor",
+    "title": "AI Tutor report",
+    "none": "Nothing yet",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "totals": "{{sessions}} sessions and {{minutes}} minutes in all",
+    "hero": {
+      "sessions": "Sessions",
+      "minutes": "Minutes",
+      "quiz": "Quiz",
+      "thisWeek": "this week",
+      "noQuiz": "no quiz yet"
+    },
+    "access": {
+      "active": "AI Tutor active",
+      "sessionsLeft_one": "{{count}} session left",
+      "sessionsLeft_other": "{{count}} sessions left",
+      "until": "until {{date}}",
+      "inactive": "Not active: ask the school to switch it on"
+    },
+    "empty": {
+      "title": "No sessions yet",
+      "text": "The first report appears after the first session."
+    },
+    "thisWeek": {
+      "title": "This week"
+    },
+    "strengths": "Strengths",
+    "gaps": "Needs work",
+    "nextUp": "Next up",
+    "mastery": {
+      "none": "Not tried yet",
+      "low": "Needs work",
+      "mid": "Getting there",
+      "high": "Strong"
+    },
+    "quizTrend": {
+      "title": "Weekly quiz"
+    },
+    "chapters": {
+      "title": "Chapters",
+      "chapterTitle": "Ch {{number}}: {{title}}",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "noTopics": "No topics studied yet",
+      "lastSeen": "last seen {{date}}"
+    },
+    "sessions": {
+      "title": "Recent sessions",
+      "empty": "No sessions yet",
+      "abandoned": "ended early",
+      "forYou": "For you"
+    },
+    "about": {
+      "title": "About {{name}}"
+    },
+    "stage": {
+      "RECAP": "Recap",
+      "TEACH": "Teach",
+      "PRACTICE": "Practice",
+      "CLOSE": "Wrap-up"
+    },
+    "transcript": {
+      "title": "Session",
+      "chapter": "Ch {{number}}: {{title}}",
+      "summary": "Summary",
+      "parentNote": "Note for parents",
+      "flagged": "This session was flagged for a teacher's review",
+      "turns_one": "{{count}} turn",
+      "turns_other": "{{count}} turns",
+      "xp": "{{xp}} XP",
+      "empty": "No messages in this session.",
+      "status": {
+        "PLANNED": "Planned",
+        "ACTIVE": "In progress",
+        "CLOSED": "Completed",
+        "ABANDONED": "Ended early"
+      }
+    }
+  },
   "myFees": {
     "title": "My Fees",
     "loadError": "Could not load your fee dues.",

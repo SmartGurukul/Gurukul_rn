@@ -2041,6 +2041,88 @@
       "roll": "रोल {{roll}}"
     }
   },
+  "tutorParent": {
+    "_comment": "AI Tutor (parent)",
+    "tile": "AI ट्यूटर",
+    "title": "AI ट्यूटर रिपोर्ट",
+    "none": "अभी कुछ नहीं",
+    "minutes_one": "{{count}} मिनट",
+    "minutes_other": "{{count}} मिनट",
+    "totals": "कुल {{sessions}} सत्र और {{minutes}} मिनट",
+    "hero": {
+      "sessions": "सत्र",
+      "minutes": "मिनट",
+      "quiz": "क्विज़",
+      "thisWeek": "इस सप्ताह",
+      "noQuiz": "अभी कोई क्विज़ नहीं"
+    },
+    "access": {
+      "active": "AI ट्यूटर चालू है",
+      "sessionsLeft_one": "{{count}} सत्र बाकी",
+      "sessionsLeft_other": "{{count}} सत्र बाकी",
+      "until": "{{date}} तक",
+      "inactive": "चालू नहीं है: स्कूल से इसे चालू करने को कहें"
+    },
+    "empty": {
+      "title": "अभी कोई सत्र नहीं",
+      "text": "पहली रिपोर्ट पहले सत्र के बाद दिखेगी।"
+    },
+    "thisWeek": {
+      "title": "इस सप्ताह"
+    },
+    "strengths": "मज़बूत पक्ष",
+    "gaps": "सुधार चाहिए",
+    "nextUp": "आगे क्या",
+    "mastery": {
+      "none": "अभी नहीं पढ़ा",
+      "low": "सुधार चाहिए",
+      "mid": "ठीक चल रहा है",
+      "high": "मज़बूत"
+    },
+    "quizTrend": {
+      "title": "साप्ताहिक क्विज़"
+    },
+    "chapters": {
+      "title": "अध्याय",
+      "chapterTitle": "अध्याय {{number}}: {{title}}",
+      "sessions_one": "{{count}} सत्र",
+      "sessions_other": "{{count}} सत्र",
+      "noTopics": "अभी कोई विषय नहीं पढ़ा",
+      "lastSeen": "आख़िरी बार {{date}}"
+    },
+    "sessions": {
+      "title": "हाल के सत्र",
+      "empty": "अभी कोई सत्र नहीं",
+      "abandoned": "जल्दी समाप्त",
+      "forYou": "आपके लिए"
+    },
+    "about": {
+      "title": "{{name}} के बारे में"
+    },
+    "stage": {
+      "RECAP": "दोहराव",
+      "TEACH": "पढ़ाई",
+      "PRACTICE": "अभ्यास",
+      "CLOSE": "समापन"
+    },
+    "transcript": {
+      "title": "सत्र",
+      "chapter": "अध्याय {{number}}: {{title}}",
+      "summary": "सारांश",
+      "parentNote": "अभिभावकों के लिए नोट",
+      "flagged": "यह सत्र शिक्षक की समीक्षा के लिए चिह्नित किया गया है",
+      "turns_one": "{{count}} संदेश",
+      "turns_other": "{{count}} संदेश",
+      "xp": "{{xp}} XP",
+      "empty": "इस सत्र में कोई संदेश नहीं।",
+      "status": {
+        "PLANNED": "नियोजित",
+        "ACTIVE": "चल रहा है",
+        "CLOSED": "पूरा हुआ",
+        "ABANDONED": "जल्दी समाप्त"
+      }
+    }
+  },
   "myFees": {
     "title": "मेरी फीस",
     "loadError": "आपकी फीस बकाया लोड नहीं की जा सकी।",

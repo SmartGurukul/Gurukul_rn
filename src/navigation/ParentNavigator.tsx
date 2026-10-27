@@ -18,6 +18,10 @@ import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
 import { OverallStatusScreen } from '../screens/principal/OverallStatusScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { MyBusScreen } from '../screens/transport/MyBusScreen';
+// AI Tutor (parent)
+import { TutorParentReportScreen } from '../screens/principal/TutorParentReportScreen';
+import { TutorTranscriptScreen } from '../screens/principal/TutorTranscriptScreen';
+// end AI Tutor (parent)
 import { colors } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
 
@@ -50,6 +54,10 @@ export function ParentNavigator() {
       <Stack.Screen name="PushDebug" component={PushDebugScreen} />
       <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
       <Stack.Screen name="MyBus" component={MyBusScreen} />
+      {/* AI Tutor (parent) */}
+      <Stack.Screen name="TutorParentReport" component={TutorParentReportScreen} />
+      <Stack.Screen name="TutorTranscript" component={TutorTranscriptScreen} />
+      {/* end AI Tutor (parent) */}
     </Stack.Navigator>
   );
 }
