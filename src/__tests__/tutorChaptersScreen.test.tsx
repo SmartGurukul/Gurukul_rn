@@ -147,6 +147,9 @@ beforeEach(() => {
   tutorApi.listTutorSessions.mockResolvedValue(noSessions);
 });
 
+// The first render of the screen loads i18n and the navigator on a cold Jest worker; CI runners are slower than a laptop.
+jest.setTimeout(20000);
+
 describe('TutorChaptersScreen', () => {
   it('locked: explains the premium state in plain words and keeps every chapter row disabled', async () => {
     tutorApi.getMyTutorAccess.mockResolvedValue(access({ allowed: false, reason: 'no_entitlement' }));
