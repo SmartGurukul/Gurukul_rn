@@ -14,6 +14,7 @@ import type {
   ResourceSubject,
   SalaryStructure,
   Student,
+  TutorSessionView,
 } from '../api/types';
 import type { InfraExpenseRequest, Vendor } from '../api/expenseTypes';
 
@@ -83,6 +84,12 @@ export type PrincipalStackParamList = {
   PrincipalDashboard: undefined;
   Profile: undefined;
   PushDebug: undefined;
+  // AI Tutor (parent)
+  /** A parent's (or admin's) AI Tutor report for one child; studentName shows until the report loads. */
+  TutorParentReport: { studentId: string; studentName?: string };
+  /** One tutor session read back; role-neutral, the server decides who may read it. */
+  TutorTranscript: { sessionId: string };
+  // end AI Tutor (parent)
   SwitchChild: undefined;
   ConnectGoogleAccount: undefined;
   GlobalSearch: undefined;
@@ -270,4 +277,13 @@ export type PrincipalStackParamList = {
   CurriculumMapping: undefined;
   /** Opens a web document (an NCERT chapter PDF) in-app; iOS renders PDFs, Android opens them outside. */
   WebDocument: { url: string; title: string };
+  // AI Tutor (student)
+  /** The student's chapters and access state; the entry point from the home tile. */
+  TutorChapters: undefined;
+  /** A live session. `session` is the view the start call returned; left out, the screen fetches it. */
+  TutorSession: { sessionId: string; session?: TutorSessionView };
+  /** The student's past sessions. */
+  TutorSessions: undefined;
+  /** This week's five-question quiz. */
+  TutorQuiz: undefined;
 };

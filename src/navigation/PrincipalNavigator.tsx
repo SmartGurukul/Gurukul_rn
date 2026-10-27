@@ -60,6 +60,12 @@ import { ScheduleCallScreen } from '../screens/principal/ScheduleCallScreen';
 import { ScheduledCallsScreen } from '../screens/principal/ScheduledCallsScreen';
 import { VideoCallHubScreen } from '../screens/principal/VideoCallHubScreen';
 import { AcademicHelperScreen } from '../screens/principal/AcademicHelperScreen';
+// AI Tutor (student)
+import { TutorChaptersScreen } from '../screens/principal/TutorChaptersScreen';
+import { TutorQuizScreen } from '../screens/principal/TutorQuizScreen';
+import { TutorSessionScreen } from '../screens/principal/TutorSessionScreen';
+import { TutorSessionsScreen } from '../screens/principal/TutorSessionsScreen';
+import { TutorTranscriptScreen } from '../screens/principal/TutorTranscriptScreen';
 import { EmployeeDetailScreen } from '../screens/principal/EmployeeDetailScreen';
 import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
@@ -272,6 +278,12 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AcademicTerms" component={AcademicTermsScreen} />
         <Stack.Screen name="TransportHub" component={TransportHubScreen} />
         <Stack.Screen name="BusTripDetail" component={BusTripDetailScreen} />
+        {/* AI Tutor (student) */}
+        <Stack.Screen name="TutorChapters" component={TutorChaptersScreen} />
+        <Stack.Screen name="TutorSession" component={TutorSessionScreen} />
+        <Stack.Screen name="TutorSessions" component={TutorSessionsScreen} />
+        <Stack.Screen name="TutorQuiz" component={TutorQuizScreen} />
+        <Stack.Screen name="TutorTranscript" component={TutorTranscriptScreen} />
       </Stack.Navigator>
   );
 }

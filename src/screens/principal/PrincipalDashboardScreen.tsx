@@ -23,6 +23,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { NotificationPermissionPrompt } from '../../components/NotificationPermissionPrompt';
 import { ScreenHeader, headerButtonStyle } from '../../components/ScreenHeader';
 import { SetupChecklistCard } from '../../components/SetupChecklistCard';
+import { TutorTile } from '../../components/TutorTile';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -591,6 +592,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
         <Text style={styles.sectionTitle}>{isAdmin ? t('dashboard.allTools') : t('dashboard.quickActions')}</Text>
         <View style={styles.tileGrid}>
+          {/* AI Tutor (student): first on a school student's grid; the tile itself says when it is premium. */}
+          {isStudent && <TutorTile schoolId={schoolId} onPress={() => navigation.navigate('TutorChapters')} />}
           {visibleFeatures.map((feature, index) => (
             <FeatureTile
               key={feature.id}

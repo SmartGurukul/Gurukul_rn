@@ -2041,6 +2041,88 @@
       "roll": "Roll {{roll}}"
     }
   },
+  "tutorParent": {
+    "_comment": "AI Tutor (parent)",
+    "tile": "AI Tutor",
+    "title": "AI Tutor report",
+    "none": "Nothing yet",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "totals": "{{sessions}} sessions and {{minutes}} minutes in all",
+    "hero": {
+      "sessions": "Sessions",
+      "minutes": "Minutes",
+      "quiz": "Quiz",
+      "thisWeek": "this week",
+      "noQuiz": "no quiz yet"
+    },
+    "access": {
+      "active": "AI Tutor active",
+      "sessionsLeft_one": "{{count}} session left",
+      "sessionsLeft_other": "{{count}} sessions left",
+      "until": "until {{date}}",
+      "inactive": "Not active: ask the school to switch it on"
+    },
+    "empty": {
+      "title": "No sessions yet",
+      "text": "The first report appears after the first session."
+    },
+    "thisWeek": {
+      "title": "This week"
+    },
+    "strengths": "Strengths",
+    "gaps": "Needs work",
+    "nextUp": "Next up",
+    "mastery": {
+      "none": "Not tried yet",
+      "low": "Needs work",
+      "mid": "Getting there",
+      "high": "Strong"
+    },
+    "quizTrend": {
+      "title": "Weekly quiz"
+    },
+    "chapters": {
+      "title": "Chapters",
+      "chapterTitle": "Ch {{number}}: {{title}}",
+      "sessions_one": "{{count}} session",
+      "sessions_other": "{{count}} sessions",
+      "noTopics": "No topics studied yet",
+      "lastSeen": "last seen {{date}}"
+    },
+    "sessions": {
+      "title": "Recent sessions",
+      "empty": "No sessions yet",
+      "abandoned": "ended early",
+      "forYou": "For you"
+    },
+    "about": {
+      "title": "About {{name}}"
+    },
+    "stage": {
+      "RECAP": "Recap",
+      "TEACH": "Teach",
+      "PRACTICE": "Practice",
+      "CLOSE": "Wrap-up"
+    },
+    "transcript": {
+      "title": "Session",
+      "chapter": "Ch {{number}}: {{title}}",
+      "summary": "Summary",
+      "parentNote": "Note for parents",
+      "flagged": "This session was flagged for a teacher's review",
+      "turns_one": "{{count}} turn",
+      "turns_other": "{{count}} turns",
+      "xp": "{{xp}} XP",
+      "empty": "No messages in this session.",
+      "status": {
+        "PLANNED": "Planned",
+        "ACTIVE": "In progress",
+        "CLOSED": "Completed",
+        "ABANDONED": "Ended early"
+      }
+    }
+  },
   "myFees": {
     "title": "My Fees",
     "loadError": "Could not load your fee dues.",
@@ -3834,5 +3916,105 @@
     "changeClassSubtitle": "Switch the class you're learning in",
     "classChanged": "You're now in Class {{class}}",
     "learnerTag": "Learner"
+  },
+  "tutor": {
+    "title": "AI Tutor",
+    "tile": {
+      "title": "AI Tutor",
+      "description": "Learn a chapter with your own tutor",
+      "premium": "Premium"
+    },
+    "access": {
+      "premium": "Premium",
+      "lockedTitle": "The AI Tutor is a premium feature",
+      "noEntitlement": "Ask your school to switch on the AI Tutor for you.",
+      "noSessionsLeft": "You have used all your sessions. Ask your school for more.",
+      "notActive": "Your AI Tutor access is not active right now. Ask your school about it.",
+      "notAvailable": "The AI Tutor is not available at your school yet.",
+      "generic": "Ask your school to switch on the AI Tutor for you."
+    },
+    "chapters": {
+      "grade": "Class {{grade}}",
+      "sessionsLeft": "Sessions left",
+      "unlimited": "Unlimited",
+      "continueSession": "Continue session",
+      "weeklyQuiz": "This week's quiz",
+      "empty": "No chapters for your class yet.",
+      "mastery": "{{percent}}%",
+      "notStarted": "Not started yet",
+      "notReady": "Not ready yet",
+      "pickMode": "How do you want to learn today?"
+    },
+    "mode": {
+      "text": "Text",
+      "textHint": "Type your answers",
+      "voice": "Voice",
+      "voiceHint": "Speak, and hear the tutor"
+    },
+    "stage": {
+      "recap": "Recap",
+      "teach": "Teach",
+      "practice": "Practice",
+      "close": "Close"
+    },
+    "status": {
+      "planned": "Planned",
+      "active": "In progress",
+      "closed": "Finished",
+      "abandoned": "Left early"
+    },
+    "session": {
+      "placeholder": "Type your answer…",
+      "send": "Send",
+      "thinking": "Your tutor is thinking…",
+      "speak": "Speak your answer",
+      "speakerOn": "Read replies aloud",
+      "speakerOff": "Stop reading aloud",
+      "recording": "Listening… {{seconds}}s",
+      "stop": "Stop",
+      "nothingHeard": "We couldn't hear anything. Try again, a little closer to the mic.",
+      "voiceUnavailable": "Voice input isn't available right now. Type your answer instead.",
+      "micDenied": "Allow the microphone in your phone's settings to speak your answers.",
+      "end": "End session",
+      "endTitle": "End this session?",
+      "endMessage": "Your tutor will wrap up and save what you learned.",
+      "endConfirm": "End",
+      "endedTitle": "Session complete",
+      "xp": "+{{xp}} XP",
+      "backToChapters": "Back to chapters",
+      "seeSessions": "See my sessions",
+      "fromTextbook": "From your textbook",
+      "page": "Page {{page}}"
+    },
+    "sessions": {
+      "title": "My sessions",
+      "empty": "No sessions yet. Pick a chapter to start your first one.",
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min"
+    },
+    "quiz": {
+      "title": "This week's quiz",
+      "none": "No quiz this week yet. Finish a session first.",
+      "progress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "submit": "Submit answers",
+      "yourScore": "Your score",
+      "score": "{{score}} / {{total}}",
+      "alreadyAnswered": "You have already taken this week's quiz. A new one comes next week.",
+      "masteryUpdated": "Your chapter progress has been updated."
+    },
+    "server": {
+      "link": "Server",
+      "title": "Server",
+      "subtitle": "Preview builds only",
+      "current": "Connected to",
+      "usingDefault": "The default server",
+      "usingOverride": "A custom server for this preview",
+      "urlLabel": "Server address",
+      "help": "Enter the backend as http://<laptop-ip>:8080 or https://host. Leave it empty and tap Save, or use the default, to go back to the production server.",
+      "saved": "Saved. Requests now go to this server.",
+      "useDefault": "Use default"
+    }
   }
 }

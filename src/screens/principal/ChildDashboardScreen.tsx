@@ -187,6 +187,9 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
     { key: 'reportCard', title: t('childDashboard.reportCard'), icon: 'file-alt', onPress: () => navigation.navigate('ReportCard', { student }) },
     { key: 'schoolBus', title: t('childDashboard.schoolBus'), icon: 'bus', onPress: () => navigation.navigate('MyBus') },
     { key: 'idCard', title: t('childDashboard.idCard'), icon: 'id-badge', onPress: () => navigation.navigate('IdCard', { kind: 'STUDENT', id: student.id, name: student.name }) },
+    // AI Tutor (parent)
+    { key: 'aiTutor', title: t('tutorParent.tile'), icon: 'robot', onPress: () => navigation.navigate('TutorParentReport', { studentId: student.id, studentName: student.name }) },
+    // end AI Tutor (parent)
   ];
 
   return (

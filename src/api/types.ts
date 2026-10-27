@@ -3065,3 +3065,223 @@ export interface SyllabusChapterHidden {
   title: string;
   hidden: boolean;
 }
+
+// ---------------------------------------------------------------------------------------------
+// AI Tutor (workspace specs/ai-tutor-preview/contract.md)
+// ---------------------------------------------------------------------------------------------
+
+export type TutorPlan = 'TRIAL' | 'YEARLY' | 'GRANT';
+export type TutorSessionMode = 'TEXT' | 'VOICE';
+export type TutorSessionStatus = 'PLANNED' | 'ACTIVE' | 'CLOSED' | 'ABANDONED';
+export type TutorStage = 'RECAP' | 'TEACH' | 'PRACTICE' | 'CLOSE';
+
+export interface TutorEntitlement {
+  id: string;
+  studentId: string;
+  plan: TutorPlan;
+  status: 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+  sessionsTotal: number | null;
+  sessionsUsed: number;
+  /** Null when unlimited. */
+  sessionsRemaining: number | null;
+  startsAt: string;
+  expiresAt: string | null;
+  source: 'ADMIN_GRANT' | 'PAYMENT';
+  note: string | null;
+  usable: boolean;
+}
+
+export interface TutorAccess {
+  studentId: string;
+  allowed: boolean;
+  /** no_entitlement, no_sessions_left, not_active; null when allowed. */
+  reason: 'no_entitlement' | 'no_sessions_left' | 'not_active' | 'not_available' | null;
+  entitlement: TutorEntitlement | null;
+  history: TutorEntitlement[];
+}
+
+export interface TutorChapterOption {
+  chapterId: string;
+  bookCode: string;
+  bookTitle: string;
+  subjectKey: string;
+  subjectName: string;
+  chapterNumber: number;
+  title: string;
+  topicCount: number;
+  /** False until ops has ingested the chapter's textbook; a session cannot start on it. */
+  ingested: boolean;
+  /** 0 to 1 over the chapter's topics the student has attempted; null before any. */
+  mastery: number | null;
+  lastSessionAt: string | null;
+}
+
+export interface TutorChaptersResponse {
+  grade: number | null;
+  chapters: TutorChapterOption[];
+}
+
+export interface TutorCitation {
+  chunkId: string;
+  /** Ready to show: "Chapter 1 Chemical Reactions and Equations, section 1.1 ..., p. 6". */
+  citation: string;
+  chapterId: string;
+  topicId: string | null;
+  pageFrom: number | null;
+}
+
+export interface TutorTurnView {
+  id: string;
+  seq: number;
+  role: 'STUDENT' | 'TUTOR' | 'SYSTEM';
+  stage: TutorStage | null;
+  content: string;
+  citations: TutorCitation[];
+  topicId: string | null;
+  createdAt: string;
+  latencyMs: number | null;
+}
+
+export interface TutorPlanView {
+  focusTopicId: string | null;
+  focusTopicTitle: string | null;
+  recapQuestions: string[];
+  steps: string[];
+  practice: string[];
+}
+
+export interface TutorSessionView {
+  id: string;
+  studentId: string;
+  chapterId: string;
+  chapterNumber: number;
+  chapterTitle: string;
+  bookTitle: string;
+  mode: TutorSessionMode;
+  status: TutorSessionStatus;
+  stage: TutorStage | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  turnCount: number;
+  plan: TutorPlanView | null;
+  turns: TutorTurnView[];
+  summary: string | null;
+  parentNote: string | null;
+  xpAwarded: number | null;
+  flaggedReason: string | null;
+}
+
+export interface TutorTurnResult {
+  turn: TutorTurnView;
+  stage: TutorStage;
+  status: TutorSessionStatus;
+  /** Guard or syllabus notice to show above the reply, when there is one. */
+  notice: string | null;
+  /** True when the tutor closed the session with this reply. */
+  sessionEnded: boolean;
+}
+
+export interface TutorSessionSummary {
+  id: string;
+  chapterId: string;
+  chapterTitle: string;
+  bookTitle: string;
+  mode: TutorSessionMode;
+  status: TutorSessionStatus;
+  startedAt: string | null;
+  endedAt: string | null;
+  turnCount: number;
+  minutes: number | null;
+  summary: string | null;
+  parentNote: string | null;
+}
+
+export interface TutorSessionList {
+  sessions: TutorSessionSummary[];
+}
+
+export interface TutorTranscription {
+  text: string;
+  provider: string;
+}
+
+export interface TutorQuizOption {
+  id: string;
+  text: string;
+}
+
+export interface TutorQuizQuestion {
+  id: string;
+  text: string;
+  options: TutorQuizOption[];
+}
+
+export interface TutorQuizWeekly {
+  quizId: string;
+  chapterId: string;
+  chapterTitle: string;
+  /** True when this week's quiz was already answered; then score and total are set and questions is empty. */
+  answered: boolean;
+  score: number | null;
+  total: number | null;
+  questions: TutorQuizQuestion[];
+}
+
+export interface TutorQuizAnswersRequest {
+  quizId: string;
+  answers: { questionId: string; optionId: string }[];
+}
+
+export interface TutorQuizResult {
+  score: number;
+  total: number;
+  perTopic: { topicId: string; title: string; correct: number; total: number }[];
+  masteryUpdated: boolean;
+}
+
+export interface TutorTopicMastery {
+  topicId: string;
+  topicNumber: string | null;
+  title: string;
+  mastery: number | null;
+  attempts: number;
+  lastSeenAt: string | null;
+}
+
+export interface TutorChapterMastery {
+  chapterId: string;
+  chapterNumber: number;
+  title: string;
+  bookTitle: string;
+  mastery: number | null;
+  sessions: number;
+  topics: TutorTopicMastery[];
+}
+
+export interface TutorReport {
+  studentId: string;
+  studentName: string;
+  access: {
+    allowed: boolean;
+    reason: string | null;
+    plan: TutorPlan | null;
+    sessionsRemaining: number | null;
+    expiresAt: string | null;
+  };
+  week: {
+    start: string;
+    end: string;
+    sessions: number;
+    minutes: number;
+    quizScore: { score: number; total: number } | null;
+  };
+  total: { sessions: number; minutes: number; firstSessionAt: string | null };
+  conceptsThisWeek: { topicId: string; title: string; chapterTitle: string; mastery: number | null }[];
+  strengths: { topicId: string; title: string; mastery: number }[];
+  gaps: { topicId: string; title: string; mastery: number }[];
+  nextPlan: string | null;
+  chapters: TutorChapterMastery[];
+  quizTrend: { weekStart: string; score: number; total: number }[];
+  recentSessions: TutorSessionSummary[];
+  profileSummary: string | null;
+}
