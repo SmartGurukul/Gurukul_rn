@@ -26,6 +26,7 @@ import {
   setAuthSession,
 } from './src/api/client';
 import { disconnectChatSocket } from './src/api/chatSocket';
+import { loadServerUrlOverride } from './src/api/serverUrl';
 import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { endSessionOnServer } from './src/push/pushLogout';
@@ -35,6 +36,7 @@ import { trackTokenFromUrl } from './src/transport/trackLink';
 import { phoneLookupOutcome } from './src/utils/phoneLogin';
 import { TrackLinkView } from './src/screens/transport/TrackLinkView';
 import PhoneEntryScreen from './src/screens/PhoneEntryScreen';
+import ServerSettingsScreen from './src/screens/ServerSettingsScreen';
 import PublicSignupScreen from './src/screens/PublicSignupScreen';
 import { PUBLIC_SCHOOL_ID } from './src/config/publicSchool';
 import SchoolPickScreen from './src/screens/SchoolPickScreen';
@@ -50,6 +52,8 @@ import RegistrationSubmittedScreen from './src/screens/RegistrationSubmittedScre
 
 type PreAuthStep =
   | { name: 'phone' }
+  // AI Tutor (student): preview bundles can point the app at another server.
+  | { name: 'server' }
   | { name: 'publicSignup'; phone: string }
   | { name: 'pickSchool'; phone: string; schools: SchoolSearchResult[] }
   | { name: 'register' }
@@ -124,6 +128,9 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
+      // A preview bundle's saved server override must apply before the first request (the session
+      // refresh below). It never throws, and the app starts on the default server when it fails.
+      await loadServerUrlOverride().catch(() => null);
       const stored = await getStoredSession().catch(() => null);
       if (!stored) {
         setSession(null);
@@ -239,8 +246,11 @@ export default function App() {
             onSchoolsFound={handlePhoneSchools}
             onRegisterSchool={() => setPreAuthStep({ name: 'register' })}
             onContinueAsPublic={openPublicSignup}
+            onOpenServer={() => setPreAuthStep({ name: 'server' })}
           />
         );
+      case 'server':
+        return <ServerSettingsScreen onBack={() => setPreAuthStep({ name: 'phone' })} />;
       case 'publicSignup':
         return (
           <PublicSignupScreen

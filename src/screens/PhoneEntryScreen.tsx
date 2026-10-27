@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardInset } from '../hooks/useKeyboardInset';
 
 import { lookupSchoolsByPhone } from '../api/auth';
+import { canOverrideServer } from '../api/serverUrl';
 import { getErrorMessage } from '../api/errorMessage';
 import type { SchoolSearchResult } from '../api/types';
 import { ErrorNotice } from '../components/ErrorNotice';
@@ -22,6 +23,8 @@ interface Props {
   onRegisterSchool: () => void;
   /** A number registered at no school can still learn as a schoolless (public) student. */
   onContinueAsPublic: (phone: string) => void;
+  /** Preview bundles only: opens the Server screen (AI Tutor preview against a laptop's backend). */
+  onOpenServer?: () => void;
 }
 
 /**
@@ -30,7 +33,7 @@ interface Props {
  * directory to browse: a number registered nowhere is told so and stays here - its school has
  * to add it. The one other way in is registering a new school.
  */
-export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool, onContinueAsPublic }: Props) {
+export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool, onContinueAsPublic, onOpenServer }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const keyboardInset = useKeyboardInset();
@@ -114,6 +117,11 @@ export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool, onC
         <Pressable onPress={onRegisterSchool} style={styles.linkButton}>
           <Text style={styles.linkText}>{t('welcome.registerSchool')}</Text>
         </Pressable>
+        {onOpenServer && canOverrideServer() && (
+          <Pressable onPress={onOpenServer} style={styles.serverLink} accessibilityRole="button">
+            <Text style={styles.serverLinkText}>{t('tutor.server.link')}</Text>
+          </Pressable>
+        )}
       </ScrollView>
     </View>
   );
@@ -170,4 +178,6 @@ const styles = StyleSheet.create({
   submitText: { color: colors.white, fontWeight: '700', fontSize: 16 },
   linkButton: { marginTop: spacing.lg, alignItems: 'center' },
   linkText: { color: colors.primary, fontWeight: '600' },
+  serverLink: { marginTop: spacing.xl, alignItems: 'center' },
+  serverLinkText: { color: colors.textMuted, fontSize: 12 },
 });
