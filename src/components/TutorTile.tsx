@@ -36,6 +36,8 @@ export function TutorTile({ schoolId, onPress }: Props) {
 
   const premium = access !== null && !access.allowed;
   const tint = tints.violet;
+  // The tutor does not exist at this school (production keeps it to the Open School for now): no tile.
+  if (access?.reason === 'not_available') return null;
 
   return (
     <TouchableOpacity

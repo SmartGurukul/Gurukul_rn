@@ -593,7 +593,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         <Text style={styles.sectionTitle}>{isAdmin ? t('dashboard.allTools') : t('dashboard.quickActions')}</Text>
         <View style={styles.tileGrid}>
           {/* AI Tutor (student): first on a school student's grid; the tile itself says when it is premium. */}
-          {isStudent && !isPublic && <TutorTile schoolId={schoolId} onPress={() => navigation.navigate('TutorChapters')} />}
+          {isStudent && <TutorTile schoolId={schoolId} onPress={() => navigation.navigate('TutorChapters')} />}
           {visibleFeatures.map((feature, index) => (
             <FeatureTile
               key={feature.id}

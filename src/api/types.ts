@@ -3095,7 +3095,7 @@ export interface TutorAccess {
   studentId: string;
   allowed: boolean;
   /** no_entitlement, no_sessions_left, not_active; null when allowed. */
-  reason: 'no_entitlement' | 'no_sessions_left' | 'not_active' | null;
+  reason: 'no_entitlement' | 'no_sessions_left' | 'not_active' | 'not_available' | null;
   entitlement: TutorEntitlement | null;
   history: TutorEntitlement[];
 }

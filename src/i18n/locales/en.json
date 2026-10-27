@@ -3930,6 +3930,7 @@
       "noEntitlement": "Ask your school to switch on the AI Tutor for you.",
       "noSessionsLeft": "You have used all your sessions. Ask your school for more.",
       "notActive": "Your AI Tutor access is not active right now. Ask your school about it.",
+      "notAvailable": "The AI Tutor is not available at your school yet.",
       "generic": "Ask your school to switch on the AI Tutor for you."
     },
     "chapters": {

@@ -28,6 +28,8 @@ export function accessReasonKey(reason: TutorAccess['reason'] | string | null | 
       return 'tutor.access.noSessionsLeft';
     case 'not_active':
       return 'tutor.access.notActive';
+    case 'not_available':
+      return 'tutor.access.notAvailable';
     default:
       return 'tutor.access.generic';
   }
