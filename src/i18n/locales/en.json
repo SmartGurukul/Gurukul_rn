@@ -3916,5 +3916,104 @@
     "changeClassSubtitle": "Switch the class you're learning in",
     "classChanged": "You're now in Class {{class}}",
     "learnerTag": "Learner"
+  },
+  "tutor": {
+    "title": "AI Tutor",
+    "tile": {
+      "title": "AI Tutor",
+      "description": "Learn a chapter with your own tutor",
+      "premium": "Premium"
+    },
+    "access": {
+      "premium": "Premium",
+      "lockedTitle": "The AI Tutor is a premium feature",
+      "noEntitlement": "Ask your school to switch on the AI Tutor for you.",
+      "noSessionsLeft": "You have used all your sessions. Ask your school for more.",
+      "notActive": "Your AI Tutor access is not active right now. Ask your school about it.",
+      "generic": "Ask your school to switch on the AI Tutor for you."
+    },
+    "chapters": {
+      "grade": "Class {{grade}}",
+      "sessionsLeft": "Sessions left",
+      "unlimited": "Unlimited",
+      "continueSession": "Continue session",
+      "weeklyQuiz": "This week's quiz",
+      "empty": "No chapters for your class yet.",
+      "mastery": "{{percent}}%",
+      "notStarted": "Not started yet",
+      "notReady": "Not ready yet",
+      "pickMode": "How do you want to learn today?"
+    },
+    "mode": {
+      "text": "Text",
+      "textHint": "Type your answers",
+      "voice": "Voice",
+      "voiceHint": "Speak, and hear the tutor"
+    },
+    "stage": {
+      "recap": "Recap",
+      "teach": "Teach",
+      "practice": "Practice",
+      "close": "Close"
+    },
+    "status": {
+      "planned": "Planned",
+      "active": "In progress",
+      "closed": "Finished",
+      "abandoned": "Left early"
+    },
+    "session": {
+      "placeholder": "Type your answer…",
+      "send": "Send",
+      "thinking": "Your tutor is thinking…",
+      "speak": "Speak your answer",
+      "speakerOn": "Read replies aloud",
+      "speakerOff": "Stop reading aloud",
+      "recording": "Listening… {{seconds}}s",
+      "stop": "Stop",
+      "nothingHeard": "We couldn't hear anything. Try again, a little closer to the mic.",
+      "voiceUnavailable": "Voice input isn't available right now. Type your answer instead.",
+      "micDenied": "Allow the microphone in your phone's settings to speak your answers.",
+      "end": "End session",
+      "endTitle": "End this session?",
+      "endMessage": "Your tutor will wrap up and save what you learned.",
+      "endConfirm": "End",
+      "endedTitle": "Session complete",
+      "xp": "+{{xp}} XP",
+      "backToChapters": "Back to chapters",
+      "seeSessions": "See my sessions",
+      "fromTextbook": "From your textbook",
+      "page": "Page {{page}}"
+    },
+    "sessions": {
+      "title": "My sessions",
+      "empty": "No sessions yet. Pick a chapter to start your first one.",
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min"
+    },
+    "quiz": {
+      "title": "This week's quiz",
+      "none": "No quiz this week yet. Finish a session first.",
+      "progress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "submit": "Submit answers",
+      "yourScore": "Your score",
+      "score": "{{score}} / {{total}}",
+      "alreadyAnswered": "You have already taken this week's quiz. A new one comes next week.",
+      "masteryUpdated": "Your chapter progress has been updated."
+    },
+    "server": {
+      "link": "Server",
+      "title": "Server",
+      "subtitle": "Preview builds only",
+      "current": "Connected to",
+      "usingDefault": "The default server",
+      "usingOverride": "A custom server for this preview",
+      "urlLabel": "Server address",
+      "help": "Enter the backend as http://<laptop-ip>:8080 or https://host. Leave it empty and tap Save, or use the default, to go back to the production server.",
+      "saved": "Saved. Requests now go to this server.",
+      "useDefault": "Use default"
+    }
   }
 }
