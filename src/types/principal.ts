@@ -286,6 +286,4 @@ export type PrincipalStackParamList = {
   TutorSessions: undefined;
   /** This week's five-question quiz. */
   TutorQuiz: undefined;
-  /** A past session's full transcript (screen owned by the parent side). */
-  TutorTranscript: { sessionId: string };
 };

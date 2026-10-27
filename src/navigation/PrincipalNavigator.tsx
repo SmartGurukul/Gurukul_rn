@@ -65,6 +65,7 @@ import { TutorChaptersScreen } from '../screens/principal/TutorChaptersScreen';
 import { TutorQuizScreen } from '../screens/principal/TutorQuizScreen';
 import { TutorSessionScreen } from '../screens/principal/TutorSessionScreen';
 import { TutorSessionsScreen } from '../screens/principal/TutorSessionsScreen';
+import { TutorTranscriptScreen } from '../screens/principal/TutorTranscriptScreen';
 import { EmployeeDetailScreen } from '../screens/principal/EmployeeDetailScreen';
 import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
@@ -282,6 +283,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="TutorSession" component={TutorSessionScreen} />
         <Stack.Screen name="TutorSessions" component={TutorSessionsScreen} />
         <Stack.Screen name="TutorQuiz" component={TutorQuizScreen} />
+        <Stack.Screen name="TutorTranscript" component={TutorTranscriptScreen} />
       </Stack.Navigator>
   );
 }
