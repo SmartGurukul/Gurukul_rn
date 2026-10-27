@@ -41,7 +41,11 @@ export interface TutorSubjectGroup {
   chapters: TutorChapterOption[];
 }
 
-/** Chapters grouped by subject, in the server's order (subject, then book, then chapter number). */
+/**
+ * Chapters grouped by subject. Subjects with at least one chapter ready for the tutor come first
+ * (keeping the server's order among themselves), so a student does not scroll past a whole subject
+ * of "Not ready yet" to find the one they can study.
+ */
 export function groupChaptersBySubject(chapters: TutorChapterOption[]): TutorSubjectGroup[] {
   const groups: TutorSubjectGroup[] = [];
   for (const chapter of chapters) {
@@ -49,7 +53,9 @@ export function groupChaptersBySubject(chapters: TutorChapterOption[]): TutorSub
     if (existing) existing.chapters.push(chapter);
     else groups.push({ subjectKey: chapter.subjectKey, subjectName: chapter.subjectName, chapters: [chapter] });
   }
-  return groups;
+  const ready = groups.filter((g) => g.chapters.some((c) => c.ingested));
+  const notReady = groups.filter((g) => !g.chapters.some((c) => c.ingested));
+  return [...ready, ...notReady];
 }
 
 /** 0..1 mastery as a whole percentage, or null before the student has attempted anything. */

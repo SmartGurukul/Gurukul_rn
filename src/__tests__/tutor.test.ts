@@ -94,6 +94,15 @@ describe('groupChaptersBySubject', () => {
   it('is empty for no chapters', () => {
     expect(groupChaptersBySubject([])).toEqual([]);
   });
+  it('lists subjects with a ready chapter before subjects with none', () => {
+    const groups = groupChaptersBySubject([
+      chapter({ chapterId: 'eng-1', subjectKey: 'english', subjectName: 'English', ingested: false }),
+      chapter({ chapterId: 'eng-2', subjectKey: 'english', subjectName: 'English', ingested: false }),
+      chapter({ chapterId: 'sci-1', ingested: true }),
+      chapter({ chapterId: 'math-1', subjectKey: 'maths', subjectName: 'Mathematics', ingested: false }),
+    ]);
+    expect(groups.map((g) => g.subjectName)).toEqual(['Science', 'English', 'Mathematics']);
+  });
 });
 
 describe('masteryPercent', () => {
