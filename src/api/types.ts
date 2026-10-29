@@ -3098,6 +3098,8 @@ export interface TutorAccess {
   reason: 'no_entitlement' | 'no_sessions_left' | 'not_active' | 'not_available' | null;
   entitlement: TutorEntitlement | null;
   history: TutorEntitlement[];
+  /** True when the server has a speech-to-text provider; the mic shows only then. */
+  voiceInputAvailable?: boolean;
 }
 
 export interface TutorChapterOption {

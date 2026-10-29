@@ -1,6 +1,6 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from 'expo-audio';
+import { AudioQuality, IOSOutputFormat, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, type RecordingOptions } from 'expo-audio';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +20,7 @@ import {
 
 import { ApiError } from '../../api/client';
 import { getErrorMessage } from '../../api/errorMessage';
-import { closeTutorSession, getTutorSession, sendTutorTurn, transcribeTutorAudio } from '../../api/tutor';
+import { closeTutorSession, getMyTutorAccess, getTutorSession, sendTutorTurn, transcribeTutorAudio } from '../../api/tutor';
 import type { TutorCitation, TutorSessionView, TutorStage, TutorTurnView } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenHeader, headerButtonStyle } from '../../components/ScreenHeader';
@@ -36,6 +36,21 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'TutorSession'>;
 
 /** Longest clip the server accepts (contract: ≤ 60 s, ≤ 10 MB). */
 const MAX_RECORDING_SECONDS = 60;
+
+/**
+ * Speech only, mono, 16 kHz, 32 kbps AAC: about 4 KB a second, so a full minute stays near 250 KB.
+ * The server's front proxy caps uploads at 1 MB and the stereo 128 kbps preset went past it, which
+ * the phone reported as a network failure.
+ */
+const SPEECH_RECORDING: RecordingOptions = {
+  extension: '.m4a',
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 32000,
+  android: { extension: '.m4a', outputFormat: 'mpeg4', audioEncoder: 'aac' },
+  ios: { extension: '.m4a', outputFormat: IOSOutputFormat.MPEG4AAC, audioQuality: AudioQuality.MEDIUM },
+  web: { mimeType: 'audio/webm', bitsPerSecond: 32000 },
+};
 
 const SPEECH_OPTIONS: Speech.SpeechOptions = { language: 'en-IN', rate: 0.95 };
 
@@ -70,11 +85,23 @@ export function TutorSessionScreen({ route, navigation }: Props) {
 
   // Voice input. The mic hides for the rest of the session once the server says it has no
   // speech provider (TUTOR_STT_UNAVAILABLE); its message is shown once.
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(SPEECH_RECORDING);
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [transcribing, setTranscribing] = useState(false);
-  const [micHidden, setMicHidden] = useState(false);
+  // Hidden until the server says it has a speech provider, so nothing is recorded that cannot be heard.
+  const [micHidden, setMicHidden] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    getMyTutorAccess(schoolId)
+      .then((access) => {
+        if (!cancelled) setMicHidden(!access.voiceInputAvailable);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [schoolId]);
   const [micNotice, setMicNotice] = useState<string | null>(null);
   const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
