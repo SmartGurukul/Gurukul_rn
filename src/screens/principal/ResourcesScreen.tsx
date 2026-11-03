@@ -10,7 +10,6 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
@@ -43,6 +42,7 @@ import {
   withChapterHidden,
   type JourneyStep,
 } from '../../utils/resources';
+import { useAppWidth } from '../../hooks/useAppWidth';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Resources'>;
 
@@ -65,7 +65,7 @@ export function ResourcesScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
-  const { width } = useWindowDimensions();
+  const width = useAppWidth();
   const classSection = route.params.classSection;
   const viewer = resourceViewer(session);
   const canHide = viewer !== 'student';

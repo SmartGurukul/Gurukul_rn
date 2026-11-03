@@ -339,7 +339,7 @@ def header(meta):
     <ul class="nav-links">{''.join(links)}</ul>
     <div class="nav-cta">
       {lang_link}
-      <a class="nav-signin" href="{rel(p, 'suite/')}">{'साइन इन' if hi else 'Sign in'}</a>
+      <a class="nav-signin" href="{rel(p, 'app/')}">{'साइन इन' if hi else 'Sign in'}</a>
       <a class="btn btn-primary btn-sm" href="{demo}">{cta}</a>
     </div>
   </div>
@@ -383,6 +383,8 @@ def footer(meta):
         <ul>
           <li><a href="{INSTAGRAM}" rel="noopener" target="_blank">Instagram @smartgurukul.app</a></li>
           <li><a href="{rel(p, home + '#demo')}">{'मुफ़्त डेमो बुक करें' if hi else 'Book a free demo'}</a></li>
+          <li><a href="{rel(p, 'app/')}">{'ब्राउज़र में ऐप खोलें' if hi else 'Open the app in your browser'}</a></li>
+          <li><a href="{rel(p, 'suite/')}">{'स्कूल सुइट (मेल, कैलेंडर, ड्राइव)' if hi else 'School Suite (mail, calendar, drive)'}</a></li>
           <li><a href="{r('privacy.html')}">{'प्राइवेसी पॉलिसी' if hi else 'Privacy policy'}</a></li>
         </ul>
       </div>

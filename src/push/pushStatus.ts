@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useSyncExternalStore } from 'react';
+import { Platform } from 'react-native';
 
 /**
  * What the app knows about push on this phone: the notification permission, the Expo push token,
@@ -23,7 +24,8 @@ const EXPO_PUSH_TOKEN_KEY = 'gurukul.expoPushToken';
 
 let status: PushStatus = {
   permission: null,
-  supported: Device.isDevice && Constants.appOwnership !== 'expo',
+  // No push on the web app (smartgurukul.org/app): Expo push tokens are phone-only.
+  supported: Platform.OS !== 'web' && Device.isDevice && Constants.appOwnership !== 'expo',
   expoPushToken: null,
   tokenError: null,
   lastRegistration: null,

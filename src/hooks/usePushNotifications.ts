@@ -251,12 +251,15 @@ export function usePushNotifications(schoolId: string | null, session: Session |
     const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
     // A tap that cold-starts the app never reaches the listener above - check for one already
     // waiting, then clear it so the same tap doesn't re-navigate every time the app is reopened.
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) {
-        handleResponse(response);
-        Notifications.clearLastNotificationResponseAsync();
-      }
-    });
+    // (No push on the web app, and these two calls throw there.)
+    if (Platform.OS !== 'web') {
+      Notifications.getLastNotificationResponseAsync().then((response) => {
+        if (response) {
+          handleResponse(response);
+          Notifications.clearLastNotificationResponseAsync();
+        }
+      });
+    }
     return () => subscription.remove();
   }, [sessionKey]);
 }

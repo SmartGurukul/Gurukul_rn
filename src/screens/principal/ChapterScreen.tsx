@@ -2,7 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Linking, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 
@@ -32,6 +32,7 @@ import {
   textbookOpenPlan,
   type TimelineNode,
 } from '../../utils/resources';
+import { useAppWidth } from '../../hooks/useAppWidth';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Chapter'>;
 
@@ -160,7 +161,7 @@ export function ChapterScreen({ route, navigation }: Props) {
     setExpandedKey((prev) => (prev === node.key ? null : node.key));
   };
 
-  const { width } = useWindowDimensions();
+  const width = useAppWidth();
   const contentWidth = width - spacing.lg * 2;
   const nowPlaying = selected >= 0 ? nodes[selected] : null;
 

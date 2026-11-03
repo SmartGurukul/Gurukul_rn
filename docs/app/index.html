@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Smart Gurukul</title>
+    <meta name="description" content="Sign in to Smart Gurukul in your browser - the same school app as on Android, for principals, teachers, students and parents." />
+    <!-- The web app's sign-in screen is not a page to rank; smartgurukul.org's marketing pages are. -->
+    <meta name="robots" content="noindex" />
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+        background-color: #FAF8FD;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+      /* The app is laid out for phones: on a wide window show it as a centred phone-width column
+         (keep in step with WEB_APP_MAX_WIDTH in src/hooks/useAppWidth.ts). */
+      @media (min-width: 560px) {
+        body {
+          background-color: #EDE7F8;
+        }
+        #root {
+          max-width: 480px;
+          margin: 0 auto;
+          background-color: #FAF8FD;
+          box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.08), 0 12px 40px rgba(46, 16, 101, 0.12);
+        }
+      }
+    </style>
+  <meta name="theme-color" content="#7C3AED">
+<link rel="icon" href="/app/favicon.ico"/></head>
+
+  <body>
+    <noscript>
+      Smart Gurukul needs JavaScript to run in the browser. Please turn it on, or use the Android app.
+    </noscript>
+    <div id="root"></div>
+  <script src="/app/_expo/static/js/web/index-d818cbf915ddbf6160b8a093703ff834.js" defer></script>
+</body>
+</html>
