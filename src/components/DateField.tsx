@@ -45,7 +45,8 @@ export default function DateField({
   const currentDate = value ? parseDateString(value) : new Date();
 
   const handleChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') {
+    // Web uses the same one-shot dialog flow as Android (see src/web/dateTimePicker.tsx).
+    if (Platform.OS !== 'ios') {
       setOpen(false);
       if (event.type === 'set' && selected) onChange(toDateString(selected));
       return;
@@ -64,7 +65,7 @@ export default function DateField({
         <Text style={styles.icon}>📅</Text>
       </Pressable>
 
-      {open && Platform.OS === 'android' && (
+      {open && Platform.OS !== 'ios' && (
         <DateTimePicker
           value={currentDate}
           mode="date"

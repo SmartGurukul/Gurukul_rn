@@ -1,5 +1,6 @@
 import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import { Platform } from 'react-native';
 
 export interface PreparedImage {
   uri: string;
@@ -32,6 +33,7 @@ export async function prepareImageForUpload(uri: string, options: PrepareOptions
   return {
     uri: saved.uri,
     contentType: asPng ? 'image/png' : 'image/jpeg',
-    sizeBytes: new File(saved.uri).size,
+    // On web the result is a blob:/data: URI with no file on disk to measure.
+    sizeBytes: Platform.OS === 'web' ? (await (await fetch(saved.uri)).blob()).size : new File(saved.uri).size,
   };
 }

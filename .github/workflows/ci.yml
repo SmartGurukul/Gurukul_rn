@@ -30,3 +30,10 @@ jobs:
 
       - name: Test
         run: npm test
+
+      # The web app at smartgurukul.org/app is this same code built for the browser. Building it here
+      # catches a change that breaks the web bundle (e.g. a new native-only module with no web
+      # stand-in in metro.config.js). It does not publish anything: docs/app is updated by running
+      # `npm run build:web` and committing the result.
+      - name: Web build
+        run: npx expo export --platform web --output-dir dist/web

@@ -56,7 +56,12 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Smart Gurukul",
+      "shortName": "Smart Gurukul",
+      "themeColor": "#7C3AED",
+      "backgroundColor": "#FFFFFF",
+      "lang": "en"
     },
     "plugins": [
       "@react-native-community/datetimepicker",
@@ -113,6 +118,9 @@
     },
     "updates": {
       "url": "https://u.expo.dev/f610c224-f96d-4706-a22c-38f27170b00c"
+    },
+    "experiments": {
+      "baseUrl": "/app"
     }
   }
 }

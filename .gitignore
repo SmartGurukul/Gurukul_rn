@@ -1,5 +1,7 @@
 # dependencies
 node_modules/
+# ...except the web app build's fonts and icons (npm run build:web), served from docs/app/assets/node_modules/.
+!docs/app/assets/node_modules/
 
 # Expo
 .expo/

@@ -2,7 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { requestPushPermission, usePushStatus } from '../push/pushStatus';
 import { colors, radius, spacing } from '../theme/colors';
@@ -28,7 +28,8 @@ export function NotificationPermissionPrompt() {
       .catch(() => setSnoozed(false));
   }, []);
 
-  if (!permission || snoozed !== false || permission.status === 'granted') return null;
+  // The web app (smartgurukul.org/app) has no push, so there's nothing to turn on.
+  if (Platform.OS === 'web' || !permission || snoozed !== false || permission.status === 'granted') return null;
 
   const dismiss = () => {
     setSnoozed(true);

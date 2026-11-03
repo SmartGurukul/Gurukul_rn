@@ -2,6 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import type { TFunction } from 'i18next';
+import { Platform } from 'react-native';
 
 import { buildQuizPaperHtml, quizPaperFileName } from '../utils/quizPaper';
 import type { AiQuizGenerationResponse } from './types';
@@ -22,6 +23,11 @@ export class ShareUnavailableError extends Error {
  */
 export async function shareQuizPaper(paper: AiQuizGenerationResponse, includeAnswerKey: boolean, t: TFunction): Promise<void> {
   const html = buildQuizPaperHtml(paper, { includeAnswerKey }, t);
+  if (Platform.OS === 'web') {
+    // Browsers can't render HTML to a PDF file directly; the print dialog's "Save as PDF" does it.
+    printHtmlInBrowser(html, quizPaperFileName(paper.title, paper.className, includeAnswerKey));
+    return;
+  }
   const { uri } = await Print.printToFileAsync({ html, ...A4_PAGE });
 
   // A readable file name for whoever receives it; the print file's own name is random.
@@ -36,4 +42,18 @@ export async function shareQuizPaper(paper: AiQuizGenerationResponse, includeAns
 
   if (!(await Sharing.isAvailableAsync())) throw new ShareUnavailableError();
   await Sharing.shareAsync(shareUri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: paper.title });
+}
+
+/** Web: prints the paper from a hidden iframe so only the paper (not the app) is printed. */
+function printHtmlInBrowser(html: string, fileName: string) {
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  // The print dialog suggests the document title as the PDF's file name.
+  frame.srcdoc = html.replace(/<title>[^<]*<\/title>/i, '').replace(/<head>/i, `<head><title>${fileName.replace(/\.pdf$/i, '').replace(/[<&]/g, '')}</title>`);
+  frame.onload = () => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    setTimeout(() => frame.remove(), 60_000);
+  };
+  document.body.appendChild(frame);
 }
