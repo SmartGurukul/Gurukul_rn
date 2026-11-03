@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>School Suite | Smart Gurukul</title>
+  <meta name="description" content="Mail, calendar and drive for your school, on the web. Sign in with your Smart Gurukul phone number or staff login." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://smartgurukul.org/suite/" />
+  <link rel="icon" href="../assets/brand/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../assets/brand/favicon-48.png" sizes="48x48" />
+  <link rel="apple-touch-icon" href="../assets/brand/apple-touch-180.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mukta:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="suite.css" />
+</head>
+<body>
+  <noscript><p class="noscript">The School Suite needs JavaScript.</p></noscript>
+
+  <!-- Sign-in -->
+  <main id="auth" class="auth" hidden>
+    <section class="auth-card" aria-labelledby="auth-title">
+      <img class="auth-logo" src="../assets/brand/lockup-horizontal.svg" alt="Smart Gurukul" width="190" height="44" />
+      <h1 id="auth-title">School Suite</h1>
+      <p class="muted">Mail, calendar and drive for your school. Sign in the way you do in the app.</p>
+
+      <div id="auth-step-phone" class="auth-step">
+        <label for="phone">Mobile number</label>
+        <div class="row">
+          <input id="phone" inputmode="tel" autocomplete="tel-national" placeholder="10-digit mobile" maxlength="13" />
+          <button id="phone-next" class="btn primary" type="button">Continue</button>
+        </div>
+        <p class="hint">We look up the schools where this number is on file and send a one-time code.</p>
+        <p class="hint"><a href="#" id="to-staff-login">Staff with a username and password</a></p>
+      </div>
+
+      <div id="auth-step-school" class="auth-step" hidden>
+        <p class="label">Choose your school</p>
+        <ul id="school-list" class="choice-list"></ul>
+        <p class="hint"><a href="#" class="auth-back">Use another number</a></p>
+      </div>
+
+      <div id="auth-step-otp" class="auth-step" hidden>
+        <p class="label">Enter the code sent to <strong id="otp-phone"></strong></p>
+        <div class="row">
+          <input id="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" maxlength="6" />
+          <button id="otp-verify" class="btn primary" type="button">Sign in</button>
+        </div>
+        <p class="hint"><a href="#" id="otp-resend">Send the code again</a> · <a href="#" class="auth-back">Start over</a></p>
+      </div>
+
+      <div id="auth-step-profile" class="auth-step" hidden>
+        <p class="label">Who is signing in?</p>
+        <ul id="profile-list" class="choice-list"></ul>
+      </div>
+
+      <div id="auth-step-staff" class="auth-step" hidden>
+        <label for="staff-school">School</label>
+        <input id="staff-school" placeholder="Type the school's name" autocomplete="organization" />
+        <ul id="staff-school-list" class="choice-list compact"></ul>
+        <label for="staff-username">Username</label>
+        <input id="staff-username" autocomplete="username" />
+        <label for="staff-password">Password</label>
+        <input id="staff-password" type="password" autocomplete="current-password" />
+        <button id="staff-login" class="btn primary block" type="button">Sign in</button>
+        <p class="hint"><a href="#" class="auth-back">Sign in with a mobile number instead</a></p>
+      </div>
+
+      <p id="auth-error" class="error" role="alert" hidden></p>
+      <p class="hint small">By signing in you agree to the <a href="../privacy.html">privacy policy</a>. Problems? <a href="https://wa.me/917024274770">WhatsApp support</a>.</p>
+    </section>
+  </main>
+
+  <!-- The suite -->
+  <div id="app" class="app" hidden>
+    <header class="topbar">
+      <button id="menu-btn" class="icon-btn" type="button" aria-label="Menu" aria-expanded="false">☰</button>
+      <a class="brand" href="./"><img src="../assets/brand/mark.svg" alt="" width="28" height="28" /> <span>School Suite</span></a>
+      <div class="search"><input id="search" type="search" placeholder="Search mail, events, files" aria-label="Search" /></div>
+      <div class="who">
+        <span id="who-name" class="who-name"></span>
+        <span id="who-school" class="who-school"></span>
+        <button id="sign-out" class="btn ghost small" type="button">Sign out</button>
+      </div>
+    </header>
+    <div class="body">
+      <nav id="sidenav" class="sidenav" aria-label="Apps">
+        <a href="#/mail" data-app="mail"><span class="ico">✉</span> Mail <span id="badge-mail" class="badge" hidden></span></a>
+        <a href="#/calendar" data-app="calendar"><span class="ico">▦</span> Calendar</a>
+        <a href="#/drive" data-app="drive"><span class="ico">▣</span> Drive</a>
+        <div class="sidenav-foot">
+          <a href="https://play.google.com/store/apps/details?id=com.gurukul.rn" target="_blank" rel="noopener">Get the app</a>
+          <a href="../">smartgurukul.org</a>
+        </div>
+      </nav>
+      <main id="view" class="view" tabindex="-1"></main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.1.1/bundles/stomp.umd.min.js" defer></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
