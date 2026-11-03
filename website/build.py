@@ -339,6 +339,7 @@ def header(meta):
     <ul class="nav-links">{''.join(links)}</ul>
     <div class="nav-cta">
       {lang_link}
+      <a class="nav-signin" href="{rel(p, 'suite/')}">{'साइन इन' if hi else 'Sign in'}</a>
       <a class="btn btn-primary btn-sm" href="{demo}">{cta}</a>
     </div>
   </div>
