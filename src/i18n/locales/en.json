@@ -99,7 +99,7 @@
         "description": "Share a ready message on WhatsApp or your parent groups."
       }
     },
-    "parentsMessage": "Namaste! {{school}} is now on the Smart Gurukul app. Install it, choose \"Find my school\", search {{school}}, and sign in with the mobile number you gave the school — you'll get a code on WhatsApp. You'll see your child's attendance, fees and report cards there. Android: https://play.google.com/store/apps/details?id=org.smartgurukul.app"
+    "parentsMessage": "Namaste! {{school}} is now on the Smart Gurukul app. Install it, choose \"Find my school\", search {{school}}, and sign in with the mobile number you gave the school — you'll get a code on WhatsApp. You'll see your child's attendance, fees and report cards there. Android: https://play.google.com/store/apps/details?id=com.gurukul.rn"
   },
   "classSetup": {
     "title": "Classes and sections",
