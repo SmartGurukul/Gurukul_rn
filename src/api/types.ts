@@ -1447,6 +1447,9 @@ export interface SwitchProfileRequest {
   refreshToken?: string;
 }
 
+/** The two staff roles an admin can assign from the app (drivers are made under Transport). */
+export type StaffRole = 'ADMIN' | 'TEACHER';
+
 export interface CredentialRequest {
   username: string;
   password: string;

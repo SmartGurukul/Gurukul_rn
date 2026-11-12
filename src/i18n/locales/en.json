@@ -700,7 +700,16 @@
       "bankAccount": "Bank account",
       "contactPhone": "Contact phone",
       "salaryHistory": "Salary history",
-      "timetable": "Timetable"
+      "timetable": "Timetable",
+      "role": "App role",
+      "roleAdmin": "Admin",
+      "roleTeacher": "Teacher",
+      "roleNone": "No login yet",
+      "makeAdmin": "Make admin",
+      "makeTeacher": "Make teacher",
+      "makeAdminConfirm": "Make {{name}} an admin? They will get full access to the whole school in the app: students, fees, payroll, settings.",
+      "makeTeacherConfirm": "Make {{name}} a teacher again? They will lose admin access and keep their own classes.",
+      "roleUpdated": "Role updated. {{name}} signs in with their mobile number."
     },
     "form": {
       "titleEdit": "Edit employee",

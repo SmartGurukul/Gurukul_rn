@@ -1,12 +1,13 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { startImmediateCall } from '../../api/calls';
 import { createConversation } from '../../api/chat';
-import { createEmployeeCredential } from '../../api/credentials';
+import { createEmployeeCredential, setEmployeeRole } from '../../api/credentials';
+import type { StaffRole } from '../../api/types';
 import { AttendanceIdentifiersPanel } from '../../components/AttendanceIdentifiersPanel';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import LabeledInput from '../../components/LabeledInput';
@@ -47,6 +48,9 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ username: string; password: string } | null>(null);
+  const [role, setRole] = useState(employee.role);
+  const [changingRole, setChangingRole] = useState(false);
+  const [roleNotice, setRoleNotice] = useState<string | null>(null);
   const [calling, setCalling] = useState(false);
   const [messaging, setMessaging] = useState(false);
   const isSelf = session.ownerType === 'EMPLOYEE' && session.ownerId === employee.id;
@@ -99,6 +103,38 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
     }
   };
 
+  // Admin ⇄ teacher. Confirmed first (a native alert; the browser's own confirm on web), never on
+  // yourself (the server refuses that too), and a staff member with no login gets one on their phone.
+  const applyRole = async (next: StaffRole) => {
+    setChangingRole(true);
+    setError(null);
+    setRoleNotice(null);
+    try {
+      const updated = await setEmployeeRole(schoolId, employee.id, next);
+      setRole(updated.role);
+      setRoleNotice(t('employees.detail.roleUpdated', { name: employee.name }));
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setChangingRole(false);
+    }
+  };
+  const handleChangeRole = () => {
+    const next: StaffRole = role === 'ADMIN' ? 'TEACHER' : 'ADMIN';
+    const title = next === 'ADMIN' ? t('employees.detail.makeAdmin') : t('employees.detail.makeTeacher');
+    const body = next === 'ADMIN'
+      ? t('employees.detail.makeAdminConfirm', { name: employee.name })
+      : t('employees.detail.makeTeacherConfirm', { name: employee.name });
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${body}`)) void applyRole(next);
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: title, style: next === 'ADMIN' ? 'default' : 'destructive', onPress: () => void applyRole(next) },
+    ]);
+  };
+
   const handleCreateCredential = async () => {
     setSubmitting(true);
     setError(null);
@@ -121,10 +157,18 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
           <AvatarBadge name={employee.name} accentKey="employees" size={56} />
           <View style={styles.heroText}>
             <Text style={styles.heroName}>{employee.name}</Text>
-            <StatusChip
-              label={employee.status === 'ACTIVE' ? t('common.active') : employee.status === 'INACTIVE' ? t('common.inactive') : employee.status}
-              variant={employee.status === 'ACTIVE' ? 'success' : 'neutral'}
-            />
+            <View style={styles.chipRow}>
+              <StatusChip
+                label={employee.status === 'ACTIVE' ? t('common.active') : employee.status === 'INACTIVE' ? t('common.inactive') : employee.status}
+                variant={employee.status === 'ACTIVE' ? 'success' : 'neutral'}
+              />
+              {isViewerAdmin && role !== 'DRIVER' && (
+                <StatusChip
+                  label={role === 'ADMIN' ? t('employees.detail.roleAdmin') : role === 'TEACHER' ? t('employees.detail.roleTeacher') : t('employees.detail.roleNone')}
+                  variant={role === 'ADMIN' ? 'info' : 'neutral'}
+                />
+              )}
+            </View>
           </View>
           {!isSelf && (
             <View style={styles.heroActions}>
@@ -157,9 +201,22 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
         )}
 
         {error && <ErrorNotice message={error} />}
+        {roleNotice && <Text style={styles.success}>{roleNotice}</Text>}
 
         {isViewerAdmin && (
           <View style={styles.actions}>
+            {!isSelf && role !== 'DRIVER' && (
+              <Pressable
+                style={[styles.actionButton, styles.roleButton, changingRole && styles.disabled]}
+                onPress={handleChangeRole}
+                disabled={changingRole}
+                accessibilityRole="button"
+              >
+                <Text style={styles.actionText}>
+                  {changingRole ? '…' : role === 'ADMIN' ? t('employees.detail.makeTeacher') : t('employees.detail.makeAdmin')}
+                </Text>
+              </Pressable>
+            )}
             <Pressable style={styles.actionButton} onPress={() => navigation.navigate('EmployeeForm', { employee })}>
               <Text style={styles.actionText}>{t('common.edit')}</Text>
             </Pressable>
@@ -272,6 +329,8 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
   actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
+  chipRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap', marginTop: 4 },
+  roleButton: { borderWidth: 1, borderColor: accent.base },
   actionButton: {
     backgroundColor: accent.light,
     borderRadius: radius.pill,
