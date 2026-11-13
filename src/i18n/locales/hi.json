@@ -99,7 +99,7 @@
         "description": "WhatsApp या अभिभावक ग्रुप में तैयार संदेश भेजें।"
       }
     },
-    "parentsMessage": "नमस्ते! {{school}} अब Smart Gurukul ऐप पर है। ऐप इंस्टॉल करें, \"मेरा स्कूल खोजें\" चुनें, {{school}} खोजें, और स्कूल में दिए मोबाइल नंबर से साइन इन करें — कोड WhatsApp पर आएगा। वहाँ आपको बच्चे की हाज़िरी, फीस और रिपोर्ट कार्ड दिखेंगे। Android: https://play.google.com/store/apps/details?id=org.smartgurukul.app"
+    "parentsMessage": "नमस्ते! {{school}} अब Smart Gurukul ऐप पर है। ऐप इंस्टॉल करें, \"मेरा स्कूल खोजें\" चुनें, {{school}} खोजें, और स्कूल में दिए मोबाइल नंबर से साइन इन करें — कोड WhatsApp पर आएगा। वहाँ आपको बच्चे की हाज़िरी, फीस और रिपोर्ट कार्ड दिखेंगे। Android: https://play.google.com/store/apps/details?id=com.gurukul.rn"
   },
   "classSetup": {
     "title": "कक्षाएँ और सेक्शन",
