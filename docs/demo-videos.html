@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo videos | Smart Gurukul</title>
+  <meta name="description" content="Watch Smart Gurukul in action: a full module-by-module demo and a short explainer, in English and Hindi, recorded from the live app." />
+  <link rel="canonical" href="https://smartgurukul.org/demo-videos.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Smart Gurukul" />
+  <meta property="og:title" content="Demo videos | Smart Gurukul" />
+  <meta property="og:description" content="Watch Smart Gurukul in action: a full module-by-module demo and a short explainer, in English and Hindi, recorded from the live app." />
+  <meta property="og:url" content="https://smartgurukul.org/demo-videos.html" />
+  <meta property="og:image" content="https://smartgurukul.org/assets/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_IN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="./assets/brand/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="./assets/brand/favicon-48.png" sizes="48x48" />
+  <link rel="apple-touch-icon" href="./assets/brand/apple-touch-180.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mukta:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="./assets/site.css" />
+  <style>
+    .videos { padding: clamp(32px, 5vw, 56px) 0 clamp(40px, 6vw, 72px); }
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 24px; }
+    .video-card { background: #fff; border: 1px solid var(--sg-line); border-radius: var(--sg-radius-card); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; min-width: 0; }
+    .video-card video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+    .video-meta { padding: 18px 20px 20px; display: grid; gap: 6px; }
+    .video-meta .vrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .vchip { font: 600 .78rem/1 var(--sg-font-display); padding: 6px 11px; border-radius: 999px; background: var(--sg-violet-100); color: var(--sg-violet-700); }
+    .vchip.hi { background: var(--sg-marigold-100); color: var(--sg-marigold-700); font-family: "Mukta", sans-serif; font-size: .9rem; }
+    .len { color: var(--sg-ink-600); font-size: .9rem; font-variant-numeric: tabular-nums; }
+    .video-meta h2 { font-size: 1.25rem; margin: 4px 0 0; }
+    .video-meta p { margin: 0; color: var(--sg-ink-600); font-size: 1rem; }
+    .video-meta a.dl { font: 600 .92rem var(--sg-font-display); color: var(--sg-violet-600); text-decoration: none; }
+    .video-meta a.dl:hover { text-decoration: underline; }
+    .hero.compact { padding: clamp(40px, 6vw, 64px) 0 clamp(32px, 4vw, 48px); }
+    .hero.compact p.lead { max-width: 62ch; }
+    .footer-links { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+    footer.simple { padding: 32px 0 40px; text-align: center; color: var(--sg-ink-600); font-size: .92rem; border-top: 1px solid var(--sg-line); }
+    footer.simple a { color: var(--sg-violet-600); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="brand" href="./">
+        <img src="./assets/brand/lockup-horizontal.svg" width="193" height="40" alt="Smart Gurukul">
+      </a>
+      <div class="nav-cta" style="margin-left:auto">
+        <a class="nav-signin" href="./app/">Sign in</a>
+        <a class="btn btn-primary btn-sm" href="./#demo">Book a free demo</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero compact">
+    <div class="wrap">
+      <p class="eyebrow" style="color: var(--sg-marigold-500)">Demo videos</p>
+      <h1>See the whole school app, module by module.</h1>
+      <p class="lead">Recorded from the live app with demo-school data and narrated. Pick the full walkthrough or the short explainer, in English or हिन्दी. Every video plays here and can be saved for a meeting without internet.</p>
+    </div>
+  </section>
+
+  <main id="main" class="wrap videos">
+    <div class="video-grid">
+      <article class="video-card">
+        <video controls preload="metadata" playsinline poster="./assets/videos/demo-en.jpg" src="./videos/smart-gurukul-demo-en.mp4"></video>
+        <div class="video-meta">
+          <div class="vrow"><span class="vchip">English</span><span class="len">18 min · full demo</span></div>
+          <h2>Full walkthrough, every module</h2>
+          <p>Principal and office, teachers, students, parents, bus drivers and the School Suite on the web: 80 scenes, one per module.</p>
+          <a class="dl" href="./videos/smart-gurukul-demo-en.mp4" download>Save the video (MP4, 720p)</a>
+        </div>
+      </article>
+      <article class="video-card">
+        <video controls preload="metadata" playsinline poster="./assets/videos/demo-hi.jpg" src="./videos/smart-gurukul-demo-hi.mp4"></video>
+        <div class="video-meta">
+          <div class="vrow"><span class="vchip hi">हिन्दी</span><span class="len">18 min · पूरा डेमो</span></div>
+          <h2>पूरी सैर, हर मॉड्यूल</h2>
+          <p>प्रिंसिपल और ऑफ़िस, शिक्षक, छात्र, अभिभावक, बस ड्राइवर और वेब पर स्कूल सुइट: 80 दृश्य, हर मॉड्यूल का एक।</p>
+          <a class="dl" href="./videos/smart-gurukul-demo-hi.mp4" download>वीडियो सेव करें (MP4, 720p)</a>
+        </div>
+      </article>
+      <article class="video-card">
+        <video controls preload="metadata" playsinline poster="./assets/videos/explainer-en.jpg" src="./videos/smart-gurukul-explainer-en.mp4"></video>
+        <div class="video-meta">
+          <div class="vrow"><span class="vchip">English</span><span class="len">9 min · explainer</span></div>
+          <h2>Short animated explainer</h2>
+          <p>The same screens at a faster pace, for a first look or to share on WhatsApp.</p>
+          <a class="dl" href="./videos/smart-gurukul-explainer-en.mp4" download>Save the video (MP4, 720p)</a>
+        </div>
+      </article>
+      <article class="video-card">
+        <video controls preload="metadata" playsinline poster="./assets/videos/explainer-hi.jpg" src="./videos/smart-gurukul-explainer-hi.mp4"></video>
+        <div class="video-meta">
+          <div class="vrow"><span class="vchip hi">हिन्दी</span><span class="len">10 min · एक्सप्लेनर</span></div>
+          <h2>छोटा एनिमेटेड एक्सप्लेनर</h2>
+          <p>वही स्क्रीन, तेज़ रफ़्तार में: पहली झलक या WhatsApp पर भेजने के लिए।</p>
+          <a class="dl" href="./videos/smart-gurukul-explainer-hi.mp4" download>वीडियो सेव करें (MP4, 720p)</a>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="simple">
+    <div class="wrap">
+      <div class="footer-links">
+        <a href="./">Home</a>
+        <a href="./onboarding-toolkit.html">Onboarding toolkit</a>
+        <a href="./app/">Sign in to the app</a>
+        <a href="./privacy.html">Privacy Policy</a>
+        <a href="./#demo">Book a free demo</a>
+      </div>
+      &copy; <span id="year"></span> Smart Gurukul. All rights reserved.
+    </div>
+  </footer>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

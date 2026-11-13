@@ -376,6 +376,7 @@ def footer(meta):
           <li><a href="{rel(p, home + '#faq')}">{'सवाल-जवाब' if hi else 'FAQ'}</a></li>
           <li>{other_lang}</li>
           <li><a href="{r('onboarding-toolkit.html')}"{' lang="en"' if hi else ''}>School onboarding toolkit</a></li>
+          <li><a href="{r('demo-videos.html')}">{'डेमो वीडियो' if hi else 'Demo videos'}</a></li>
         </ul>
       </div>
       <div>
