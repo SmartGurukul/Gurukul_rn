@@ -1,12 +1,12 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getErrorMessage } from '../../api/errorMessage';
-import { getMyTutorAccess, getTutorChapters, listTutorSessions, startTutorSession } from '../../api/tutor';
-import type { TutorAccess, TutorChapterOption, TutorSessionMode, TutorSessionSummary } from '../../api/types';
+import { getMyTutorAccess, getTutorChapterMap, getTutorChapters, listTutorSessions, startTutorSession } from '../../api/tutor';
+import type { TutorAccess, TutorChapterOption, TutorKnowledgePoint, TutorSessionMode, TutorSessionSummary } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader, headerButtonStyle } from '../../components/ScreenHeader';
@@ -16,8 +16,37 @@ import { colors, radius, spacing, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { accessReasonKey, activeSession, groupChaptersBySubject, masteryPercent } from '../../utils/tutor';
+import { masteryColor, masteryLevel } from '../../utils/tutorReport';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TutorChapters'>;
+
+/** A chapter's knowledge map as the row shows it: not asked for yet, loading, failed, or the points. */
+type MapState = 'loading' | 'error' | TutorKnowledgePoint[];
+
+/**
+ * The mastery strip under a ready chapter: one small chip per knowledge point, grey before the
+ * student has met it, red / marigold / green by mastery band. Tapping a chip opens its title and
+ * one-line description.
+ */
+function MasteryStrip({ points, onPick }: { points: TutorKnowledgePoint[]; onPick: (point: TutorKnowledgePoint) => void }) {
+  const { t } = useTranslation();
+  if (points.length === 0) return null;
+  return (
+    <View style={styles.strip} testID="tutor-mastery-strip">
+      {points.map((point) => (
+        <Pressable
+          key={point.id}
+          style={[styles.pointChip, { backgroundColor: masteryColor(masteryLevel(point.mastery)) }]}
+          onPress={() => onPick(point)}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={t('tutor.map.chipLabel', { title: point.title, state: t(`tutorParent.mastery.${masteryLevel(point.mastery)}`) })}
+          testID={`tutor-point-${point.id}`}
+        />
+      ))}
+    </View>
+  );
+}
 
 /**
  * The AI Tutor's front door for a student: access (sessions left, or why it is locked), a running
@@ -37,6 +66,28 @@ export function TutorChaptersScreen({ navigation }: Props) {
   const [startError, setStartError] = useState<string | null>(null);
   const [picking, setPicking] = useState<TutorChapterOption | null>(null);
   const [starting, setStarting] = useState<TutorSessionMode | null>(null);
+  // Knowledge maps by chapter, fetched lazily: for chapters the student opened before, and on
+  // demand ("Show points" / long press) for the rest, so the list stays one request per screen.
+  const [maps, setMaps] = useState<Record<string, MapState>>({});
+  const [point, setPoint] = useState<TutorKnowledgePoint | null>(null);
+
+  // Chapters whose map is loaded or in flight, so a long press or a re-focus never fetches twice.
+  const mapRequested = useRef(new Set<string>());
+
+  const loadMap = useCallback(
+    (chapterId: string) => {
+      if (mapRequested.current.has(chapterId)) return;
+      mapRequested.current.add(chapterId);
+      setMaps((prev) => ({ ...prev, [chapterId]: 'loading' }));
+      getTutorChapterMap(schoolId, chapterId)
+        .then((map) => setMaps((prev) => ({ ...prev, [chapterId]: map.points })))
+        .catch(() => {
+          mapRequested.current.delete(chapterId);
+          setMaps((prev) => ({ ...prev, [chapterId]: 'error' }));
+        });
+    },
+    [schoolId],
+  );
 
   const load = useCallback(async () => {
     setError(null);
@@ -50,10 +101,13 @@ export function TutorChaptersScreen({ navigation }: Props) {
       setChapters(chaptersRes.chapters);
       setGrade(chaptersRes.grade);
       setCurrent(activeSession(sessionsRes.sessions));
+      for (const chapter of chaptersRes.chapters) {
+        if (chapter.ingested && chapter.lastSessionAt) loadMap(chapter.chapterId);
+      }
     } catch (e) {
       setError(getErrorMessage(e));
     }
-  }, [schoolId]);
+  }, [loadMap, schoolId]);
 
   useEffect(() => {
     setLoading(true);
@@ -157,6 +211,7 @@ export function TutorChaptersScreen({ navigation }: Props) {
                     {group.chapters.map((chapter, index) => {
                       const percent = masteryPercent(chapter.mastery);
                       const disabled = !allowed || !chapter.ingested;
+                      const map = maps[chapter.chapterId];
                       return (
                         <Pressable
                           key={chapter.chapterId}
@@ -166,6 +221,7 @@ export function TutorChaptersScreen({ navigation }: Props) {
                             setStartError(null);
                             setPicking(chapter);
                           }}
+                          onLongPress={() => chapter.ingested && loadMap(chapter.chapterId)}
                           accessibilityRole="button"
                           accessibilityState={{ disabled }}
                           testID={`tutor-chapter-${chapter.chapterId}`}
@@ -193,6 +249,22 @@ export function TutorChaptersScreen({ navigation }: Props) {
                                 <StatusChip label={t('tutor.chapters.notReady')} variant="neutral" />
                               </View>
                             )}
+                            {chapter.ingested &&
+                              (Array.isArray(map) ? (
+                                <MasteryStrip points={map} onPick={setPoint} />
+                              ) : map === 'loading' ? (
+                                <ActivityIndicator size="small" color={colors.textMuted} style={styles.stripLoading} />
+                              ) : (
+                                <Pressable
+                                  style={styles.showPoints}
+                                  onPress={() => loadMap(chapter.chapterId)}
+                                  hitSlop={6}
+                                  accessibilityRole="button"
+                                  testID={`tutor-map-toggle-${chapter.chapterId}`}
+                                >
+                                  <Text style={styles.showPointsText}>{t(map === 'error' ? 'tutor.map.retry' : 'tutor.map.show')}</Text>
+                                </Pressable>
+                              ))}
                           </View>
                           <Text style={styles.chevron}>›</Text>
                         </Pressable>
@@ -205,6 +277,33 @@ export function TutorChaptersScreen({ navigation }: Props) {
           </>
         )}
       </ScreenContainer>
+
+      <Modal visible={point !== null} transparent animationType="fade" onRequestClose={() => setPoint(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setPoint(null)}>
+          <Pressable style={styles.sheet} onPress={() => {}} testID="tutor-point-sheet">
+            {point && (
+              <>
+                <View style={styles.pointHead}>
+                  <View style={[styles.pointDot, { backgroundColor: masteryColor(masteryLevel(point.mastery)) }]} />
+                  <Text style={styles.pointState}>
+                    {point.mastery === null
+                      ? t('tutorParent.mastery.none')
+                      : t('tutor.map.mastery', { percent: masteryPercent(point.mastery) ?? 0 })}
+                  </Text>
+                </View>
+                <Text style={styles.sheetTitle}>{point.title}</Text>
+                <Text style={styles.sheetText}>{point.description}</Text>
+                {point.misconceptions.length > 0 && (
+                  <Text style={styles.rowHint}>{t('tutor.map.misconceptions', { list: point.misconceptions.join(', ') })}</Text>
+                )}
+              </>
+            )}
+            <Pressable style={styles.cancel} onPress={() => setPoint(null)} accessibilityRole="button">
+              <Text style={styles.cancelText}>{t('common.done')}</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal visible={picking !== null} transparent animationType="fade" onRequestClose={() => setPicking(null)}>
         <Pressable style={styles.backdrop} onPress={() => !starting && setPicking(null)}>
@@ -288,6 +387,14 @@ const styles = StyleSheet.create({
   masteryFill: { height: 6, borderRadius: 3, backgroundColor: colors.primaryBright },
   masteryText: { fontFamily: fonts.bodySemibold, fontSize: 12, color: colors.textSecondary, width: 36, textAlign: 'right' },
   chevron: { fontSize: 22, color: colors.textMuted, fontFamily: fonts.headingMedium },
+  strip: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: spacing.xs },
+  pointChip: { width: 18, height: 10, borderRadius: 3 },
+  stripLoading: { alignSelf: 'flex-start', marginTop: spacing.xs },
+  showPoints: { alignSelf: 'flex-start', marginTop: 2 },
+  showPointsText: { fontFamily: fonts.bodySemibold, fontSize: 12, color: colors.primary },
+  pointHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  pointDot: { width: 10, height: 10, borderRadius: 5 },
+  pointState: { fontFamily: fonts.label, fontSize: 12, color: colors.textSecondary },
   backdrop: { flex: 1, backgroundColor: 'rgba(30, 22, 51, 0.45)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.background,

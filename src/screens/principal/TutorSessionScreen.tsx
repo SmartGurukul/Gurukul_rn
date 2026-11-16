@@ -12,6 +12,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,8 +21,8 @@ import {
 
 import { ApiError } from '../../api/client';
 import { getErrorMessage } from '../../api/errorMessage';
-import { closeTutorSession, getMyTutorAccess, getTutorSession, sendTutorTurn, transcribeTutorAudio } from '../../api/tutor';
-import type { TutorCitation, TutorSessionView, TutorStage, TutorTurnView } from '../../api/types';
+import { answerTutorDiagnostic, closeTutorSession, getMyTutorAccess, getTutorSession, sendTutorTurn, transcribeTutorAudio } from '../../api/tutor';
+import type { TutorCitation, TutorDiagnosticItem, TutorDiagnosticItemResult, TutorSessionView, TutorStage, TutorTurnView } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenHeader, headerButtonStyle } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -30,7 +31,17 @@ import { useKeyboardInset } from '../../hooks/useKeyboardInset';
 import { colors, radius, spacing, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { latestTutorTurn, stageLabelKey, TUTOR_STAGES, visibleTurns } from '../../utils/tutor';
+import {
+  diagnosticComplete,
+  HINT_ANSWER_LEVEL,
+  hintTagKey,
+  JUST_TELL_ME_MESSAGE,
+  latestTutorTurn,
+  stageLabelKey,
+  stuckOnPoint,
+  TUTOR_STAGES,
+  visibleTurns,
+} from '../../utils/tutor';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TutorSession'>;
 
@@ -82,6 +93,18 @@ export function TutorSessionScreen({ route, navigation }: Props) {
   const [closing, setClosing] = useState(false);
   const [speakOn, setSpeakOn] = useState(route.params.session?.mode === 'VOICE');
   const [citation, setCitation] = useState<TutorCitation | null>(null);
+
+  // Phase 2 quick check: a new session can open with 3 to 5 diagnostic items. They are answered (or
+  // skipped) before the chat; the server's reply carries the first TEACH turn and the per-item
+  // results, which stay above the chat. A resumed session never carries a diagnostic.
+  const [diagnostic, setDiagnostic] = useState<TutorDiagnosticItem[] | null>(() => {
+    const items = route.params.session?.diagnostic?.items;
+    return items && items.length > 0 ? items : null;
+  });
+  const [diagnosticAnswers, setDiagnosticAnswers] = useState<Record<string, string | undefined>>({});
+  const [diagnosticResults, setDiagnosticResults] = useState<TutorDiagnosticItemResult[] | null>(null);
+  const [submittingDiagnostic, setSubmittingDiagnostic] = useState(false);
+  const [diagnosticError, setDiagnosticError] = useState<string | null>(null);
 
   // Voice input. The mic hides for the rest of the session once the server says it has no
   // speech provider (TUTOR_STT_UNAVAILABLE); its message is shown once.
@@ -199,6 +222,29 @@ export function TutorSessionScreen({ route, navigation }: Props) {
     [ended, schoolId, sending, sessionId, stage, turns.length],
   );
 
+  const submitDiagnostic = async (skip: boolean) => {
+    if (!diagnostic || submittingDiagnostic) return;
+    const answers = skip
+      ? []
+      : diagnostic.flatMap((item) => {
+          const key = diagnosticAnswers[item.id];
+          return key ? [{ itemId: item.id, key }] : [];
+        });
+    setSubmittingDiagnostic(true);
+    setDiagnosticError(null);
+    try {
+      const result = await answerTutorDiagnostic(schoolId, sessionId, answers);
+      setDiagnosticResults(skip ? [] : result.results);
+      setTurns((prev) => (prev.some((turn) => turn.id === result.turn.id) ? prev : [...prev, result.turn]));
+      setStage(result.stage);
+      setDiagnostic(null);
+    } catch (e) {
+      setDiagnosticError(getErrorMessage(e));
+    } finally {
+      setSubmittingDiagnostic(false);
+    }
+  };
+
   const clearRecordingTimers = () => {
     if (stopTimer.current) clearTimeout(stopTimer.current);
     if (tick.current) clearInterval(tick.current);
@@ -293,15 +339,27 @@ export function TutorSessionScreen({ route, navigation }: Props) {
 
   const shown = visibleTurns(turns);
   const canSend = !!input.trim() && !sending && !ended && !recording && !transcribing;
+  const offerAnswer = !ended && !sending && stuckOnPoint(turns);
 
   const renderTurn = ({ item }: { item: TutorTurnView }) => {
     const mine = item.role === 'STUDENT';
+    const hintKey = mine ? null : hintTagKey(item.hintLevel);
     return (
       <View style={[styles.turn, mine ? styles.turnMine : styles.turnTutor]}>
         {notice && notice.turnId === item.id && (
           <View style={styles.noticeBanner} accessibilityRole="alert">
             <FontAwesome5 name="info-circle" size={13} color={tints.marigold.fg} />
             <Text style={styles.noticeText}>{notice.text}</Text>
+          </View>
+        )}
+        {hintKey && (
+          <View style={[styles.hintTag, hintKey === 'tutor.hint.answer' && styles.hintTagAnswer]} testID={`tutor-hint-${item.id}`}>
+            <FontAwesome5 name={hintKey === 'tutor.hint.answer' ? 'check' : 'lightbulb'} size={9} color={hintKey === 'tutor.hint.answer' ? tints.mint.fg : tints.marigold.fg} />
+            <Text style={[styles.hintTagText, hintKey === 'tutor.hint.answer' && styles.hintTagTextAnswer]}>
+              {hintKey === 'tutor.hint.answer'
+                ? t('tutor.hint.answer')
+                : t('tutor.hint.level', { level: item.hintLevel, total: HINT_ANSWER_LEVEL })}
+            </Text>
           </View>
         )}
         <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTutor]}>
@@ -326,6 +384,89 @@ export function TutorSessionScreen({ route, navigation }: Props) {
   };
 
   const title = session ? `${session.chapterNumber}. ${session.chapterTitle}` : t('tutor.title');
+
+  const answered = diagnostic ? diagnostic.filter((item) => !!diagnosticAnswers[item.id]).length : 0;
+  const canSubmitDiagnostic = !!diagnostic && diagnosticComplete(diagnostic.map((item) => item.id), diagnosticAnswers) && !submittingDiagnostic;
+
+  const renderDiagnostic = (items: TutorDiagnosticItem[]) => (
+    <ScrollView style={styles.flex} contentContainerStyle={styles.diagnosticContent} keyboardShouldPersistTaps="handled" testID="tutor-diagnostic">
+      <View style={styles.diagnosticHead}>
+        <View style={styles.flex}>
+          <Text style={styles.diagnosticTitle}>{t('tutor.diagnostic.title')}</Text>
+          <Text style={styles.diagnosticIntro}>{t('tutor.diagnostic.intro')}</Text>
+        </View>
+        <Text style={styles.diagnosticProgress}>{t('tutor.diagnostic.progress', { current: answered, total: items.length })}</Text>
+      </View>
+      {items.map((item, index) => (
+        <View key={item.id} style={styles.diagnosticCard} testID={`tutor-diagnostic-item-${item.id}`}>
+          <Text style={styles.diagnosticNumber}>{t('tutor.diagnostic.question', { number: index + 1 })}</Text>
+          <Text style={styles.diagnosticStem}>{item.stem}</Text>
+          {item.options.map((option) => {
+            const picked = diagnosticAnswers[item.id] === option.key;
+            return (
+              <Pressable
+                key={option.key}
+                style={[styles.optionCard, picked && styles.optionCardPicked]}
+                onPress={() => setDiagnosticAnswers((prev) => ({ ...prev, [item.id]: option.key }))}
+                disabled={submittingDiagnostic}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: picked }}
+                testID={`tutor-diagnostic-option-${item.id}-${option.key}`}
+              >
+                <View style={[styles.optionKey, picked && styles.optionKeyPicked]}>
+                  <Text style={[styles.optionKeyText, picked && styles.optionKeyTextPicked]}>{option.key}</Text>
+                </View>
+                <Text style={[styles.optionText, picked && styles.optionTextPicked]}>{option.text}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+      {diagnosticError && <ErrorNotice message={diagnosticError} />}
+      <Pressable
+        style={[styles.primaryButton, !canSubmitDiagnostic && styles.disabled]}
+        onPress={() => void submitDiagnostic(false)}
+        disabled={!canSubmitDiagnostic}
+        accessibilityRole="button"
+        testID="tutor-diagnostic-submit"
+      >
+        {submittingDiagnostic ? (
+          <ActivityIndicator color={colors.white} />
+        ) : (
+          <Text style={styles.primaryButtonText}>{t('tutor.diagnostic.submit')}</Text>
+        )}
+      </Pressable>
+      <Pressable
+        style={styles.secondaryButton}
+        onPress={() => void submitDiagnostic(true)}
+        disabled={submittingDiagnostic}
+        accessibilityRole="button"
+        testID="tutor-diagnostic-skip"
+      >
+        <Text style={styles.secondaryButtonText}>{t('tutor.diagnostic.skip')}</Text>
+      </Pressable>
+    </ScrollView>
+  );
+
+  // The quick check's per-item results, shown above the chat for the rest of the session.
+  const diagnosticSummary =
+    diagnosticResults && diagnosticResults.length > 0 ? (
+      <View style={styles.resultsCard} testID="tutor-diagnostic-results">
+        <Text style={styles.resultsTitle}>
+          {t('tutor.diagnostic.score', { correct: diagnosticResults.filter((r) => r.correct).length, total: diagnosticResults.length })}
+        </Text>
+        {diagnosticResults.map((result, index) => (
+          <View key={result.itemId} style={styles.resultRow}>
+            <FontAwesome5 name={result.correct ? 'check-circle' : 'times-circle'} size={14} color={result.correct ? colors.success : colors.error} />
+            <Text style={styles.resultText}>
+              {t('tutor.diagnostic.question', { number: index + 1 })}
+              {': '}
+              {result.correct ? t('tutor.diagnostic.correct') : result.remediation || result.misconception || t('tutor.diagnostic.wrong')}
+            </Text>
+          </View>
+        ))}
+      </View>
+    ) : null;
 
   return (
     <View style={styles.root}>
@@ -373,6 +514,8 @@ export function TutorSessionScreen({ route, navigation }: Props) {
         <ActivityIndicator color={colors.primary} style={styles.loading} />
       ) : loadError ? (
         <ErrorNotice message={loadError} inset />
+      ) : diagnostic && !ended ? (
+        renderDiagnostic(diagnostic)
       ) : (
         <KeyboardAvoidingView
           style={[styles.flex, { paddingBottom: androidKeyboardInset }]}
@@ -386,6 +529,7 @@ export function TutorSessionScreen({ route, navigation }: Props) {
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            ListHeaderComponent={diagnosticSummary}
             ListFooterComponent={
               ended && session ? (
                 <View style={styles.endCard}>
@@ -418,6 +562,15 @@ export function TutorSessionScreen({ route, navigation }: Props) {
           {micNotice && (
             <View style={styles.micNotice}>
               <Text style={styles.micNoticeText}>{micNotice}</Text>
+            </View>
+          )}
+
+          {offerAnswer && (
+            <View style={styles.justTellMeRow}>
+              <Pressable style={styles.justTellMe} onPress={() => send(JUST_TELL_ME_MESSAGE)} accessibilityRole="button" testID="tutor-just-tell-me">
+                <FontAwesome5 name="hand-point-right" size={12} color={colors.primary} />
+                <Text style={styles.justTellMeText}>{t('tutor.hint.justTellMe')}</Text>
+              </Pressable>
             </View>
           )}
 
@@ -513,6 +666,61 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   noticeText: { flex: 1, fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: tints.marigold.fg },
+  hintTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: tints.marigold.bg,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    marginBottom: 4,
+  },
+  hintTagAnswer: { backgroundColor: tints.mint.bg },
+  hintTagText: { fontFamily: fonts.bodySemibold, fontSize: 11, color: tints.marigold.fg },
+  hintTagTextAnswer: { color: tints.mint.fg },
+  justTellMeRow: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, alignItems: 'flex-end' },
+  justTellMe: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+  },
+  justTellMeText: { fontFamily: fonts.bodySemibold, fontSize: 13, color: colors.primary },
+  diagnosticContent: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.md },
+  diagnosticHead: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  diagnosticTitle: { fontFamily: fonts.heading, fontSize: 18, lineHeight: 24, color: colors.textPrimary },
+  diagnosticIntro: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary },
+  diagnosticProgress: { fontFamily: fonts.bodySemibold, fontSize: 13, color: colors.primary, paddingTop: 3 },
+  diagnosticCard: { backgroundColor: colors.surface, borderRadius: radius.xxl, padding: spacing.lg, gap: spacing.sm },
+  diagnosticNumber: { fontFamily: fonts.label, fontSize: 12, color: colors.textMuted },
+  diagnosticStem: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 22, color: colors.textPrimary, marginBottom: spacing.xs },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
+  optionCardPicked: { borderColor: colors.primary, backgroundColor: tints.violet.bg },
+  optionKey: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
+  optionKeyPicked: { backgroundColor: colors.primary },
+  optionKeyText: { fontFamily: fonts.headingMedium, fontSize: 12, color: colors.textSecondary },
+  optionKeyTextPicked: { color: colors.white },
+  optionText: { flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textPrimary },
+  optionTextPicked: { fontFamily: fonts.bodySemibold },
+  resultsCard: { backgroundColor: colors.surface, borderRadius: radius.xxl, padding: spacing.md, marginBottom: spacing.md, gap: spacing.xs },
+  resultsTitle: { fontFamily: fonts.headingMedium, fontSize: 14, color: colors.textPrimary, marginBottom: 2 },
+  resultRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  resultText: { flex: 1, fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary },
   citations: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
   citationChip: {
     flexDirection: 'row',

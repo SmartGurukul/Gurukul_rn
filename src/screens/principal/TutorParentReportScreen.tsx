@@ -57,6 +57,11 @@ function ChapterRow({ chapter, locale }: { chapter: TutorChapterMastery; locale:
             <Text style={styles.rowMeta}>
               {chapter.bookTitle} · {t('tutorParent.chapters.sessions', { count: chapter.sessions })}
             </Text>
+            {typeof chapter.pointsTotal === 'number' && chapter.pointsTotal > 0 && (
+              <Text style={styles.pointsLine}>
+                {t('tutorParent.chapters.points', { mastered: chapter.pointsMastered ?? 0, total: chapter.pointsTotal })}
+              </Text>
+            )}
           </View>
           <Text style={styles.chapterPercent}>{percent === null ? '—' : `${percent}%`}</Text>
           <Text style={styles.chevron}>{open ? '⌃' : '⌄'}</Text>
@@ -309,6 +314,33 @@ export function TutorParentReportScreen({ route, navigation }: Props) {
           </>
         )}
 
+        {report.misconceptions && report.misconceptions.length > 0 && (
+          <>
+            <SectionTitle>{t('tutorParent.misconceptions.title')}</SectionTitle>
+            <Text style={styles.sectionHint}>{t('tutorParent.misconceptions.hint')}</Text>
+            <View style={styles.card} testID="tutor-misconceptions">
+              {report.misconceptions.map((item, index) => (
+                <View key={`${item.name}-${item.seenAt}-${index}`} style={[styles.misconceptionRow, index === report.misconceptions!.length - 1 && styles.rowNoBorder]}>
+                  <View style={[styles.misconceptionMark, item.resolved ? styles.misconceptionFixed : styles.misconceptionOpen]}>
+                    <Text style={[styles.misconceptionMarkText, item.resolved ? styles.misconceptionFixedText : styles.misconceptionOpenText]}>
+                      {item.resolved ? '✓' : '…'}
+                    </Text>
+                  </View>
+                  <View style={styles.chapterText}>
+                    <Text style={styles.rowTitle}>{item.name}</Text>
+                    <Text style={styles.rowMeta}>
+                      {item.pointTitle} · {item.chapterTitle}
+                    </Text>
+                    <Text style={styles.rowMeta}>
+                      {shortDate(item.seenAt, locale)} · {t(item.resolved ? 'tutorParent.misconceptions.resolved' : 'tutorParent.misconceptions.open')}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
         <SectionTitle>{t('tutorParent.sessions.title')}</SectionTitle>
         <View style={styles.card}>
           {report.recentSessions.length === 0 && <Text style={styles.listEmpty}>{t('tutorParent.sessions.empty')}</Text>}
@@ -402,5 +434,15 @@ const styles = StyleSheet.create({
   sessionDate: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, marginLeft: 'auto' },
   sessionSummary: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textPrimary, marginTop: spacing.xs },
   parentNote: { fontFamily: fonts.bodyMedium, fontSize: 13, lineHeight: 18, color: colors.primary, marginTop: spacing.xs },
+  pointsLine: { fontFamily: fonts.bodySemibold, fontSize: 12, lineHeight: 16, color: colors.primary, marginTop: 2 },
+  sectionHint: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textSecondary, marginTop: -spacing.sm },
+  misconceptionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.hairline },
+  rowNoBorder: { borderBottomWidth: 0 },
+  misconceptionMark: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  misconceptionFixed: { backgroundColor: colors.successLight },
+  misconceptionOpen: { backgroundColor: colors.warningLight },
+  misconceptionMarkText: { fontFamily: fonts.bodyBold, fontSize: 13 },
+  misconceptionFixedText: { color: colors.success },
+  misconceptionOpenText: { color: colors.warning },
   totals: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
 });

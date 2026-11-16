@@ -2097,7 +2097,14 @@
       "sessions_one": "{{count}} सत्र",
       "sessions_other": "{{count}} सत्र",
       "noTopics": "अभी कोई विषय नहीं पढ़ा",
-      "lastSeen": "आख़िरी बार {{date}}"
+      "lastSeen": "आख़िरी बार {{date}}",
+      "points": "{{total}} में से {{mastered}} बिंदु पक्के"
+    },
+    "misconceptions": {
+      "title": "पकड़ी और सुधारी गई गलतफ़हमियाँ",
+      "hint": "वे बातें जो ट्यूटर ने उलझी हुई पाईं, और क्या वे अब साफ़ हो गई हैं।",
+      "resolved": "सुधर गई",
+      "open": "अभी काम चल रहा है"
     },
     "sessions": {
       "title": "हाल के सत्र",
@@ -3953,6 +3960,29 @@
       "notStarted": "अभी शुरू नहीं किया",
       "notReady": "अभी तैयार नहीं",
       "pickMode": "आज आप कैसे सीखना चाहते हैं?"
+    },
+    "map": {
+      "show": "बिंदु देखें",
+      "retry": "बिंदु लोड नहीं हो सके। फिर से कोशिश करने के लिए टैप करें",
+      "mastery": "{{percent}}% पक्का",
+      "misconceptions": "देखी गई गलतफ़हमियाँ: {{list}}",
+      "chipLabel": "{{title}}: {{state}}"
+    },
+    "diagnostic": {
+      "title": "झटपट जाँच",
+      "intro": "पहले इनके जवाब दें, ताकि आपका ट्यूटर जान सके कि कहाँ से शुरू करना है।",
+      "progress": "{{current}} / {{total}}",
+      "question": "प्रश्न {{number}}",
+      "submit": "जमा करें",
+      "skip": "अभी छोड़ें",
+      "score": "झटपट जाँच: {{total}} में से {{correct}} सही",
+      "correct": "सही",
+      "wrong": "पूरी तरह सही नहीं, आपका ट्यूटर इसे समझाएगा"
+    },
+    "hint": {
+      "level": "संकेत {{level}} / {{total}}",
+      "answer": "उत्तर",
+      "justTellMe": "बस बता दो"
     },
     "mode": {
       "text": "लिखकर",
