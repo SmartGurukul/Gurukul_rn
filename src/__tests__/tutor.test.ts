@@ -2,13 +2,16 @@ import type { TutorChapterOption, TutorSessionSummary, TutorTurnView } from '../
 import {
   accessReasonKey,
   activeSession,
+  diagnosticComplete,
   groupChaptersBySubject,
+  hintTagKey,
   latestTutorTurn,
   masteryPercent,
   quizComplete,
   sessionMinutes,
   sessionStatusVariant,
   stageLabelKey,
+  stuckOnPoint,
   TUTOR_STAGES,
   visibleTurns,
 } from '../utils/tutor';
@@ -166,5 +169,51 @@ describe('quizComplete', () => {
     expect(quizComplete(['q1', 'q2'], { q1: 'a' })).toBe(false);
     expect(quizComplete(['q1', 'q2'], { q1: 'a', q2: 'b' })).toBe(true);
     expect(quizComplete([], {})).toBe(false);
+  });
+});
+
+describe('Phase 2 helpers: diagnostic and hint ladder', () => {
+  const tutor = (id: string, over: Partial<TutorTurnView>): TutorTurnView => ({
+    id,
+    seq: 1,
+    role: 'TUTOR',
+    stage: 'TEACH',
+    content: id,
+    citations: [],
+    topicId: null,
+    createdAt: '2026-11-16T10:00:00Z',
+    latencyMs: null,
+    ...over,
+  });
+
+  it('diagnosticComplete needs every item answered', () => {
+    expect(diagnosticComplete([], {})).toBe(false);
+    expect(diagnosticComplete(['a', 'b'], { a: 'A' })).toBe(false);
+    expect(diagnosticComplete(['a', 'b'], { a: 'A', b: 'C' })).toBe(true);
+  });
+
+  it('hintTagKey: nothing for level 0 or an older server, a hint for 1..3, the answer for 4', () => {
+    expect(hintTagKey(undefined)).toBeNull();
+    expect(hintTagKey(null)).toBeNull();
+    expect(hintTagKey(0)).toBeNull();
+    expect(hintTagKey(1)).toBe('tutor.hint.level');
+    expect(hintTagKey(3)).toBe('tutor.hint.level');
+    expect(hintTagKey(4)).toBe('tutor.hint.answer');
+  });
+
+  it('stuckOnPoint: two consecutive hints on the same point, not after the answer or across points', () => {
+    const student = tutor('s', { role: 'STUDENT' });
+    expect(stuckOnPoint([])).toBe(false);
+    expect(stuckOnPoint([tutor('a', { hintLevel: 1, knowledgePointId: 'k1' })])).toBe(false);
+    expect(stuckOnPoint([tutor('a', { hintLevel: 1, knowledgePointId: 'k1' }), student, tutor('b', { hintLevel: 2, knowledgePointId: 'k1' })])).toBe(true);
+    // A SYSTEM turn in between does not break the run.
+    expect(
+      stuckOnPoint([tutor('a', { hintLevel: 1, knowledgePointId: 'k1' }), tutor('sys', { role: 'SYSTEM' }), tutor('b', { hintLevel: 1, knowledgePointId: 'k1' })]),
+    ).toBe(true);
+    expect(stuckOnPoint([tutor('a', { hintLevel: 1, knowledgePointId: 'k1' }), tutor('b', { hintLevel: 1, knowledgePointId: 'k2' })])).toBe(false);
+    expect(stuckOnPoint([tutor('a', { hintLevel: 2, knowledgePointId: 'k1' }), tutor('b', { hintLevel: 4, knowledgePointId: 'k1' })])).toBe(false);
+    expect(stuckOnPoint([tutor('a', { hintLevel: 1, knowledgePointId: 'k1' }), tutor('b', { hintLevel: 0, knowledgePointId: 'k1' })])).toBe(false);
+    // Older servers send no hint level at all.
+    expect(stuckOnPoint([tutor('a', {}), tutor('b', {})])).toBe(false);
   });
 });

@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { initReactI18next } from 'react-i18next';
 import { Text } from 'react-native';
 
-import type { TutorAccess, TutorChaptersResponse, TutorSessionList } from '../api/types';
+import type { TutorAccess, TutorChapterMap, TutorChaptersResponse, TutorSessionList } from '../api/types';
 import { SchoolContext } from '../context/SchoolContext';
 import en from '../i18n/locales/en.json';
 import { TutorChaptersScreen } from '../screens/principal/TutorChaptersScreen';
@@ -13,6 +13,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 jest.mock('../api/tutor', () => ({
   getMyTutorAccess: jest.fn(),
+  getTutorChapterMap: jest.fn(),
   getTutorChapters: jest.fn(),
   listTutorSessions: jest.fn(),
   startTutorSession: jest.fn(),
@@ -30,7 +31,7 @@ interface ReactTestInstance {
   children: (ReactTestInstance | string)[];
   findAllByType(type: unknown): ReactTestInstance[];
   findByProps(props: Record<string, unknown>): ReactTestInstance;
-  findAll(predicate: (node: ReactTestInstance) => boolean): ReactTestInstance[];
+  findAll(predicate: (node: ReactTestInstance) => boolean, options?: { deep: boolean }): ReactTestInstance[];
 }
 interface ReactTestRenderer {
   root: ReactTestInstance;
@@ -42,6 +43,7 @@ const { act, create } = jest.requireActual<{
 
 const tutorApi = jest.requireMock('../api/tutor') as {
   getMyTutorAccess: jest.Mock;
+  getTutorChapterMap: jest.Mock;
   getTutorChapters: jest.Mock;
   listTutorSessions: jest.Mock;
   startTutorSession: jest.Mock;
@@ -103,6 +105,17 @@ const access = (over: Partial<TutorAccess>): TutorAccess => ({
 
 const noSessions: TutorSessionList = { sessions: [] };
 
+/** The Phase 2 knowledge map of chapter 1: one point per mastery band plus one never met. */
+const chapterMap: TutorChapterMap = {
+  chapterId: 'jesc1-c01',
+  points: [
+    { id: 'jesc1-c01-k1', topicId: 'tp1', title: 'What a chemical reaction is', description: 'A change that makes a new substance.', prerequisiteIds: [], mastery: 0.9, attempts: 4, misconceptions: [] },
+    { id: 'jesc1-c01-k2', topicId: 'tp1', title: 'Balancing an equation', description: 'The same atoms on both sides.', prerequisiteIds: ['jesc1-c01-k1'], mastery: 0.5, attempts: 3, misconceptions: ['Changing subscripts to balance'] },
+    { id: 'jesc1-c01-k3', topicId: 'tp2', title: 'Displacement reactions', description: 'A more reactive metal pushes out a less reactive one.', prerequisiteIds: ['jesc1-c01-k2'], mastery: 0.2, attempts: 2, misconceptions: [] },
+    { id: 'jesc1-c01-k4', topicId: 'tp2', title: 'Redox', description: 'Oxidation and reduction happen together.', prerequisiteIds: ['jesc1-c01-k3'], mastery: null, attempts: 0, misconceptions: [] },
+  ],
+};
+
 const navigation = { navigate: jest.fn(), goBack: jest.fn(), addListener: jest.fn(() => () => {}) };
 
 /** Every Text's own string content (a Text's `children` prop; nested elements are skipped). */
@@ -145,6 +158,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   tutorApi.getTutorChapters.mockResolvedValue(chapters);
   tutorApi.listTutorSessions.mockResolvedValue(noSessions);
+  tutorApi.getTutorChapterMap.mockResolvedValue(chapterMap);
 });
 
 // The first render of the screen loads i18n and the navigator on a cold Jest worker; CI runners are slower than a laptop.
@@ -245,5 +259,69 @@ describe('TutorChaptersScreen', () => {
 
     expect(tutorApi.startTutorSession).toHaveBeenCalledWith('school-1', 'jesc1-c01', 'VOICE');
     expect(navigation.navigate).toHaveBeenCalledWith('TutorSession', { sessionId: 'sess-1', session: { id: 'sess-1', turns: [] } });
+  });
+
+  describe('mastery strip (Phase 2 knowledge map)', () => {
+    it('loads the map only for chapters the student opened before, and shows one chip per point', async () => {
+      tutorApi.getMyTutorAccess.mockResolvedValue(access({}));
+      tutorApi.getTutorChapters.mockResolvedValue({
+        ...chapters,
+        chapters: chapters.chapters.map((c) => (c.chapterId === 'jesc1-c01' ? { ...c, lastSessionAt: '2026-11-10T10:00:00Z' } : c)),
+      });
+      const tree = await renderScreen();
+
+      // One request, for the chapter with a session; the untouched ready chapter waits for a tap.
+      expect(tutorApi.getTutorChapterMap).toHaveBeenCalledTimes(1);
+      expect(tutorApi.getTutorChapterMap).toHaveBeenCalledWith('school-1', 'jesc1-c01');
+      const chips = tree.root.findAll((node) => typeof node.props.testID === 'string' && node.props.testID.startsWith('tutor-point-'), { deep: false });
+      expect(chips.map((chip) => chip.props.testID)).toEqual(['tutor-point-jesc1-c01-k1', 'tutor-point-jesc1-c01-k2', 'tutor-point-jesc1-c01-k3', 'tutor-point-jesc1-c01-k4']);
+      // Colour by band: green ≥ 0.7, marigold ≥ 0.4, red below, grey before any attempt.
+      const colorOf = (chip: ReactTestInstance) => (chip.props.style as { backgroundColor: string }[]).find((s) => s && 'backgroundColor' in s)?.backgroundColor;
+      expect(chips.map(colorOf)).toEqual(['#1E9E5A', '#F5A70A', '#D6453D', '#E6E1EF']);
+      // The never-opened ready chapter offers to show its points; the not-ready one offers nothing.
+      expect(tree.root.findAll((node) => node.props.testID === 'tutor-map-toggle-jemh1-c01', { deep: false })).toHaveLength(1);
+      expect(tree.root.findAll((node) => node.props.testID === 'tutor-map-toggle-jesc1-c02')).toHaveLength(0);
+    });
+
+    it('fetches a map on demand from "Show points" and opens a point\'s title and description from its chip', async () => {
+      tutorApi.getMyTutorAccess.mockResolvedValue(access({}));
+      tutorApi.getTutorChapterMap.mockResolvedValue({ ...chapterMap, chapterId: 'jemh1-c01' });
+      const tree = await renderScreen();
+      expect(tutorApi.getTutorChapterMap).not.toHaveBeenCalled();
+
+      await act(async () => {
+        press(tree.root.findByProps({ testID: 'tutor-map-toggle-jemh1-c01' }));
+      });
+      expect(tutorApi.getTutorChapterMap).toHaveBeenCalledWith('school-1', 'jemh1-c01');
+      expect(tree.root.findAll((node) => node.props.testID === 'tutor-map-toggle-jemh1-c01')).toHaveLength(0);
+
+      expect(texts(tree)).not.toContain('Balancing an equation');
+      await act(async () => {
+        press(tree.root.findByProps({ testID: 'tutor-point-jesc1-c01-k2' }));
+      });
+      const shown = texts(tree);
+      expect(shown).toContain('Balancing an equation');
+      expect(shown).toContain('The same atoms on both sides.');
+      expect(shown).toContain('50% mastered');
+      expect(shown).toContain('Mix-ups seen: Changing subscripts to balance');
+    });
+
+    it('a failed map load offers a retry instead of breaking the list', async () => {
+      tutorApi.getMyTutorAccess.mockResolvedValue(access({}));
+      tutorApi.getTutorChapterMap.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(chapterMap);
+      tutorApi.getTutorChapters.mockResolvedValue({
+        ...chapters,
+        chapters: chapters.chapters.map((c) => (c.chapterId === 'jesc1-c01' ? { ...c, lastSessionAt: '2026-11-10T10:00:00Z' } : c)),
+      });
+      const tree = await renderScreen();
+
+      expect(texts(tree)).toContain(en.tutor.map.retry);
+      expect(texts(tree)).toContain('Chemical Reactions and Equations');
+      await act(async () => {
+        press(tree.root.findByProps({ testID: 'tutor-map-toggle-jesc1-c01' }));
+      });
+      expect(tutorApi.getTutorChapterMap).toHaveBeenCalledTimes(2);
+      expect(tree.root.findAll((node) => node.props.testID === 'tutor-point-jesc1-c01-k1', { deep: false })).toHaveLength(1);
+    });
   });
 });
