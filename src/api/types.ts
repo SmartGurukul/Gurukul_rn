@@ -3348,7 +3348,7 @@ export interface TutorChapterMastery {
   mastery: number | null;
   sessions: number;
   topics: TutorTopicMastery[];
-  /** Phase 2: knowledge points at mastery ≥ 0.7, out of the chapter's points; absent from older servers. */
+  /** Phase 2: knowledge points at mastery ≥ 0.6 (the server's mastered line), out of the chapter's active points; absent from older servers. */
   pointsMastered?: number;
   pointsTotal?: number;
 }
