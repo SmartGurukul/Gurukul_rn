@@ -2097,7 +2097,14 @@
       "sessions_one": "{{count}} session",
       "sessions_other": "{{count}} sessions",
       "noTopics": "No topics studied yet",
-      "lastSeen": "last seen {{date}}"
+      "lastSeen": "last seen {{date}}",
+      "points": "{{mastered}} of {{total}} points mastered"
+    },
+    "misconceptions": {
+      "title": "Misconceptions found and fixed",
+      "hint": "Ideas the tutor noticed were mixed up, and whether they have been cleared up since.",
+      "resolved": "Fixed",
+      "open": "Still working on it"
     },
     "sessions": {
       "title": "Recent sessions",
@@ -3953,6 +3960,29 @@
       "notStarted": "Not started yet",
       "notReady": "Not ready yet",
       "pickMode": "How do you want to learn today?"
+    },
+    "map": {
+      "show": "Show points",
+      "retry": "Couldn't load the points. Tap to try again",
+      "mastery": "{{percent}}% mastered",
+      "misconceptions": "Mix-ups seen: {{list}}",
+      "chipLabel": "{{title}}: {{state}}"
+    },
+    "diagnostic": {
+      "title": "Quick check",
+      "intro": "Answer these first so your tutor knows where to start.",
+      "progress": "{{current}} of {{total}}",
+      "question": "Question {{number}}",
+      "submit": "Submit",
+      "skip": "Skip for now",
+      "score": "Quick check: {{correct}} of {{total}} right",
+      "correct": "Correct",
+      "wrong": "Not quite, your tutor will go over this"
+    },
+    "hint": {
+      "level": "Hint {{level}} of {{total}}",
+      "answer": "Answer",
+      "justTellMe": "Just tell me"
     },
     "mode": {
       "text": "Text",

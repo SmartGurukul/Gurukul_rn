@@ -1,7 +1,10 @@
 import { api } from './client';
 import type {
   TutorAccess,
+  TutorChapterMap,
   TutorChaptersResponse,
+  TutorDiagnosticAnswer,
+  TutorDiagnosticResult,
   TutorQuizAnswersRequest,
   TutorQuizResult,
   TutorQuizWeekly,
@@ -26,12 +29,29 @@ export function getTutorChapters(schoolId: string) {
   return api.get<TutorChaptersResponse>('/api/v1/tutor/chapters', schoolId);
 }
 
+/**
+ * Phase 2 knowledge map of one chapter with the student's mastery per point (workspace
+ * specs/ai-tutor-adaptive/spec.md). A student sees their own; a parent or admin passes the studentId.
+ */
+export function getTutorChapterMap(schoolId: string, chapterId: string, studentId?: string) {
+  const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+  return api.get<TutorChapterMap>(`/api/v1/tutor/chapters/${encodeURIComponent(chapterId)}/map${query}`, schoolId);
+}
+
 export function startTutorSession(schoolId: string, chapterId: string, mode: 'TEXT' | 'VOICE') {
   return api.post<TutorSessionView>('/api/v1/tutor/sessions', { chapterId, mode }, schoolId);
 }
 
 export function sendTutorTurn(schoolId: string, sessionId: string, content: string) {
   return api.post<TutorTurnResult>(`/api/v1/tutor/sessions/${sessionId}/turns`, { content }, schoolId);
+}
+
+/**
+ * The answers to the session's opening quick check. An empty list skips it: the plan then uses the
+ * stored mastery. The result carries the first TEACH turn, so the chat continues from it.
+ */
+export function answerTutorDiagnostic(schoolId: string, sessionId: string, answers: TutorDiagnosticAnswer[]) {
+  return api.post<TutorDiagnosticResult>(`/api/v1/tutor/sessions/${sessionId}/diagnostic`, { answers }, schoolId);
 }
 
 export function closeTutorSession(schoolId: string, sessionId: string) {

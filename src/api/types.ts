@@ -3145,6 +3145,13 @@ export interface TutorTurnView {
   topicId: string | null;
   createdAt: string;
   latencyMs: number | null;
+  /**
+   * Phase 2 hint ladder (specs/ai-tutor-adaptive): 0 none, 1 "what made you think that", 2 a hint
+   * from the passage, 3 a worked step, 4 the answer. Absent from older servers.
+   */
+  hintLevel?: number;
+  /** The knowledge point this turn is about; absent from older servers. */
+  knowledgePointId?: string | null;
 }
 
 export interface TutorPlanView {
@@ -3153,6 +3160,77 @@ export interface TutorPlanView {
   recapQuestions: string[];
   steps: string[];
   practice: string[];
+  /** Phase 2: the knowledge points the plan targets; absent from older servers. */
+  focusPointIds?: string[];
+}
+
+// Phase 2: knowledge map, diagnostic and hint ladder (workspace specs/ai-tutor-adaptive/spec.md)
+
+export interface TutorKnowledgePoint {
+  id: string;
+  topicId: string;
+  title: string;
+  /** One sentence in student language. */
+  description: string;
+  prerequisiteIds: string[];
+  /** 0 to 1, or null before the student has met the point. */
+  mastery: number | null;
+  attempts: number;
+  /** Names of the misconceptions the student has shown on this point, newest last. */
+  misconceptions: string[];
+}
+
+/** GET /api/v1/tutor/chapters/{chapterId}/map */
+export interface TutorChapterMap {
+  chapterId: string;
+  points: TutorKnowledgePoint[];
+}
+
+export interface TutorDiagnosticOption {
+  key: string;
+  text: string;
+}
+
+export interface TutorDiagnosticItem {
+  id: string;
+  pointId: string;
+  stem: string;
+  /** The correct option is not marked; the server scores the answers. */
+  options: TutorDiagnosticOption[];
+}
+
+export interface TutorDiagnostic {
+  items: TutorDiagnosticItem[];
+}
+
+export interface TutorDiagnosticAnswer {
+  itemId: string;
+  key: string;
+}
+
+export interface TutorDiagnosticItemResult {
+  itemId: string;
+  correct: boolean;
+  /** The misconception a wrong option names; null when correct or unknown. */
+  misconception: string | null;
+  /** A one-line hint that addresses the misconception; null when correct. */
+  remediation: string | null;
+}
+
+/** POST /api/v1/tutor/sessions/{id}/diagnostic */
+export interface TutorDiagnosticResult {
+  results: TutorDiagnosticItemResult[];
+  /** The first TEACH turn, generated from the re-targeted plan. */
+  turn: TutorTurnView;
+  stage: TutorStage;
+}
+
+export interface TutorMisconception {
+  name: string;
+  pointTitle: string;
+  chapterTitle: string;
+  seenAt: string;
+  resolved: boolean;
 }
 
 export interface TutorSessionView {
@@ -3170,6 +3248,11 @@ export interface TutorSessionView {
   turnCount: number;
   plan: TutorPlanView | null;
   turns: TutorTurnView[];
+  /**
+   * Phase 2: the 3-to-5-item quick check a new session opens with; null (or absent on older
+   * servers) when there is nothing to ask. Only POST /sessions carries it.
+   */
+  diagnostic?: TutorDiagnostic | null;
   summary: string | null;
   parentNote: string | null;
   xpAwarded: number | null;
@@ -3184,6 +3267,10 @@ export interface TutorTurnResult {
   notice: string | null;
   /** True when the tutor closed the session with this reply. */
   sessionEnded: boolean;
+  /** Phase 2 hint ladder level of this reply (0..4); absent from older servers. */
+  hintLevel?: number;
+  /** Phase 2: the knowledge point the reply is about; absent from older servers. */
+  knowledgePointId?: string | null;
 }
 
 export interface TutorSessionSummary {
@@ -3261,6 +3348,9 @@ export interface TutorChapterMastery {
   mastery: number | null;
   sessions: number;
   topics: TutorTopicMastery[];
+  /** Phase 2: knowledge points at mastery ≥ 0.6 (the server's mastered line), out of the chapter's active points; absent from older servers. */
+  pointsMastered?: number;
+  pointsTotal?: number;
 }
 
 export interface TutorReport {
@@ -3289,4 +3379,6 @@ export interface TutorReport {
   quizTrend: { weekStart: string; score: number; total: number }[];
   recentSessions: TutorSessionSummary[];
   profileSummary: string | null;
+  /** Phase 2: misconceptions the diagnostic or the chat revealed, newest first; absent from older servers. */
+  misconceptions?: TutorMisconception[];
 }

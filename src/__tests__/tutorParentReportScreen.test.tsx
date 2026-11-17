@@ -162,6 +162,36 @@ describe('TutorParentReportScreen', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('TutorTranscript', { sessionId: 'sess1' });
   });
 
+  it('Phase 2: lists misconceptions found and fixed, and the points mastered per chapter', async () => {
+    getTutorReport.mockResolvedValue({
+      ...fullReport,
+      chapters: [{ ...fullReport.chapters[0], pointsMastered: 3, pointsTotal: 5 }],
+      misconceptions: [
+        { name: 'Changing subscripts to balance', pointTitle: 'Balancing an equation', chapterTitle: 'Chemical Reactions and Equations', seenAt: '2026-10-24T10:00:00Z', resolved: true },
+        { name: 'Rust needs only water', pointTitle: 'Corrosion', chapterTitle: 'Chemical Reactions and Equations', seenAt: '2026-10-22T10:00:00Z', resolved: false },
+      ],
+    });
+    const tree = render({ studentId: 's1' });
+    await flush();
+
+    const out = texts(tree);
+    expect(out).toContain('3 of 5 points mastered');
+    expect(out).toContain(en.tutorParent.misconceptions.title);
+    expect(out).toContain('Changing subscripts to balance');
+    expect(out).toContain('Balancing an equation · Chemical Reactions and Equations');
+    expect(out).toContain(`24 Oct · ${en.tutorParent.misconceptions.resolved}`);
+    expect(out).toContain(`22 Oct · ${en.tutorParent.misconceptions.open}`);
+  });
+
+  it('an older server (no misconceptions, no point counts) shows neither', async () => {
+    getTutorReport.mockResolvedValue(fullReport);
+    const tree = render({ studentId: 's1' });
+    await flush();
+    const out = texts(tree);
+    expect(out).not.toContain(en.tutorParent.misconceptions.title);
+    expect(out).not.toContain('points mastered');
+  });
+
   it('shows the empty state and the inactive access line before any session', async () => {
     getTutorReport.mockResolvedValue(emptyReport);
     const tree = render({ studentId: 's1', studentName: 'Riya' });

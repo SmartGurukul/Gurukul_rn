@@ -108,3 +108,40 @@ export function sessionMinutes(session: Pick<TutorSessionSummary, 'minutes' | 's
 export function quizComplete(questionIds: string[], answers: Record<string, string | undefined>): boolean {
   return questionIds.length > 0 && questionIds.every((id) => !!answers[id]);
 }
+
+// Phase 2: knowledge map, diagnostic and hint ladder (workspace specs/ai-tutor-adaptive/spec.md)
+
+/** Every diagnostic item has an option picked: the quick check can be submitted. */
+export function diagnosticComplete(itemIds: string[], answers: Record<string, string | undefined>): boolean {
+  return itemIds.length > 0 && itemIds.every((id) => !!answers[id]);
+}
+
+/** The highest rung of the hint ladder: the answer itself. Levels 1..3 are hints. */
+export const HINT_ANSWER_LEVEL = 4;
+
+/**
+ * Translation key for the small tag on a tutor turn that carries a hint level: "Hint 1 of 4" for
+ * levels 1 to 3, "Answer" for level 4, nothing for level 0 or a turn from an older server.
+ */
+export function hintTagKey(hintLevel: number | null | undefined): 'tutor.hint.level' | 'tutor.hint.answer' | null {
+  if (typeof hintLevel !== 'number' || hintLevel < 1) return null;
+  return hintLevel >= HINT_ANSWER_LEVEL ? 'tutor.hint.answer' : 'tutor.hint.level';
+}
+
+/**
+ * True when the student has been wrong twice in a row on the same knowledge point: the last two
+ * tutor turns both carry a hint (level 1 to 3) on the same point, and the latest turn is still a
+ * hint, not the answer. That is when "Just tell me" is offered.
+ */
+export function stuckOnPoint(turns: TutorTurnView[]): boolean {
+  const tutorTurns = visibleTurns(turns).filter((turn) => turn.role === 'TUTOR');
+  if (tutorTurns.length < 2) return false;
+  const last = tutorTurns[tutorTurns.length - 1];
+  const previous = tutorTurns[tutorTurns.length - 2];
+  const isHint = (turn: TutorTurnView) =>
+    typeof turn.hintLevel === 'number' && turn.hintLevel >= 1 && turn.hintLevel < HINT_ANSWER_LEVEL;
+  return isHint(last) && isHint(previous) && (last.knowledgePointId ?? null) === (previous.knowledgePointId ?? null);
+}
+
+/** The literal message "Just tell me" sends; the server lets the ladder jump to the answer on it. */
+export const JUST_TELL_ME_MESSAGE = 'Please just tell me the answer.';
