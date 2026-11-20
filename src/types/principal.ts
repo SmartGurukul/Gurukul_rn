@@ -202,6 +202,8 @@ export type PrincipalStackParamList = {
   AiMisuseLog: { pauseId?: string } | undefined;
   AttendanceExport: undefined;
   SchoolLogoSettings: undefined;
+  /** Admin: the board (CBSE / ICSE) the school's tutor books follow. */
+  SchoolBoardSettings: undefined;
   /** `mode: 'edit'` shows only the details form (opened from Profile's Edit button). */
   IdCard: { kind: 'STUDENT' | 'EMPLOYEE'; id: string; name: string; mode?: 'edit' };
   IdCardSheets: undefined;

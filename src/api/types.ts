@@ -6,6 +6,9 @@ export interface ApiResponse<T> {
   message: string | null;
 }
 
+/** The curriculum board a school, a student or a tutor book follows (workspace specs/ai-tutor-boards). */
+export type Board = 'CBSE' | 'ICSE';
+
 export interface School {
   id: string;
   name: string;
@@ -32,6 +35,8 @@ export interface School {
   studentCount: number;
   classSectionCount: number;
   teacherCount: number;
+  /** Absent from an older server. */
+  board?: Board;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,6 +55,8 @@ export interface SchoolUpdateRequest {
   bankIfsc?: string;
   bankAccountHolderName?: string;
   upiVpaOverride?: string;
+  /** Leave out to keep the school's current board. */
+  board?: Board;
 }
 
 export interface SchoolLocationUpdateRequest {
@@ -3123,6 +3130,8 @@ export interface TutorChapterOption {
 
 export interface TutorChaptersResponse {
   grade: number | null;
+  /** The board the chapters are from (the student's own, else the school's). Absent from an older server. */
+  board?: Board;
   chapters: TutorChapterOption[];
 }
 

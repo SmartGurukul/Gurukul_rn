@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Textbooks | Smart Gurukul ops</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="../assets/brand/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../assets/brand/favicon-48.png" sizes="48x48" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mukta:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="textbooks.css" />
+</head>
+<body>
+  <noscript><p class="noscript">This page needs JavaScript.</p></noscript>
+
+  <header class="topbar">
+    <a class="brand" href="../"><img src="../assets/brand/mark.svg" alt="" width="28" height="28" /> <span>Textbooks</span></a>
+    <span id="server-badge" class="chip gold server-badge" hidden></span>
+    <form class="keybox" id="key-form" autocomplete="off">
+      <label for="ops-key" class="sr-only">Ops key</label>
+      <input id="ops-key" type="password" placeholder="Ops key" autocomplete="off" spellcheck="false" />
+      <button class="btn small" type="submit">Use key</button>
+    </form>
+  </header>
+
+  <main class="wrap" id="main">
+    <section class="card controls" aria-labelledby="controls-title">
+      <h1 id="controls-title">Textbooks</h1>
+      <p class="muted">Parse chapters, generate concept maps and feed new books for the AI Tutor. Pick a board and class to see the catalogue.</p>
+      <div class="controls-row">
+        <div class="field">
+          <label for="board">Board</label>
+          <select id="board">
+            <option value="CBSE">CBSE</option>
+            <option value="ICSE">ICSE</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="grade">Class</label>
+          <select id="grade">
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+          </select>
+        </div>
+        <div class="field field-btn">
+          <button id="reload" class="btn primary" type="button">Load</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="status" class="status" aria-live="polite" aria-busy="false"></section>
+
+    <details class="card add-book" id="add-book">
+      <summary><h2>Add a book</h2><span class="muted small">Catalogue JSON built here, imported with one call</span></summary>
+      <form id="book-form" class="book-form" autocomplete="off">
+        <div class="form-grid">
+          <div class="field">
+            <label for="bk-board">Board</label>
+            <select id="bk-board">
+              <option value="CBSE">CBSE</option>
+              <option value="ICSE" selected>ICSE</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bk-class">Class</label>
+            <select id="bk-class">
+              <option value="6">Class 6</option>
+              <option value="7">Class 7</option>
+              <option value="8">Class 8</option>
+              <option value="9">Class 9</option>
+              <option value="10" selected>Class 10</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="bk-subject">Subject</label>
+            <input id="bk-subject" placeholder="Science" required />
+            <p class="hint">Key: <code id="bk-subject-key">—</code></p>
+          </div>
+          <div class="field">
+            <label for="bk-code">Book code</label>
+            <input id="bk-code" placeholder="icse10sci" pattern="[a-z0-9]+" required />
+            <p class="hint">Lowercase letters and digits. Chapter ids become <code>&lt;code&gt;-c01</code>.</p>
+          </div>
+          <div class="field field-wide">
+            <label for="bk-title">Book title</label>
+            <input id="bk-title" placeholder="Concise Physics Class 10" required />
+          </div>
+          <div class="field field-wide">
+            <label for="bk-chapters">Chapters, one title per line</label>
+            <textarea id="bk-chapters" rows="8" placeholder="Force&#10;  1.1 Turning effect of a force&#10;  1.2 Centre of gravity&#10;Work, Energy and Power" required></textarea>
+            <p class="hint">Indented lines, or lines starting with a number and a dot such as <code>1.1 Topic</code>, become topics of the chapter above.</p>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="button" id="bk-preview">Preview JSON</button>
+          <button class="btn primary" type="submit" id="bk-import">Import</button>
+          <span id="bk-summary" class="muted small"></span>
+        </div>
+        <pre id="bk-json" class="json" hidden tabindex="0"></pre>
+        <p id="bk-error" class="error" role="alert" hidden></p>
+        <p class="hint rights">Only feed books you have the right to use. ICSE textbooks are published by private publishers.</p>
+      </form>
+    </details>
+
+    <section class="card log-pane" aria-labelledby="log-title">
+      <div class="log-head">
+        <h2 id="log-title">Log</h2>
+        <button id="log-clear" class="btn ghost small" type="button">Clear</button>
+      </div>
+      <ol id="log" class="log" aria-live="polite"></ol>
+    </section>
+  </main>
+
+  <dialog id="map-dialog" class="map-dialog" aria-labelledby="map-title">
+    <div class="map-head">
+      <h2 id="map-title">Concept map</h2>
+      <button id="map-close" class="btn ghost small" type="button" aria-label="Close">Close</button>
+    </div>
+    <div id="map-body" class="map-body"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="textbooks.js"></script>
+</body>
+</html>
