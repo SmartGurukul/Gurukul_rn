@@ -11,6 +11,9 @@ import { TutorChaptersScreen } from '../screens/principal/TutorChaptersScreen';
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+jest.mock('../api/auth', () => ({ setPublicBoard: jest.fn() }));
+const mockShowToast = jest.fn();
+jest.mock('../context/ToastContext', () => ({ useToast: () => ({ showToast: mockShowToast }) }));
 jest.mock('../api/tutor', () => ({
   getMyTutorAccess: jest.fn(),
   getTutorChapterMap: jest.fn(),
@@ -41,6 +44,7 @@ const { act, create } = jest.requireActual<{
   create(element: ReactElement): ReactTestRenderer;
 }>('react-test-renderer');
 
+const authApi = jest.requireMock('../api/auth') as { setPublicBoard: jest.Mock };
 const tutorApi = jest.requireMock('../api/tutor') as {
   getMyTutorAccess: jest.Mock;
   getTutorChapterMap: jest.Mock;
@@ -133,11 +137,11 @@ function press(node: ReactTestInstance) {
   (node.props.onPress as () => void)();
 }
 
-async function renderScreen(): Promise<ReactTestRenderer> {
+async function renderScreen(schoolId = 'school-1'): Promise<ReactTestRenderer> {
   let tree!: ReactTestRenderer;
   await act(async () => {
     tree = create(
-      <SchoolContext.Provider value="school-1">
+      <SchoolContext.Provider value={schoolId}>
         <TutorChaptersScreen navigation={navigation as never} route={{ key: 'k', name: 'TutorChapters', params: undefined } as never} />
       </SchoolContext.Provider>,
     );
@@ -322,6 +326,67 @@ describe('TutorChaptersScreen', () => {
       });
       expect(tutorApi.getTutorChapterMap).toHaveBeenCalledTimes(2);
       expect(tree.root.findAll((node) => node.props.testID === 'tutor-point-jesc1-c01-k1', { deep: false })).toHaveLength(1);
+    });
+  });
+  describe('board', () => {
+    const OPEN_SCHOOL = '11111111-1111-4111-8111-111111111111';
+    const chip = (tree: ReactTestRenderer) => tree.root.findAll((node) => node.props.testID === 'tutor-board-chip', { deep: false });
+
+    it('shows no chip when the server sends no board (older backend)', async () => {
+      tutorApi.getMyTutorAccess.mockResolvedValue(access({}));
+      const tree = await renderScreen();
+      expect(chip(tree)).toHaveLength(0);
+    });
+
+    it("a school's student sees the board as a plain chip that does not open a picker", async () => {
+      tutorApi.getMyTutorAccess.mockResolvedValue(access({}));
+      tutorApi.getTutorChapters.mockResolvedValue({ ...chapters, board: 'ICSE' });
+      const tree = await renderScreen();
+
+      const [node] = chip(tree);
+      expect(node.props.disabled).toBe(true);
+      expect(texts(tree)).toContain(en.tutor.board.ICSE);
+      expect(tree.root.findAll((n) => n.props.testID === 'tutor-board-sheet', { deep: false })).toHaveLength(0);
+    });
+
+    it('an Open School student picks a board: the server is told and the chapters reload', async () => {
+      tutorApi.getMyTutorAccess.mockResolvedValue(access({}));
+      tutorApi.getTutorChapters.mockResolvedValueOnce({ ...chapters, board: 'CBSE' }).mockResolvedValue({ ...chapters, board: 'ICSE' });
+      authApi.setPublicBoard.mockResolvedValue(undefined);
+      const tree = await renderScreen(OPEN_SCHOOL);
+
+      const [node] = chip(tree);
+      expect(node.props.disabled).toBe(false);
+      await act(async () => {
+        press(node);
+      });
+      expect(texts(tree)).toContain(en.tutor.board.pickTitle);
+      await act(async () => {
+        press(tree.root.findByProps({ testID: 'tutor-board-option-ICSE' }));
+      });
+
+      expect(authApi.setPublicBoard).toHaveBeenCalledWith(OPEN_SCHOOL, 'ICSE');
+      expect(tutorApi.getTutorChapters).toHaveBeenCalledTimes(2);
+      expect(texts(tree)).toContain(en.tutor.board.ICSE);
+      expect(mockShowToast).toHaveBeenCalledWith("You're now learning the ICSE books", 'success');
+    });
+
+    it('a failed board change shows the error and keeps the current board', async () => {
+      tutorApi.getMyTutorAccess.mockResolvedValue(access({}));
+      tutorApi.getTutorChapters.mockResolvedValue({ ...chapters, board: 'CBSE' });
+      authApi.setPublicBoard.mockRejectedValue(new Error('Not allowed'));
+      const tree = await renderScreen(OPEN_SCHOOL);
+
+      await act(async () => {
+        press(chip(tree)[0]);
+      });
+      await act(async () => {
+        press(tree.root.findByProps({ testID: 'tutor-board-option-ICSE' }));
+      });
+
+      expect(mockShowToast).toHaveBeenCalledWith('Not allowed', 'error');
+      expect(tutorApi.getTutorChapters).toHaveBeenCalledTimes(1);
+      expect(texts(tree)).toContain(en.tutor.board.CBSE);
     });
   });
 });

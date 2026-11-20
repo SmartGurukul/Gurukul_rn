@@ -2,6 +2,7 @@ import { api, getRefreshToken } from './client';
 import { PUBLIC_SCHOOL_ID } from '../config/publicSchool';
 import type {
   AuthProfile,
+  Board,
   ChangeClassRequest,
   GoogleLoginRequest,
   LoginRequest,
@@ -56,6 +57,11 @@ export function publicSignup(req: PublicSignupRequest) {
 
 export function changeMyClass(req: ChangeClassRequest) {
   return api.put<void>('/api/v1/auth/public/class', req, PUBLIC_SCHOOL_ID);
+}
+
+/** An Open School student picks the board (CBSE / ICSE) the AI Tutor's books follow. */
+export function setPublicBoard(schoolId: string, board: Board) {
+  return api.put<void>('/api/v1/auth/public/board', { board }, schoolId);
 }
 
 export function listProfiles(schoolId: string) {

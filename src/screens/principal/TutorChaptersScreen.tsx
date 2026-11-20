@@ -4,14 +4,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { setPublicBoard } from '../../api/auth';
 import { getErrorMessage } from '../../api/errorMessage';
 import { getMyTutorAccess, getTutorChapterMap, getTutorChapters, listTutorSessions, startTutorSession } from '../../api/tutor';
-import type { TutorAccess, TutorChapterOption, TutorKnowledgePoint, TutorSessionMode, TutorSessionSummary } from '../../api/types';
+import type { Board, TutorAccess, TutorChapterOption, TutorKnowledgePoint, TutorSessionMode, TutorSessionSummary } from '../../api/types';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader, headerButtonStyle } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { isPublicSchool } from '../../config/publicSchool';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, spacing, tints } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -19,6 +22,8 @@ import { accessReasonKey, activeSession, groupChaptersBySubject, masteryPercent 
 import { masteryColor, masteryLevel } from '../../utils/tutorReport';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TutorChapters'>;
+
+const BOARDS: Board[] = ['CBSE', 'ICSE'];
 
 /** A chapter's knowledge map as the row shows it: not asked for yet, loading, failed, or the points. */
 type MapState = 'loading' | 'error' | TutorKnowledgePoint[];
@@ -57,9 +62,15 @@ function MasteryStrip({ points, onPick }: { points: TutorKnowledgePoint[]; onPic
 export function TutorChaptersScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
+  const { showToast } = useToast();
+  // Open School students follow no school: they pick their own board (the server keeps it).
+  const isPublic = isPublicSchool(schoolId);
   const [access, setAccess] = useState<TutorAccess | null>(null);
   const [chapters, setChapters] = useState<TutorChapterOption[] | null>(null);
   const [grade, setGrade] = useState<number | null>(null);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [boardMenuOpen, setBoardMenuOpen] = useState(false);
+  const [changingBoard, setChangingBoard] = useState<Board | null>(null);
   const [current, setCurrent] = useState<TutorSessionSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +111,7 @@ export function TutorChaptersScreen({ navigation }: Props) {
       setAccess(accessRes);
       setChapters(chaptersRes.chapters);
       setGrade(chaptersRes.grade);
+      setBoard(chaptersRes.board ?? null);
       setCurrent(activeSession(sessionsRes.sessions));
       for (const chapter of chaptersRes.chapters) {
         if (chapter.ingested && chapter.lastSessionAt) loadMap(chapter.chapterId);
@@ -119,6 +131,22 @@ export function TutorChaptersScreen({ navigation }: Props) {
 
   const allowed = access?.allowed ?? false;
   const remaining = access?.entitlement?.sessionsRemaining ?? null;
+
+  const changeBoard = async (next: Board) => {
+    if (changingBoard) return;
+    setChangingBoard(next);
+    try {
+      await setPublicBoard(schoolId, next);
+      setBoardMenuOpen(false);
+      // The chapter list is that board's books: reload it rather than guess.
+      await load();
+      showToast(t('tutor.board.changed', { board: t(`tutor.board.${next}`) }), 'success');
+    } catch (e) {
+      showToast(getErrorMessage(e), 'error');
+    } finally {
+      setChangingBoard(null);
+    }
+  };
 
   const start = async (mode: TutorSessionMode) => {
     if (!picking || starting) return;
@@ -155,7 +183,22 @@ export function TutorChaptersScreen({ navigation }: Props) {
             <FontAwesome5 name="history" size={16} color={colors.textPrimary} />
           </Pressable>
         }
-      />
+      >
+        {board && (
+          <Pressable
+            style={styles.boardChip}
+            onPress={() => setBoardMenuOpen(true)}
+            disabled={!isPublic}
+            hitSlop={6}
+            accessibilityRole={isPublic ? 'button' : 'text'}
+            accessibilityLabel={t('tutor.board.label', { board: t(`tutor.board.${board}`) })}
+            testID="tutor-board-chip"
+          >
+            <Text style={styles.boardChipText}>{t(`tutor.board.${board}`)}</Text>
+            {isPublic && <FontAwesome5 name="chevron-down" size={10} color={colors.primary} />}
+          </Pressable>
+        )}
+      </ScreenHeader>
       <ScreenContainer>
         {loading ? (
           <ActivityIndicator color={colors.primary} style={styles.loading} />
@@ -305,6 +348,39 @@ export function TutorChaptersScreen({ navigation }: Props) {
         </Pressable>
       </Modal>
 
+      <Modal visible={boardMenuOpen} transparent animationType="fade" onRequestClose={() => setBoardMenuOpen(false)}>
+        <Pressable style={styles.backdrop} onPress={() => !changingBoard && setBoardMenuOpen(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}} testID="tutor-board-sheet">
+            <Text style={styles.sheetTitle}>{t('tutor.board.pickTitle')}</Text>
+            <Text style={styles.sheetText}>{t('tutor.board.pickHint')}</Text>
+            {BOARDS.map((option) => (
+              <Pressable
+                key={option}
+                style={[styles.modeButton, changingBoard && styles.rowDisabled]}
+                disabled={!!changingBoard}
+                onPress={() => changeBoard(option)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: option === board }}
+                testID={`tutor-board-option-${option}`}
+              >
+                <View style={styles.rowText}>
+                  <Text style={styles.modeTitle}>{t(`tutor.board.${option}`)}</Text>
+                  <Text style={styles.rowHint}>{t(`tutor.board.${option}Hint`)}</Text>
+                </View>
+                {changingBoard === option ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : option === board ? (
+                  <FontAwesome5 name="check" size={14} color={colors.primary} />
+                ) : null}
+              </Pressable>
+            ))}
+            <Pressable style={styles.cancel} onPress={() => setBoardMenuOpen(false)} disabled={!!changingBoard}>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <Modal visible={picking !== null} transparent animationType="fade" onRequestClose={() => setPicking(null)}>
         <Pressable style={styles.backdrop} onPress={() => !starting && setPicking(null)}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -382,6 +458,17 @@ const styles = StyleSheet.create({
   rowTitle: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 20, color: colors.textPrimary },
   rowHint: { fontFamily: fonts.body, fontSize: 12, lineHeight: 16, color: colors.textMuted },
   chipRow: { flexDirection: 'row', marginTop: 2 },
+  boardChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 3,
+  },
+  boardChipText: { fontFamily: fonts.bodySemibold, fontSize: 12, color: colors.primary },
   masteryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
   masteryTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.primaryLight, overflow: 'hidden' },
   masteryFill: { height: 6, borderRadius: 3, backgroundColor: colors.primaryBright },

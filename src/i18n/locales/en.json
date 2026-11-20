@@ -258,6 +258,10 @@
         "title": "Terms",
         "description": "The school's terms and dates, for assessments and report cards"
       },
+      "schoolBoard": {
+        "title": "Board",
+        "description": "CBSE or ICSE: the books the AI Tutor and Resources follow"
+      },
       "markMyAttendance": {
         "title": "Mark My Attendance",
         "description": "Check in from the school premises"
@@ -2655,6 +2659,21 @@
     "done": "\"{{term}}\" report cards unpublished",
     "adminOnly": "Only an admin can unpublish report cards."
   },
+  "schoolBoard": {
+    "title": "Board",
+    "intro": "The board your school follows. The AI Tutor and the Resource Hub show every student this board's books.",
+    "saved": "Board set to {{board}}",
+    "options": {
+      "CBSE": {
+        "title": "CBSE",
+        "hint": "NCERT textbooks"
+      },
+      "ICSE": {
+        "title": "ICSE",
+        "hint": "ICSE board textbooks"
+      }
+    }
+  },
   "schoolLogo": {
     "title": "School Logo",
     "intro": "Your school logo is printed on report-card PDFs. Without one, they show your school's name.",
@@ -3960,6 +3979,16 @@
       "notStarted": "Not started yet",
       "notReady": "Not ready yet",
       "pickMode": "How do you want to learn today?"
+    },
+    "board": {
+      "CBSE": "CBSE",
+      "ICSE": "ICSE",
+      "CBSEHint": "NCERT textbooks",
+      "ICSEHint": "ICSE board textbooks",
+      "label": "Board: {{board}}",
+      "pickTitle": "Which board are you in?",
+      "pickHint": "The tutor teaches from that board's books.",
+      "changed": "You're now learning the {{board}} books"
     },
     "map": {
       "show": "Show points",
